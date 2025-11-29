@@ -6,7 +6,7 @@ const providerInfo = {
       pricing: 'Free tier: 60 requests/minute per key',
       getApiLink: 'https://makersuite.google.com/app/apikey',
       steps: [
-        'Go to Google AI Studio (link above)',
+        'Go to Google AI Studio',
         'Click "Get API Key" or "Create API Key"',
         'Create 3 different API keys (or use same key 3 times)',
         'Copy each key into the respective field below'
@@ -18,7 +18,7 @@ const providerInfo = {
       pricing: 'Pay-as-you-go: ~$0.03-0.05 per optimization',
       getApiLink: 'https://platform.openai.com/api-keys',
       steps: [
-        'Go to OpenAI Platform (link above)',
+        'Go to OpenAI Platform',
         'Sign up or log in to your account',
         'Navigate to API Keys section',
         'Click "Create new secret key"',
@@ -92,10 +92,10 @@ const providerInfo = {
         <h4>${info.name}</h4>
         <p><strong>Description:</strong> ${info.description}</p>
         <p><strong>Pricing:</strong> ${info.pricing}</p>
-        <p><strong>Get API Key:</strong> <a href="${info.getApiLink}" target="_blank">Click here →</a></p>
+        <p><strong>Get API Key:</strong> <a href="${info.getApiLink}" target="_blank">Click here</a></p>
         <p><strong>Setup Steps:</strong></p>
-        <ol style="margin-left: 20px; margin-top: 8px;">
-          ${info.steps.map(step => `<li style="margin: 6px 0; color: #555;">${step}</li>`).join('')}
+        <ol>
+          ${info.steps.map(step => `<li>${step}</li>`).join('')}
         </ol>
       </div>
     `;
@@ -115,7 +115,7 @@ const providerInfo = {
     const provider = aiProviderSelect.value;
     
     if (!provider) {
-      showStatus('❌ Please select an AI provider', 'error');
+      showStatus('Please select an AI provider', 'error');
       return;
     }
     
@@ -128,32 +128,32 @@ const providerInfo = {
       const key3 = geminiKey3.value.trim();
       
       if (!key1 || !key2 || !key3) {
-        showStatus('❌ Please enter all 3 Gemini API keys', 'error');
+        showStatus('Please enter all 3 Gemini API keys', 'error');
         return;
       }
       
       settingsToSave.geminiKey1 = key1;
       settingsToSave.geminiKey2 = key2;
       settingsToSave.geminiKey3 = key3;
-      settingsToSave.chatgptApiKey = ''; // Clear ChatGPT key
+      settingsToSave.chatgptApiKey = '';
       
     } else if (provider === 'chatgpt') {
       const key = chatgptApiKey.value.trim();
       
       if (!key) {
-        showStatus('❌ Please enter your ChatGPT API key', 'error');
+        showStatus('Please enter your ChatGPT API key', 'error');
         return;
       }
       
       settingsToSave.chatgptApiKey = key;
-      settingsToSave.geminiKey1 = ''; // Clear Gemini keys
+      settingsToSave.geminiKey1 = '';
       settingsToSave.geminiKey2 = '';
       settingsToSave.geminiKey3 = '';
     }
     
     // Save to Chrome storage
     chrome.storage.local.set(settingsToSave, () => {
-      showStatus('✅ Settings saved successfully! You can now close this page.', 'success');
+      showStatus('Settings saved successfully! You can now close this page.', 'success');
       
       // Scroll to top to see message
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -166,7 +166,7 @@ const providerInfo = {
     statusMessage.className = `status-message ${type}`;
     statusMessage.style.display = 'block';
     
-    // Auto-hide after 5 seconds for error, 8 seconds for success
+    // Auto-hide after duration
     const duration = type === 'success' ? 8000 : 5000;
     setTimeout(() => {
       statusMessage.style.display = 'none';

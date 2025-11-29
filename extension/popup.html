@@ -1,212 +1,245 @@
 <!DOCTYPE html>
-<html>
+<html style="width: 420px; height: 600px;">
 <head>
   <meta charset="UTF-8">
   <link rel="stylesheet" href="styles.css">
 </head>
-<body>
-  <div class="container">
+<body style="width: 420px; height: 600px; margin: 0; padding: 0;">
+  <div class="glass-container" style="width: 420px; height: 600px;">
+    <!-- Header -->
     <div class="header">
-      <h1>Resume Optimizer</h1>
-      <p class="subtitle">AI-powered resume optimization</p>
+      <div class="header-content">
+        <div class="logo-section">
+          <div class="logo-icon">⚡</div>
+          <h1 class="app-name">Resume Optimizer</h1>
+        </div>
+        <button id="settingsBtn" class="icon-btn settings-icon" title="Settings">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path>
+            <circle cx="12" cy="12" r="3"></circle>
+          </svg>
+        </button>
+      </div>
+      <div class="ai-badge" id="aiProviderBadge">
+        <span class="badge-dot"></span>
+        <span id="currentProvider">Loading...</span>
+      </div>
     </div>
 
+    <!-- Content Area -->
     <div class="content">
+      
       <!-- Settings Required State -->
       <div id="settingsRequired" class="state" style="display: none;">
-        <div class="warning-box">
-          <div class="warning-icon">⚙️</div>
+        <div class="glass-card warning-card">
+          <div class="card-icon warning">⚠️</div>
           <h2>Setup Required</h2>
-          <p>Please configure your AI provider and API keys first.</p>
+          <p>Please configure your AI provider and API keys in Settings</p>
+          <p class="helper-text">Click the settings icon (⚙️) in the top right corner to get started</p>
         </div>
-        <button id="openSettings" class="btn btn-primary">
-          Open Settings
-        </button>
       </div>
 
-      <!-- STEP 1: Mode Selection Screen (Initial) -->
+      <!-- Mode Selection State -->
       <div id="modeSelectionState" class="state">
-        <div class="ai-provider-badge">
-          <span id="currentProvider">Loading...</span>
-        </div>
-        
-        <div class="mode-selection">
-          <h2 class="mode-title">How do you want to proceed?</h2>
-          
-          <button id="selectPasteMode" class="mode-btn">
+        <div class="mode-grid">
+          <button id="selectPasteMode" class="mode-card glass-card">
             <div class="mode-icon">📝</div>
-            <div class="mode-label">Paste Job Description</div>
-            <div class="mode-desc">Manually paste the job description text</div>
+            <h3>Paste Job Description</h3>
+            <p>Manually paste JD text</p>
+            <div class="card-shine"></div>
           </button>
           
-          <button id="selectUrlMode" class="mode-btn">
+          <button id="selectUrlMode" class="mode-card glass-card">
             <div class="mode-icon">🌐</div>
-            <div class="mode-label">Fetch from URL</div>
-            <div class="mode-desc">Extract job description from current page</div>
+            <h3>Fetch from URL</h3>
+            <p>Extract from current page</p>
+            <div class="card-shine"></div>
           </button>
         </div>
-
-        <button id="settingsBtnMain" class="btn btn-secondary">
-          ⚙️ Settings
-        </button>
       </div>
 
-      <!-- STEP 2A: Paste JD Mode Screen -->
+      <!-- Paste JD State -->
       <div id="pasteJdState" class="state" style="display: none;">
-        <div class="mode-header">
-          <span class="mode-badge">📝 Mode: Manual JD Input</span>
-        </div>
+        <div class="glass-card">
+          <div class="mode-indicator">
+            <span class="indicator-dot paste"></span>
+            <span>Manual Input Mode</span>
+          </div>
+          
+          <div class="input-section">
+            <label class="input-label">📋 Job Description</label>
+            <textarea 
+              id="jobDescriptionInput" 
+              class="glass-input"
+              placeholder="Paste the complete job description here..."
+              rows="8"
+            ></textarea>
+            <div class="char-info">
+              <span id="charCount" class="char-count">0</span>
+              <span id="charWarning" class="char-warning"></span>
+            </div>
+          </div>
 
-        <div class="manual-input">
-          <label for="jobDescriptionInput" class="input-label">
-            📋 Paste Job Description:
-          </label>
-          <textarea 
-            id="jobDescriptionInput" 
-            class="job-input"
-            placeholder="Paste the complete job description here...
-
-Example:
-Job Title: Senior Full Stack Developer
-Location: Austin, TX
-Company: TechCorp
-
-Responsibilities:
-- Develop and maintain web applications
-- Work with React and Node.js
-- Collaborate with cross-functional teams
-
-Requirements:
-- 5+ years of experience
-- Strong JavaScript skills
-- Bachelor's degree in Computer Science
-..."
-            rows="12"
-          ></textarea>
-          <div class="char-count">
-            <span id="charCount">0</span> characters
-            <span id="charWarning" class="char-warning" style="display: none;">⚠️ Too short</span>
+          <div class="button-group">
+            <button id="optimizePasteBtn" class="btn btn-primary glow">
+              <span>⚡ Optimize Resume</span>
+            </button>
+            <div class="button-row">
+              <button id="backFromPaste" class="btn btn-secondary">
+                <span>← Back</span>
+              </button>
+            </div>
           </div>
         </div>
-
-        <button id="optimizePasteBtn" class="btn btn-primary">
-          <span class="btn-icon">⚡</span>
-          Optimize Resume
-        </button>
-        
-        <div class="bottom-buttons">
-          <button id="backFromPaste" class="btn btn-secondary">
-            ← Back
-          </button>
-          <button id="settingsBtnPaste" class="btn btn-secondary">
-            ⚙️ Settings
-          </button>
-        </div>
       </div>
 
-      <!-- STEP 2B: URL Mode Screen -->
+      <!-- URL Mode State -->
       <div id="urlModeState" class="state" style="display: none;">
-        <div class="mode-header">
-          <span class="mode-badge">🌐 Mode: URL Fetch</span>
-        </div>
+        <div class="glass-card">
+          <div class="mode-indicator">
+            <span class="indicator-dot url"></span>
+            <span>URL Fetch Mode</span>
+          </div>
+          
+          <div class="url-info">
+            <div class="info-icon">🌐</div>
+            <p class="info-text">Navigate to a job posting and click optimize</p>
+            <div class="current-url-box">
+              <span class="url-label">Current Page:</span>
+              <span id="currentUrl" class="current-url">Loading...</span>
+            </div>
+          </div>
 
-        <div class="info-box">
-          <p class="info-icon">📍</p>
-          <p class="info-text">Navigate to a job posting page and click optimize</p>
-          <p class="current-url" id="currentUrl">Checking current page...</p>
-        </div>
-
-        <button id="optimizeUrlBtn" class="btn btn-primary">
-          <span class="btn-icon">⚡</span>
-          Optimize Resume
-        </button>
-        
-        <div class="bottom-buttons">
-          <button id="backFromUrl" class="btn btn-secondary">
-            ← Back
-          </button>
-          <button id="settingsBtnUrl" class="btn btn-secondary">
-            ⚙️ Settings
-          </button>
+          <div class="button-group">
+            <button id="optimizeUrlBtn" class="btn btn-primary glow">
+              <span>⚡ Optimize Resume</span>
+            </button>
+            <div class="button-row">
+              <button id="backFromUrl" class="btn btn-secondary">
+                <span>← Back</span>
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
       <!-- Loading State -->
       <div id="loadingState" class="state" style="display: none;">
-        <div class="mode-indicator" id="loadingModeIndicator"></div>
-        
-        <div class="loader-container">
-          <div class="loader"></div>
-          <p class="loading-text">Optimizing your resume...</p>
-          <p class="loading-subtext" id="loadingStep">Analyzing job description</p>
-        </div>
-        <div class="progress-steps">
-          <div class="step active">
-            <div class="step-number">1</div>
-            <div class="step-label">Extract JD</div>
+        <div class="glass-card loading-card">
+          <div class="loading-animation">
+            <div class="pulse-ring"></div>
+            <div class="pulse-ring delay-1"></div>
+            <div class="pulse-ring delay-2"></div>
+            <div class="loader-icon">⚡</div>
           </div>
-          <div class="step">
-            <div class="step-number">2</div>
-            <div class="step-label">Analyze</div>
+          
+          <h2 class="loading-title">Optimizing Your Resume</h2>
+          <p class="loading-step" id="loadingStep">Analyzing job description...</p>
+          
+          <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
           </div>
-          <div class="step">
-            <div class="step-number">3</div>
-            <div class="step-label">Optimize</div>
-          </div>
-          <div class="step">
-            <div class="step-number">4</div>
-            <div class="step-label">Create Doc</div>
+          
+          <div class="loading-steps">
+            <div class="step-item active" id="step1">
+              <div class="step-dot"></div>
+              <span>Extract</span>
+            </div>
+            <div class="step-item" id="step2">
+              <div class="step-dot"></div>
+              <span>Analyze</span>
+            </div>
+            <div class="step-item" id="step3">
+              <div class="step-dot"></div>
+              <span>Optimize</span>
+            </div>
+            <div class="step-item" id="step4">
+              <div class="step-dot"></div>
+              <span>Create</span>
+            </div>
           </div>
         </div>
       </div>
 
     <!-- Success State -->
     <div id="successState" class="state" style="display: none;">
-        <div class="success-box">
-        <div class="success-icon">✅</div>
-        <h2>Resume Optimized!</h2>
-        <p id="optimizationCount" class="optimization-count"></p>
-        <p id="fileNameDisplay" class="file-name"></p>
-        <p id="jobDetails" class="job-details"></p>
+        <div class="glass-card success-card">
+        <div class="success-animation">
+            <div class="success-circle">
+            <svg class="checkmark" viewBox="0 0 52 52">
+                <circle class="checkmark-circle" cx="26" cy="26" r="25" fill="none"/>
+                <path class="checkmark-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+            </svg>
+            </div>
         </div>
-        <div class="links">
-        <a id="viewLink" class="link-btn link-primary" target="_blank">
+        
+        <h2 class="success-title">Resume Optimized!</h2>
+        <p id="optimizationCount" class="success-subtitle"></p>
+        
+        <!-- Rest of success card content stays the same -->
+        <div class="job-info" id="jobInfoCard">
+            <div class="job-info-item">
+            <span class="job-info-label">Company:</span>
+            <span id="companyName" class="job-info-value">N/A</span>
+            </div>
+            <div class="job-info-item">
+            <span class="job-info-label">Position:</span>
+            <span id="positionName" class="job-info-value">N/A</span>
+            </div>
+        </div>
+    
+        <div class="file-badge" id="fileNameDisplay">
+            <span id="fileName">📄 Resume.docx</span>
+        </div>
+    
+        <div class="action-links">
+            <a id="viewLink" class="action-btn primary" target="_blank">
             <span>📄 View in Google Docs</span>
-        </a>
-        <a id="pdfLink" class="link-btn link-secondary" target="_blank">
+            </a>
+            <a id="pdfLink" class="action-btn secondary" target="_blank">
             <span>⬇️ Download PDF</span>
-        </a>
-        <a id="trackingSheetLink" class="link-btn link-secondary" target="_blank" style="display: none;">
+            </a>
+            <a id="trackingSheetLink" class="action-btn secondary" target="_blank" style="display: none;">
             <span>📊 View Tracking Sheet</span>
-        </a>
+            </a>
         </div>
-        <button id="optimizeAnother" class="btn btn-primary">
-        ⚡ Optimize Another Resume
-        </button>
-        <button id="settingsBtnSuccess" class="btn btn-secondary">
-        ⚙️ Settings
-        </button>
+    
+        <div class="button-group">
+            <button id="optimizeAnother" class="btn btn-primary glow">
+            <span>⚡ Optimize Another</span>
+            </button>
+        </div>
+        </div>
     </div>
-
       <!-- Error State -->
       <div id="errorState" class="state" style="display: none;">
-        <div class="error-box">
+        <div class="glass-card error-card">
           <div class="error-icon">❌</div>
           <h2>Optimization Failed</h2>
           <p id="errorMessage" class="error-message"></p>
+          
+          <div class="button-group">
+            <button id="retryBtn" class="btn btn-primary glow">
+              <span>🔄 Try Again</span>
+            </button>
+            <button id="backToModeSelection" class="btn btn-secondary">
+              <span>← Back to Start</span>
+            </button>
+          </div>
         </div>
-        <button id="retryBtn" class="btn btn-primary">Try Again</button>
-        <button id="backToModeSelection" class="btn btn-secondary">← Back to Start</button>
       </div>
+
     </div>
 
+    <!-- Footer -->
     <div class="footer">
       <div class="server-status">
         <span class="status-dot" id="serverStatus"></span>
-        <span id="serverText">Checking server...</span>
+        <span id="serverText" class="status-text">Checking server...</span>
       </div>
     </div>
   </div>
+
   <script src="popup.js"></script>
 </body>
 </html>

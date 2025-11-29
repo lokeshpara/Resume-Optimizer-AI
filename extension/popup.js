@@ -22,7 +22,6 @@ document.addEventListener('DOMContentLoaded', function() {
   // Paste mode elements
   const optimizePasteBtn = document.getElementById('optimizePasteBtn');
   const backFromPaste = document.getElementById('backFromPaste');
-  const settingsBtnPaste = document.getElementById('settingsBtnPaste');
   const jobDescriptionInput = document.getElementById('jobDescriptionInput');
   const charCount = document.getElementById('charCount');
   const charWarning = document.getElementById('charWarning');
@@ -30,25 +29,20 @@ document.addEventListener('DOMContentLoaded', function() {
   // URL mode elements
   const optimizeUrlBtn = document.getElementById('optimizeUrlBtn');
   const backFromUrl = document.getElementById('backFromUrl');
-  const settingsBtnUrl = document.getElementById('settingsBtnUrl');
   const currentUrl = document.getElementById('currentUrl');
 
   // Other buttons
-  const settingsBtnMain = document.getElementById('settingsBtnMain');
-  const settingsBtnSuccess = document.getElementById('settingsBtnSuccess');
-  const openSettingsBtn = document.getElementById('openSettings');
+  const settingsBtn = document.getElementById('settingsBtn');
   const retryBtn = document.getElementById('retryBtn');
   const optimizeAnother = document.getElementById('optimizeAnother');
   const backToModeSelection = document.getElementById('backToModeSelection');
 
   // Display elements
   const loadingStep = document.getElementById('loadingStep');
-  const loadingModeIndicator = document.getElementById('loadingModeIndicator');
   const viewLink = document.getElementById('viewLink');
   const pdfLink = document.getElementById('pdfLink');
   const errorMessage = document.getElementById('errorMessage');
   const optimizationCount = document.getElementById('optimizationCount');
-  const fileNameDisplay = document.getElementById('fileNameDisplay');
   const serverStatus = document.getElementById('serverStatus');
   const serverText = document.getElementById('serverText');
   const currentProvider = document.getElementById('currentProvider');
@@ -114,11 +108,10 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
-  // Settings buttons
-  const settingsButtons = [settingsBtnMain, settingsBtnPaste, settingsBtnUrl, settingsBtnSuccess, openSettingsBtn];
-  settingsButtons.forEach(btn => {
-    if (btn) btn.addEventListener('click', openSettings);
-  });
+  // Settings button - only the top-right icon
+  if (settingsBtn) {
+    settingsBtn.addEventListener('click', openSettings);
+  }
 
   // Character counter for paste mode
   if (jobDescriptionInput) {
@@ -130,19 +123,19 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Color feedback
         if (length < 100) {
-          charCount.style.color = '#e74c3c';
+          charCount.style.color = '#ef4444';
           if (charWarning) {
             charWarning.style.display = 'inline';
             charWarning.textContent = '⚠️ Too short (min 100 chars)';
           }
         } else if (length < 500) {
-          charCount.style.color = '#f39c12';
+          charCount.style.color = '#f59e0b';
           if (charWarning) {
             charWarning.style.display = 'inline';
             charWarning.textContent = '✓ Acceptable';
           }
         } else {
-          charCount.style.color = '#27ae60';
+          charCount.style.color = '#10b981';
           if (charWarning) {
             charWarning.style.display = 'inline';
             charWarning.textContent = '✓ Good length';
@@ -162,18 +155,18 @@ document.addEventListener('DOMContentLoaded', function() {
       if (aiProvider === 'gemini') {
         settingsComplete = geminiKey1 && geminiKey2 && geminiKey3;
         if (settingsComplete && currentProvider) {
-          currentProvider.textContent = `🤖 Gemini AI (3 keys)`;
+          currentProvider.textContent = `Gemini AI`;
         }
       } else if (aiProvider === 'chatgpt') {
         settingsComplete = chatgptApiKey;
         if (settingsComplete && currentProvider) {
-          currentProvider.textContent = `🤖 ChatGPT GPT-4`;
+          currentProvider.textContent = `ChatGPT GPT-4`;
         }
       }
       
       if (!settingsComplete) {
         showState('settingsRequired');
-        if (currentProvider) currentProvider.textContent = '⚠️ Not configured';
+        if (currentProvider) currentProvider.textContent = 'Not configured';
       } else {
         showState('modeSelection');
       }
@@ -203,13 +196,11 @@ document.addEventListener('DOMContentLoaded', function() {
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
       if (currentUrl && tab && tab.url) {
         const url = new URL(tab.url);
-        currentUrl.textContent = `Current page: ${url.hostname}`;
-        currentUrl.style.color = '#667eea';
+        currentUrl.textContent = url.hostname;
       }
     } catch (error) {
       if (currentUrl) {
         currentUrl.textContent = 'Unable to detect current page';
-        currentUrl.style.color = '#e74c3c';
       }
     }
   }
@@ -232,7 +223,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
       // Validate based on mode
       if (mode === 'paste') {
-        // Paste mode - get manual JD
         manualJobDescription = jobDescriptionInput.value.trim();
         
         if (!manualJobDescription) {
@@ -247,7 +237,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
         console.log(`📝 Paste mode: ${manualJobDescription.length} characters`);
       } else if (mode === 'url') {
-        // URL mode - validate URL
         if (!jobUrl || jobUrl.startsWith('chrome://') || jobUrl.startsWith('chrome-extension://')) {
           showError('Please navigate to a job posting page first');
           return;
@@ -286,53 +275,61 @@ document.addEventListener('DOMContentLoaded', function() {
       // Show loading state
       showState('loading');
       
-      // Set mode indicator in loading screen
-      if (loadingModeIndicator) {
-        loadingModeIndicator.textContent = mode === 'paste' ? '📝 Using Manual JD' : '🌐 Fetching from URL';
-      }
+      // Get progress bar element
+      const progressFill = document.getElementById('progressFill');
+      if (progressFill) progressFill.style.width = '0%';
       
       // Update loading steps based on mode
       const steps = mode === 'paste' 
         ? [
-            { text: 'Processing manual job description...', delay: 0 },
-            { text: 'Analyzing resume vs job requirements...', delay: 8000 },
-            { text: 'Generating optimization points...', delay: 15000 },
-            { text: 'Rewriting resume with AI...', delay: 25000 },
-            { text: 'Creating formatted document...', delay: 35000 }
+            { text: 'Processing manual job description...', delay: 0, progress: 25, step: 0 },
+            { text: 'Analyzing resume vs job requirements...', delay: 8000, progress: 50, step: 1 },
+            { text: 'Generating optimization points...', delay: 15000, progress: 75, step: 2 },
+            { text: 'Creating formatted document...', delay: 25000, progress: 90, step: 3 }
           ]
         : [
-            { text: 'Fetching job page from URL...', delay: 0 },
-            { text: 'Extracting job description...', delay: 5000 },
-            { text: 'Analyzing resume vs job requirements...', delay: 13000 },
-            { text: 'Generating optimization points...', delay: 20000 },
-            { text: 'Rewriting resume with AI...', delay: 30000 },
-            { text: 'Creating formatted document...', delay: 40000 }
+            { text: 'Fetching job page from URL...', delay: 0, progress: 20, step: 0 },
+            { text: 'Extracting job description...', delay: 5000, progress: 40, step: 0 },
+            { text: 'Analyzing resume vs job requirements...', delay: 13000, progress: 60, step: 1 },
+            { text: 'Generating optimization points...', delay: 20000, progress: 80, step: 2 },
+            { text: 'Creating formatted document...', delay: 30000, progress: 95, step: 3 }
           ];
 
-      let currentStep = 0;
+      let currentStepIndex = 0;
       const stepInterval = setInterval(() => {
-        if (currentStep < steps.length) {
-          if (loadingStep) loadingStep.textContent = steps[currentStep].text;
-          updateProgressStep(currentStep);
-          currentStep++;
+        if (currentStepIndex < steps.length) {
+          const currentStep = steps[currentStepIndex];
+          
+          // Update loading text
+          if (loadingStep) {
+            loadingStep.textContent = currentStep.text;
+          }
+          
+          // Update progress bar
+          if (progressFill) {
+            progressFill.style.width = currentStep.progress + '%';
+          }
+          
+          // Update step indicators
+          updateProgressStep(currentStep.step);
+          
+          currentStepIndex++;
         }
       }, mode === 'paste' ? 8000 : 7000);
 
-    // Prepare request body based on mode
-    const requestBody = {
+      // Prepare request body
+      const requestBody = {
         aiProvider
-    };
-    
-    // Add appropriate content based on mode
-    if (mode === 'paste') {
-        // Paste mode - send manual JD only
+      };
+
+      // Add appropriate content based on mode
+      if (mode === 'paste') {
         requestBody.manualJobDescription = manualJobDescription;
         console.log('📝 Sending manual JD only (no URL)');
-    } else {
-        // URL mode - send jobUrl only
+      } else {
         requestBody.jobUrl = jobUrl;
         console.log('🌐 Sending URL only (no manual JD)');
-    }
+      }
 
       // Add API keys based on provider
       if (aiProvider === 'gemini') {
@@ -416,38 +413,49 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
 
-    // Show success state
-    function showSuccess(data) {
-        if (viewLink) viewLink.href = data.links.editInGoogleDocs;
-        if (pdfLink) pdfLink.href = data.links.downloadPDF;
-        
-        // Show tracking sheet link if available
-        const trackingSheetLink = document.getElementById('trackingSheetLink');
-        if (trackingSheetLink && data.links.trackingSheet) {
-        trackingSheetLink.href = data.links.trackingSheet;
-        trackingSheetLink.style.display = 'block';
-        }
-        
-        const pointsText = data.optimizationPoints 
-        ? `${data.optimizationPoints} optimizations applied with ${data.keysUsed || data.aiProvider}`
-        : 'Resume optimized successfully';
-        if (optimizationCount) optimizationCount.textContent = pointsText;
+  // Show success state
+  function showSuccess(data) {
+    if (viewLink) viewLink.href = data.links.editInGoogleDocs;
+    if (pdfLink) pdfLink.href = data.links.downloadPDF;
     
-        // Display filename
-        if (fileNameDisplay && data.fileName) {
-        fileNameDisplay.textContent = `📄 ${data.fileName}`;
-        fileNameDisplay.style.display = 'block';
-        }
-    
-        // NEW: Display job details
-        const jobDetails = document.getElementById('jobDetails');
-        if (jobDetails && data.companyName && data.position) {
-        jobDetails.textContent = `🏢 ${data.companyName} • 💼 ${data.position}`;
-        jobDetails.style.display = 'block';
-        }
-    
-        showState('success');
+    // Show tracking sheet link if available
+    const trackingSheetLink = document.getElementById('trackingSheetLink');
+    if (trackingSheetLink && data.links.trackingSheet) {
+      trackingSheetLink.href = data.links.trackingSheet;
+      trackingSheetLink.style.display = 'flex';
     }
+    
+    const pointsText = data.optimizationPoints 
+      ? `${data.optimizationPoints} optimizations applied`
+      : 'Resume optimized successfully';
+    if (optimizationCount) optimizationCount.textContent = pointsText;
+
+    // Display filename
+    const fileNameSpan = document.getElementById('fileName');
+    if (fileNameSpan && data.fileName) {
+      fileNameSpan.textContent = data.fileName;
+    }
+
+    // Display company and position
+    const companyNameEl = document.getElementById('companyName');
+    const positionNameEl = document.getElementById('positionName');
+    
+    if (companyNameEl && data.companyName) {
+      companyNameEl.textContent = data.companyName;
+    }
+    
+    if (positionNameEl && data.position) {
+      positionNameEl.textContent = data.position;
+    }
+
+    // Animate progress bar to 100%
+    const progressFill = document.getElementById('progressFill');
+    if (progressFill) {
+      progressFill.style.width = '100%';
+    }
+
+    showState('success');
+  }
 
   // Show error state
   function showError(message) {
@@ -457,7 +465,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Update progress step indicator
   function updateProgressStep(index) {
-    const steps = document.querySelectorAll('.step');
+    const steps = document.querySelectorAll('.step-item');
     steps.forEach((step, i) => {
       if (i <= index) {
         step.classList.add('active');

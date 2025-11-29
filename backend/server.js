@@ -237,61 +237,60 @@ async function extractJobDetails(jobDescription, aiProvider, apiKey) {
     }
   }
 
-// Helper: Log optimization to Google Sheets
-async function logToGoogleSheet(data) {
-  try {
-    console.log('📊 Step 8: Logging to Google Sheets...');
-    console.log('📊 Sheet ID:', TRACKING_SHEET_ID);
+    // Helper: Log optimization to Google Sheets
+    async function logToGoogleSheet(data) {
+        try {
+        console.log('📊 Step 8: Logging to Google Sheets...');
+        console.log('📊 Sheet ID:', TRACKING_SHEET_ID);
     
-    const { 
-      companyName, 
-      position, 
-      resumeLink, 
-      contacts,
-      fileName 
-    } = data;
-    
-    const today = new Date();
-    const formattedDate = `${today.getMonth() + 1}/${today.getDate()}/${today.getFullYear()}`;
-    
-    // Prepare row data
-    const values = [[
-      companyName || 'N/A',
-      position || 'N/A',
-      formattedDate,
-      resumeLink || '',
-      contacts || ''
-    ]];
-    
-    console.log('📊 Values to append:', values);
-    
-    // Get the sheet metadata to find the first sheet name
-    const sheetMetadata = await sheets.spreadsheets.get({
-      spreadsheetId: TRACKING_SHEET_ID
-    });
-    
-    const firstSheetName = sheetMetadata.data.sheets[0].properties.title;
-    console.log(`📊 Using sheet: ${firstSheetName}`);
-    
-    // Append to the first sheet
-    const result = await sheets.spreadsheets.values.append({
-      spreadsheetId: TRACKING_SHEET_ID,
-      range: `${firstSheetName}!A:E`,
-      valueInputOption: 'USER_ENTERED',
-      insertDataOption: 'INSERT_ROWS',
-      requestBody: {
-        values: values
-      }
-    });
-    
-    console.log('✅ Logged to Google Sheets:', result.data.updates.updatedRange);
-    return true;
-    
-  } catch (error) {
-    console.error('❌ Failed to log to Google Sheets:', error.message);
-    return false;
-  }
-}
+        const { 
+            companyName, 
+            position, 
+            resumeLink, 
+            contacts,
+            fileName 
+        } = data;
+        
+        // Simple date formatting
+        const today = new Date();
+        const formattedDate = `'${today.getMonth()+1}/${today.getDate()}/${today.getFullYear()}'`;
+
+        
+        console.log('📊 Formatted date:', formattedDate);
+        
+        // Get the sheet metadata
+        const sheetMetadata = await sheets.spreadsheets.get({
+            spreadsheetId: TRACKING_SHEET_ID
+        });
+        
+        const firstSheetName = sheetMetadata.data.sheets[0].properties.title;
+        console.log(`📊 Using sheet: ${firstSheetName}`);
+        
+        // Append with RAW to preserve exact format
+        const result = await sheets.spreadsheets.values.append({
+            spreadsheetId: TRACKING_SHEET_ID,
+            range: `${firstSheetName}!A:E`,
+            valueInputOption: 'USER_ENTERED',
+            insertDataOption: 'INSERT_ROWS',
+            requestBody: {
+            values: [[
+                companyName || 'N/A',
+                position || 'N/A',
+                formattedDate || '',
+                resumeLink || '',
+                contacts || ''
+            ]]
+            }
+        });
+        
+        console.log('✅ Logged to Google Sheets:', result.data.updates.updatedRange);
+        return true;
+        
+        } catch (error) {
+        console.error('❌ Failed to log to Google Sheets:', error.message);
+        return false;
+        }
+    }
 
 // Main optimization endpoint
 app.post('/api/optimize-resume', async (req, res) => {
