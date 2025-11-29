@@ -1,7 +1,12 @@
 # Resume Optimizer - Chrome Extension with AI & Google Workspace Integration
 
-**One-click resume optimization powered by Google Gemini or ChatGPT with automatic Google Drive & Sheets tracking**
+[![GitHub](https://img.shields.io/github/license/lokeshpara/Resume-Optimizer-AI)](https://github.com/lokeshpara/Resume-Optimizer-AI/blob/main/LICENSE)
+[![Node.js](https://img.shields.io/badge/node-%3E%3D14.0.0-brightgreen)](https://nodejs.org/)
+[![Chrome Extension](https://img.shields.io/badge/Chrome-Extension-blue)](https://chrome.google.com/webstore)
+[![Google Gemini](https://img.shields.io/badge/Google-Gemini_2.0-4285F4)](https://ai.google.dev/)
+[![Stars](https://img.shields.io/github/stars/lokeshpara/Resume-Optimizer-AI)](https://github.com/lokeshpara/Resume-Optimizer-AI/stargazers)
 
+**One-click resume optimization powered by Google Gemini or ChatGPT with automatic Google Drive & Sheets tracking**
 ---
 
 ## 📋 Table of Contents
