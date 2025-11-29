@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Resume Optimizer - Settings</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 40px 20px;
+    }
+
+    .settings-container {
+      max-width: 700px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+      padding: 40px;
+    }
+
+    .settings-header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .settings-header h1 {
+      font-size: 32px;
+      color: #667eea;
+      margin-bottom: 8px;
+    }
+
+    .settings-header p {
+      color: #666;
+      font-size: 14px;
+    }
+
+    .form-group {
+      margin-bottom: 25px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 10px;
+      font-weight: 600;
+      color: #333;
+      font-size: 15px;
+    }
+
+    .form-group select,
+    .form-group input {
+      width: 100%;
+      padding: 14px 16px;
+      border: 2px solid #e0e0e0;
+      border-radius: 10px;
+      font-size: 15px;
+      transition: all 0.3s ease;
+      font-family: inherit;
+    }
+
+    .form-group select:focus,
+    .form-group input:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .info-text {
+      font-size: 13px;
+      color: #666;
+      margin-top: 8px;
+      line-height: 1.5;
+    }
+
+    .provider-info {
+      background: linear-gradient(135deg, #f0f4ff 0%, #e8ecff 100%);
+      padding: 20px;
+      border-radius: 10px;
+      margin-top: 15px;
+      border-left: 4px solid #667eea;
+    }
+
+    .provider-info h4 {
+      margin: 0 0 12px 0;
+      color: #667eea;
+      font-size: 16px;
+    }
+
+    .provider-info p {
+      margin: 8px 0;
+      font-size: 14px;
+      color: #555;
+      line-height: 1.6;
+    }
+
+    .provider-info a {
+      color: #667eea;
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .provider-info a:hover {
+      text-decoration: underline;
+    }
+
+    .api-keys-section {
+      background: #f8f9fa;
+      padding: 25px;
+      border-radius: 10px;
+      margin-top: 20px;
+    }
+
+    .api-keys-section h3 {
+      color: #333;
+      margin-bottom: 20px;
+      font-size: 18px;
+    }
+
+    .api-key-group {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      margin-bottom: 15px;
+      border: 2px solid #e0e0e0;
+    }
+
+    .api-key-group h4 {
+      color: #667eea;
+      margin-bottom: 10px;
+      font-size: 15px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .step-badge {
+      background: #667eea;
+      color: white;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .save-btn {
+      width: 100%;
+      padding: 16px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-top: 20px;
+    }
+
+    .save-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+    }
+
+    .status-message {
+      padding: 16px;
+      border-radius: 10px;
+      margin-top: 20px;
+      text-align: center;
+      font-weight: 600;
+      font-size: 15px;
+      display: none;
+      animation: slideDown 0.3s ease;
+    }
+
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .status-message.success {
+      background: #d4edda;
+      color: #155724;
+      border: 2px solid #c3e6cb;
+    }
+
+    .status-message.error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 2px solid #f5c6cb;
+    }
+
+    .chatgpt-single-key {
+      display: none;
+    }
+
+    .note-box {
+      background: #fff3cd;
+      border-left: 4px solid #ffc107;
+      padding: 15px;
+      border-radius: 8px;
+      margin-top: 15px;
+    }
+
+    .note-box p {
+      color: #856404;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .toggle-visibility {
+      background: none;
+      border: none;
+      color: #667eea;
+      cursor: pointer;
+      font-size: 13px;
+      margin-top: 5px;
+      padding: 0;
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="settings-container">
+    <div class="settings-header">
+      <h1>⚙️ Settings</h1>
+      <p>Configure your AI provider and API keys</p>
+    </div>
+
+    <form id="settingsForm">
+      <!-- AI Provider Selection -->
+      <div class="form-group">
+        <label for="aiProvider">AI Provider *</label>
+        <select id="aiProvider" required>
+          <option value="">-- Select AI Provider --</option>
+          <option value="gemini">Google Gemini AI (3 separate keys)</option>
+          <option value="chatgpt">OpenAI ChatGPT (1 key for all steps)</option>
+        </select>
+        <p class="info-text">Choose which AI model to use for resume optimization</p>
+      </div>
+
+      <!-- Provider Information -->
+      <div id="providerInfo"></div>
+
+      <!-- Gemini: 3 API Keys -->
+      <div id="geminiKeys" class="api-keys-section" style="display: none;">
+        <h3>🔑 Gemini API Keys (3 Keys Required)</h3>
+        
+        <div class="api-key-group">
+          <h4><span class="step-badge">Step 1</span> Extract Job Description</h4>
+          <input 
+            type="password" 
+            id="geminiKey1" 
+            class="form-control"
+            placeholder="Gemini API Key for extracting job description"
+          />
+          <button type="button" class="toggle-visibility" onclick="toggleVisibility('geminiKey1')">
+            👁️ Show/Hide
+          </button>
+          <p class="info-text">Used to extract clean job description from HTML</p>
+        </div>
+
+        <div class="api-key-group">
+          <h4><span class="step-badge">Step 2</span> Generate Optimization Points</h4>
+          <input 
+            type="password" 
+            id="geminiKey2" 
+            class="form-control"
+            placeholder="Gemini API Key for analyzing resume vs JD"
+          />
+          <button type="button" class="toggle-visibility" onclick="toggleVisibility('geminiKey2')">
+            👁️ Show/Hide
+          </button>
+          <p class="info-text">Used to analyze resume and generate optimization points</p>
+        </div>
+
+        <div class="api-key-group">
+          <h4><span class="step-badge">Step 3</span> Rewrite Resume</h4>
+          <input 
+            type="password" 
+            id="geminiKey3" 
+            class="form-control"
+            placeholder="Gemini API Key for rewriting resume"
+          />
+          <button type="button" class="toggle-visibility" onclick="toggleVisibility('geminiKey3')">
+            👁️ Show/Hide
+          </button>
+          <p class="info-text">Used to rewrite resume with all optimizations applied</p>
+        </div>
+
+        <div class="note-box">
+          <p><strong>💡 Why 3 keys?</strong> Using separate API keys for each step allows better rate limiting, separate billing tracking, and load distribution across your Gemini accounts.</p>
+        </div>
+      </div>
+
+      <!-- ChatGPT: 1 API Key -->
+      <div id="chatgptKey" class="chatgpt-single-key" style="display: none;">
+        <div class="form-group">
+          <label for="chatgptApiKey">ChatGPT API Key *</label>
+          <input 
+            type="password" 
+            id="chatgptApiKey" 
+            placeholder="Enter your OpenAI API key"
+          />
+          <button type="button" class="toggle-visibility" onclick="toggleVisibility('chatgptApiKey')">
+            👁️ Show/Hide
+          </button>
+          <p class="info-text">🔒 One key used for all 3 steps (extract JD, analyze, rewrite)</p>
+        </div>
+      </div>
+
+      <button type="submit" class="save-btn">💾 Save All Settings</button>
+    </form>
+
+    <div id="statusMessage" class="status-message"></div>
+  </div>
+
+  <script>
+    function toggleVisibility(inputId) {
+      const input = document.getElementById(inputId);
+      input.type = input.type === 'password' ? 'text' : 'password';
+    }
+  </script>
+  <script src="options.js"></script>
+</body>
+</html>

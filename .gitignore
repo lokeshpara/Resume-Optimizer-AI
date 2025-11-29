@@ -1,0 +1,31 @@
+# Environment variables - NEVER COMMIT THIS!
+.env
+
+# Dependencies
+node_modules/
+package-lock.json
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+npm-debug.log*
+
+# Temporary files
+*.tmp
+*.temp
+
+# Chrome extension (optional - only if you want to exclude)
+# extension/
+
+# Credentials (CRITICAL - NEVER COMMIT!)
+credentials.json
+token.json

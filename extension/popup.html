@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Resume Optimizer</h1>
+      <p class="subtitle">AI-powered resume optimization</p>
+    </div>
+
+    <div class="content">
+      <!-- Settings Required State -->
+      <div id="settingsRequired" class="state" style="display: none;">
+        <div class="warning-box">
+          <div class="warning-icon">⚙️</div>
+          <h2>Setup Required</h2>
+          <p>Please configure your AI provider and API keys first.</p>
+        </div>
+        <button id="openSettings" class="btn btn-primary">
+          Open Settings
+        </button>
+      </div>
+
+      <!-- STEP 1: Mode Selection Screen (Initial) -->
+      <div id="modeSelectionState" class="state">
+        <div class="ai-provider-badge">
+          <span id="currentProvider">Loading...</span>
+        </div>
+        
+        <div class="mode-selection">
+          <h2 class="mode-title">How do you want to proceed?</h2>
+          
+          <button id="selectPasteMode" class="mode-btn">
+            <div class="mode-icon">📝</div>
+            <div class="mode-label">Paste Job Description</div>
+            <div class="mode-desc">Manually paste the job description text</div>
+          </button>
+          
+          <button id="selectUrlMode" class="mode-btn">
+            <div class="mode-icon">🌐</div>
+            <div class="mode-label">Fetch from URL</div>
+            <div class="mode-desc">Extract job description from current page</div>
+          </button>
+        </div>
+
+        <button id="settingsBtnMain" class="btn btn-secondary">
+          ⚙️ Settings
+        </button>
+      </div>
+
+      <!-- STEP 2A: Paste JD Mode Screen -->
+      <div id="pasteJdState" class="state" style="display: none;">
+        <div class="mode-header">
+          <span class="mode-badge">📝 Mode: Manual JD Input</span>
+        </div>
+
+        <div class="manual-input">
+          <label for="jobDescriptionInput" class="input-label">
+            📋 Paste Job Description:
+          </label>
+          <textarea 
+            id="jobDescriptionInput" 
+            class="job-input"
+            placeholder="Paste the complete job description here...
+
+Example:
+Job Title: Senior Full Stack Developer
+Location: Austin, TX
+Company: TechCorp
+
+Responsibilities:
+- Develop and maintain web applications
+- Work with React and Node.js
+- Collaborate with cross-functional teams
+
+Requirements:
+- 5+ years of experience
+- Strong JavaScript skills
+- Bachelor's degree in Computer Science
+..."
+            rows="12"
+          ></textarea>
+          <div class="char-count">
+            <span id="charCount">0</span> characters
+            <span id="charWarning" class="char-warning" style="display: none;">⚠️ Too short</span>
+          </div>
+        </div>
+
+        <button id="optimizePasteBtn" class="btn btn-primary">
+          <span class="btn-icon">⚡</span>
+          Optimize Resume
+        </button>
+        
+        <div class="bottom-buttons">
+          <button id="backFromPaste" class="btn btn-secondary">
+            ← Back
+          </button>
+          <button id="settingsBtnPaste" class="btn btn-secondary">
+            ⚙️ Settings
+          </button>
+        </div>
+      </div>
+
+      <!-- STEP 2B: URL Mode Screen -->
+      <div id="urlModeState" class="state" style="display: none;">
+        <div class="mode-header">
+          <span class="mode-badge">🌐 Mode: URL Fetch</span>
+        </div>
+
+        <div class="info-box">
+          <p class="info-icon">📍</p>
+          <p class="info-text">Navigate to a job posting page and click optimize</p>
+          <p class="current-url" id="currentUrl">Checking current page...</p>
+        </div>
+
+        <button id="optimizeUrlBtn" class="btn btn-primary">
+          <span class="btn-icon">⚡</span>
+          Optimize Resume
+        </button>
+        
+        <div class="bottom-buttons">
+          <button id="backFromUrl" class="btn btn-secondary">
+            ← Back
+          </button>
+          <button id="settingsBtnUrl" class="btn btn-secondary">
+            ⚙️ Settings
+          </button>
+        </div>
+      </div>
+
+      <!-- Loading State -->
+      <div id="loadingState" class="state" style="display: none;">
+        <div class="mode-indicator" id="loadingModeIndicator"></div>
+        
+        <div class="loader-container">
+          <div class="loader"></div>
+          <p class="loading-text">Optimizing your resume...</p>
+          <p class="loading-subtext" id="loadingStep">Analyzing job description</p>
+        </div>
+        <div class="progress-steps">
+          <div class="step active">
+            <div class="step-number">1</div>
+            <div class="step-label">Extract JD</div>
+          </div>
+          <div class="step">
+            <div class="step-number">2</div>
+            <div class="step-label">Analyze</div>
+          </div>
+          <div class="step">
+            <div class="step-number">3</div>
+            <div class="step-label">Optimize</div>
+          </div>
+          <div class="step">
+            <div class="step-number">4</div>
+            <div class="step-label">Create Doc</div>
+          </div>
+        </div>
+      </div>
+
+    <!-- Success State -->
+    <div id="successState" class="state" style="display: none;">
+        <div class="success-box">
+        <div class="success-icon">✅</div>
+        <h2>Resume Optimized!</h2>
+        <p id="optimizationCount" class="optimization-count"></p>
+        <p id="fileNameDisplay" class="file-name"></p>
+        <p id="jobDetails" class="job-details"></p>
+        </div>
+        <div class="links">
+        <a id="viewLink" class="link-btn link-primary" target="_blank">
+            <span>📄 View in Google Docs</span>
+        </a>
+        <a id="pdfLink" class="link-btn link-secondary" target="_blank">
+            <span>⬇️ Download PDF</span>
+        </a>
+        <a id="trackingSheetLink" class="link-btn link-secondary" target="_blank" style="display: none;">
+            <span>📊 View Tracking Sheet</span>
+        </a>
+        </div>
+        <button id="optimizeAnother" class="btn btn-primary">
+        ⚡ Optimize Another Resume
+        </button>
+        <button id="settingsBtnSuccess" class="btn btn-secondary">
+        ⚙️ Settings
+        </button>
+    </div>
+
+      <!-- Error State -->
+      <div id="errorState" class="state" style="display: none;">
+        <div class="error-box">
+          <div class="error-icon">❌</div>
+          <h2>Optimization Failed</h2>
+          <p id="errorMessage" class="error-message"></p>
+        </div>
+        <button id="retryBtn" class="btn btn-primary">Try Again</button>
+        <button id="backToModeSelection" class="btn btn-secondary">← Back to Start</button>
+      </div>
+    </div>
+
+    <div class="footer">
+      <div class="server-status">
+        <span class="status-dot" id="serverStatus"></span>
+        <span id="serverText">Checking server...</span>
+      </div>
+    </div>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>
