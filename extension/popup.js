@@ -210,174 +210,179 @@ document.addEventListener('DOMContentLoaded', function() {
     chrome.runtime.openOptionsPage();
   }
 
-  // Main optimization function
-  async function optimizeResume(mode) {
-    try {
-      currentMode = mode;
-      
-      // Get current tab
-      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-      const jobUrl = tab.url;
-
-      let manualJobDescription = null;
-
-      // Validate based on mode
-      if (mode === 'paste') {
-        manualJobDescription = jobDescriptionInput.value.trim();
+    // Main optimization function
+    async function optimizeResume(mode) {
+        try {
+        currentMode = mode;
         
-        if (!manualJobDescription) {
-          showError('Please paste the job description in the text area');
-          return;
+        // Get current tab - ALWAYS capture URL regardless of mode
+        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+        const currentPageUrl = tab.url || 'Unknown';
+        
+        console.log(`🔗 Current page URL: ${currentPageUrl}`);
+    
+        let manualJobDescription = null;
+    
+        // Validate based on mode
+        if (mode === 'paste') {
+            manualJobDescription = jobDescriptionInput.value.trim();
+            
+            if (!manualJobDescription) {
+            showError('Please paste the job description in the text area');
+            return;
+            }
+    
+            if (manualJobDescription.length < 100) {
+            showError('Job description is too short. Please paste the complete job description (at least 100 characters).');
+            return;
+            }
+    
+            console.log(`📝 Paste mode: ${manualJobDescription.length} characters`);
+            console.log(`🔗 Will log URL: ${currentPageUrl}`);
+            
+        } else if (mode === 'url') {
+            if (!currentPageUrl || currentPageUrl.startsWith('chrome://') || currentPageUrl.startsWith('chrome-extension://')) {
+            showError('Please navigate to a job posting page first');
+            return;
+            }
+    
+            console.log(`🌐 URL mode: ${currentPageUrl}`);
         }
-
-        if (manualJobDescription.length < 100) {
-          showError('Job description is too short. Please paste the complete job description (at least 100 characters).');
-          return;
+    
+        // Get saved settings
+        const settings = await chrome.storage.local.get([
+            'aiProvider', 
+            'geminiKey1', 
+            'geminiKey2', 
+            'geminiKey3', 
+            'chatgptApiKey'
+        ]);
+    
+        const { aiProvider, geminiKey1, geminiKey2, geminiKey3, chatgptApiKey } = settings;
+    
+        // Validate settings
+        if (!aiProvider) {
+            showError('Please configure your AI provider in Settings first');
+            return;
         }
-
-        console.log(`📝 Paste mode: ${manualJobDescription.length} characters`);
-      } else if (mode === 'url') {
-        if (!jobUrl || jobUrl.startsWith('chrome://') || jobUrl.startsWith('chrome-extension://')) {
-          showError('Please navigate to a job posting page first');
-          return;
+    
+        if (aiProvider === 'gemini' && (!geminiKey1 || !geminiKey2 || !geminiKey3)) {
+            showError('Please configure all 3 Gemini API keys in Settings');
+            return;
         }
-
-        console.log(`🌐 URL mode: ${jobUrl}`);
-      }
-
-      // Get saved settings
-      const settings = await chrome.storage.local.get([
-        'aiProvider', 
-        'geminiKey1', 
-        'geminiKey2', 
-        'geminiKey3', 
-        'chatgptApiKey'
-      ]);
-
-      const { aiProvider, geminiKey1, geminiKey2, geminiKey3, chatgptApiKey } = settings;
-
-      // Validate settings
-      if (!aiProvider) {
-        showError('Please configure your AI provider in Settings first');
-        return;
-      }
-
-      if (aiProvider === 'gemini' && (!geminiKey1 || !geminiKey2 || !geminiKey3)) {
-        showError('Please configure all 3 Gemini API keys in Settings');
-        return;
-      }
-
-      if (aiProvider === 'chatgpt' && !chatgptApiKey) {
-        showError('Please configure your ChatGPT API key in Settings');
-        return;
-      }
-
-      // Show loading state
-      showState('loading');
-      
-      // Get progress bar element
-      const progressFill = document.getElementById('progressFill');
-      if (progressFill) progressFill.style.width = '0%';
-      
-      // Update loading steps based on mode
-      const steps = mode === 'paste' 
-        ? [
-            { text: 'Processing manual job description...', delay: 0, progress: 25, step: 0 },
-            { text: 'Analyzing resume vs job requirements...', delay: 8000, progress: 50, step: 1 },
-            { text: 'Generating optimization points...', delay: 15000, progress: 75, step: 2 },
-            { text: 'Creating formatted document...', delay: 25000, progress: 90, step: 3 }
-          ]
-        : [
-            { text: 'Fetching job page from URL...', delay: 0, progress: 20, step: 0 },
-            { text: 'Extracting job description...', delay: 5000, progress: 40, step: 0 },
-            { text: 'Analyzing resume vs job requirements...', delay: 13000, progress: 60, step: 1 },
-            { text: 'Generating optimization points...', delay: 20000, progress: 80, step: 2 },
-            { text: 'Creating formatted document...', delay: 30000, progress: 95, step: 3 }
-          ];
-
-      let currentStepIndex = 0;
-      const stepInterval = setInterval(() => {
-        if (currentStepIndex < steps.length) {
-          const currentStep = steps[currentStepIndex];
-          
-          // Update loading text
-          if (loadingStep) {
-            loadingStep.textContent = currentStep.text;
-          }
-          
-          // Update progress bar
-          if (progressFill) {
-            progressFill.style.width = currentStep.progress + '%';
-          }
-          
-          // Update step indicators
-          updateProgressStep(currentStep.step);
-          
-          currentStepIndex++;
+    
+        if (aiProvider === 'chatgpt' && !chatgptApiKey) {
+            showError('Please configure your ChatGPT API key in Settings');
+            return;
         }
-      }, mode === 'paste' ? 8000 : 7000);
-
-      // Prepare request body
-      const requestBody = {
-        aiProvider
-      };
-
-      // Add appropriate content based on mode
-      if (mode === 'paste') {
-        requestBody.manualJobDescription = manualJobDescription;
-        console.log('📝 Sending manual JD only (no URL)');
-      } else {
-        requestBody.jobUrl = jobUrl;
-        console.log('🌐 Sending URL only (no manual JD)');
-      }
-
-      // Add API keys based on provider
-      if (aiProvider === 'gemini') {
-        requestBody.geminiKey1 = geminiKey1;
-        requestBody.geminiKey2 = geminiKey2;
-        requestBody.geminiKey3 = geminiKey3;
-      } else {
-        requestBody.chatgptApiKey = chatgptApiKey;
-      }
-
-      console.log('📤 Sending request to backend...', {
-        mode,
-        hasManualJD: !!manualJobDescription,
-        hasJobUrl: !!jobUrl,
-        aiProvider
-      });
-
-      // Call backend API
-      const response = await fetch(`${BACKEND_URL}/api/optimize-resume`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(requestBody)
-      });
-
-      clearInterval(stepInterval);
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.details || error.error || 'Server error occurred');
-      }
-
-      const data = await response.json();
-
-      console.log('✅ Optimization complete:', data);
-
-      // Show success state
-      showSuccess(data);
-
-      // Save to history
-      saveToHistory(jobUrl, data, mode);
-
-    } catch (error) {
-      console.error('❌ Error:', error);
-      showError(error.message || 'Failed to optimize resume. Please try again.');
+    
+        // Show loading state
+        showState('loading');
+        
+        // Get progress bar element
+        const progressFill = document.getElementById('progressFill');
+        if (progressFill) progressFill.style.width = '0%';
+        
+        // Update loading steps based on mode
+        const steps = mode === 'paste' 
+            ? [
+                { text: 'Processing manual job description...', delay: 0, progress: 25, step: 0 },
+                { text: 'Analyzing resume vs job requirements...', delay: 8000, progress: 50, step: 1 },
+                { text: 'Generating optimization points...', delay: 15000, progress: 75, step: 2 },
+                { text: 'Creating formatted document...', delay: 25000, progress: 90, step: 3 }
+            ]
+            : [
+                { text: 'Fetching job page from URL...', delay: 0, progress: 20, step: 0 },
+                { text: 'Extracting job description...', delay: 5000, progress: 40, step: 0 },
+                { text: 'Analyzing resume vs job requirements...', delay: 13000, progress: 60, step: 1 },
+                { text: 'Generating optimization points...', delay: 20000, progress: 80, step: 2 },
+                { text: 'Creating formatted document...', delay: 30000, progress: 95, step: 3 }
+            ];
+    
+        let currentStepIndex = 0;
+        const stepInterval = setInterval(() => {
+            if (currentStepIndex < steps.length) {
+            const currentStep = steps[currentStepIndex];
+            
+            // Update loading text
+            if (loadingStep) {
+                loadingStep.textContent = currentStep.text;
+            }
+            
+            // Update progress bar
+            if (progressFill) {
+                progressFill.style.width = currentStep.progress + '%';
+            }
+            
+            // Update step indicators
+            updateProgressStep(currentStep.step);
+            
+            currentStepIndex++;
+            }
+        }, mode === 'paste' ? 8000 : 7000);
+    
+        // Prepare request body
+        const requestBody = {
+            aiProvider,
+            currentPageUrl: currentPageUrl  // NEW: Always send current page URL
+        };
+    
+        // Add appropriate content based on mode
+        if (mode === 'paste') {
+            requestBody.manualJobDescription = manualJobDescription;
+            console.log('📝 Sending manual JD + current URL');
+        } else {
+            requestBody.jobUrl = currentPageUrl;
+            console.log('🌐 Sending URL for fetching');
+        }
+    
+        // Add API keys based on provider
+        if (aiProvider === 'gemini') {
+            requestBody.geminiKey1 = geminiKey1;
+            requestBody.geminiKey2 = geminiKey2;
+            requestBody.geminiKey3 = geminiKey3;
+        } else {
+            requestBody.chatgptApiKey = chatgptApiKey;
+        }
+    
+        console.log('📤 Sending request to backend...', {
+            mode,
+            hasManualJD: !!manualJobDescription,
+            currentPageUrl: currentPageUrl,
+            aiProvider
+        });
+    
+        // Call backend API
+        const response = await fetch(`${BACKEND_URL}/api/optimize-resume`, {
+            method: 'POST',
+            headers: {
+            'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(requestBody)
+        });
+    
+        clearInterval(stepInterval);
+    
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.details || error.error || 'Server error occurred');
+        }
+    
+        const data = await response.json();
+    
+        console.log('✅ Optimization complete:', data);
+    
+        // Show success state
+        showSuccess(data);
+    
+        // Save to history
+        saveToHistory(currentPageUrl, data, mode);
+    
+        } catch (error) {
+        console.error('❌ Error:', error);
+        showError(error.message || 'Failed to optimize resume. Please try again.');
+        }
     }
-  }
 
   // Show different states
   function showState(state) {

@@ -246,17 +246,21 @@ async function extractJobDetails(jobDescription, aiProvider, apiKey) {
         const { 
             companyName, 
             position, 
-            resumeLink, 
+            resumeLink,
+            jobPostUrl,  // NEW: Add this
             contacts,
             fileName 
         } = data;
         
         // Simple date formatting
         const today = new Date();
-        const formattedDate = `'${today.getMonth()+1}/${today.getDate()}/${today.getFullYear()}'`;
-
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        const year = today.getFullYear();
+        const formattedDate = `${month}/${day}/${year}`;
         
         console.log('📊 Formatted date:', formattedDate);
+        console.log('📊 Job Post URL:', jobPostUrl);
         
         // Get the sheet metadata
         const sheetMetadata = await sheets.spreadsheets.get({
@@ -266,18 +270,19 @@ async function extractJobDetails(jobDescription, aiProvider, apiKey) {
         const firstSheetName = sheetMetadata.data.sheets[0].properties.title;
         console.log(`📊 Using sheet: ${firstSheetName}`);
         
-        // Append with RAW to preserve exact format
+        // Append with USER_ENTERED - NOW WITH 6 COLUMNS (A-F)
         const result = await sheets.spreadsheets.values.append({
             spreadsheetId: TRACKING_SHEET_ID,
-            range: `${firstSheetName}!A:E`,
+            range: `${firstSheetName}!A:F`,  // Changed from A:E to A:F
             valueInputOption: 'USER_ENTERED',
             insertDataOption: 'INSERT_ROWS',
             requestBody: {
             values: [[
                 companyName || 'N/A',
                 position || 'N/A',
-                formattedDate || '',
+                formattedDate,
                 resumeLink || '',
+                jobPostUrl || 'Manual Input',  // NEW: Job post URL
                 contacts || ''
             ]]
             }
@@ -287,22 +292,36 @@ async function extractJobDetails(jobDescription, aiProvider, apiKey) {
         return true;
         
         } catch (error) {
-        console.error('❌ Failed to log to Google Sheets:', error.message);
+        console.log('❌ Failed to log to Google Sheets:', error.message);
         return false;
         }
     }
 
-// Main optimization endpoint
-app.post('/api/optimize-resume', async (req, res) => {
-  try {
-    const { jobUrl, aiProvider, geminiKey1, geminiKey2, geminiKey3, chatgptApiKey, manualJobDescription } = req.body;
-    
-    console.log('\n📥 Request received:', {
-      hasJobUrl: !!jobUrl,
-      hasManualJD: !!manualJobDescription,
-      manualJDLength: manualJobDescription ? manualJobDescription.length : 0,
-      aiProvider
-    });
+    // Main optimization endpoint
+    app.post('/api/optimize-resume', async (req, res) => {
+        try {
+        const { 
+            jobUrl, 
+            currentPageUrl,  // NEW: Add this line
+            aiProvider, 
+            geminiKey1, 
+            geminiKey2, 
+            geminiKey3, 
+            chatgptApiKey, 
+            manualJobDescription 
+        } = req.body;
+        
+        console.log('\n📥 Request received:', {
+            hasJobUrl: !!jobUrl,
+            hasCurrentPageUrl: !!currentPageUrl,  // NEW: Add this
+            hasManualJD: !!manualJobDescription,
+            manualJDLength: manualJobDescription ? manualJobDescription.length : 0,
+            aiProvider
+        });
+        
+        // NEW: Determine job post URL for tracking
+        const jobPostUrl = currentPageUrl || jobUrl || 'Manual Input';
+        console.log('🔗 Job Post URL for tracking:', jobPostUrl);
     
     // Validation
     const hasManualJD = manualJobDescription && manualJobDescription.trim().length > 0;
@@ -561,6 +580,7 @@ Return ONLY the complete updated resume. No explanations.`;
       companyName: companyName,
       position: position,
       resumeLink: resumeLink,
+      jobPostUrl: jobPostUrl,
       contacts: '',
       fileName: fileName
     });
