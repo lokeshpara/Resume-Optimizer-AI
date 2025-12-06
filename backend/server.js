@@ -48,15 +48,15 @@ async function generateWithGemini(prompt, apiKey) {
   try {
     console.log('🔑 Using Gemini API key:', apiKey.substring(0, 10) + '...');
     console.log('🎯 Model: gemini-2.0-flash');
-    
+
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
-    
+
     console.log('📤 Sending request to Gemini...');
     const result = await model.generateContent(prompt);
     const response = await result.response;
     const text = response.text();
-    
+
     console.log('✅ Gemini response received:', text.substring(0, 100) + '...');
     return text;
   } catch (error) {
@@ -83,7 +83,7 @@ async function generateWithChatGPT(prompt, apiKey) {
         'Content-Type': 'application/json'
       }
     });
-    
+
     return response.data.choices[0].message.content;
   } catch (error) {
     if (error.response) {
@@ -95,21 +95,21 @@ async function generateWithChatGPT(prompt, apiKey) {
 
 // Health check endpoint
 app.get('/health', (req, res) => {
-  res.json({ 
-    status: 'Server is running', 
-    timestamp: new Date().toISOString() 
+  res.json({
+    status: 'Server is running',
+    timestamp: new Date().toISOString()
   });
 });
 
 // Helper: Extract company and position from job description
 async function extractJobDetails(jobDescription, aiProvider, apiKey) {
-    try {
-      console.log('🔍 Extracting company and position from job description...');
-      console.log('🔍 JD Preview (first 500 chars):');
-      console.log(jobDescription.substring(0, 500));
-      console.log('...\n');
-      
-      const extractionPrompt = `You must extract ONLY the company name and job position from this job description.
+  try {
+    console.log('🔍 Extracting company and position from job description...');
+    console.log('🔍 JD Preview (first 500 chars):');
+    console.log(jobDescription.substring(0, 500));
+    console.log('...\n');
+
+    const extractionPrompt = `You must extract ONLY the company name and job position from this job description.
   
   JOB DESCRIPTION:
   ${jobDescription.substring(0, 3000)}
@@ -123,221 +123,221 @@ async function extractJobDetails(jobDescription, aiProvider, apiKey) {
   POSITION: Senior Software Engineer
   
   Now extract the company and position from the job description above. Output ONLY those two lines.`;
-  
-      console.log('🔍 Calling AI for extraction...');
-      const response = await generateAIContent(extractionPrompt, aiProvider, apiKey);
-      
-      console.log('\n🔍 FULL AI EXTRACTION RESPONSE:');
-      console.log('═'.repeat(60));
-      console.log(response);
-      console.log('═'.repeat(60));
-      console.log('\n');
-      
-      let company = 'N/A';
-      let position = 'N/A';
-      
-      // Method 1: Try exact pattern match
-      console.log('🔍 Trying regex extraction...');
-      const companyMatch = response.match(/COMPANY:\s*(.+?)(?:\n|$)/i);
-      if (companyMatch && companyMatch[1]) {
-        company = companyMatch[1].trim();
-        console.log(`   ✅ Regex found company: "${company}"`);
-      } else {
-        console.log('   ❌ Regex did NOT find company pattern');
-      }
-      
-      const positionMatch = response.match(/POSITION:\s*(.+?)(?:\n|$)/i);
-      if (positionMatch && positionMatch[1]) {
-        position = positionMatch[1].trim();
-        console.log(`   ✅ Regex found position: "${position}"`);
-      } else {
-        console.log('   ❌ Regex did NOT find position pattern');
-      }
-      
-      // Method 2: If still N/A, try parsing line by line
-      if (company === 'N/A' || position === 'N/A') {
-        console.log('⚠️ Regex failed, trying line-by-line parsing...');
-        const lines = response.split('\n');
-        
-        for (let i = 0; i < lines.length; i++) {
-          const line = lines[i].trim();
-          console.log(`   Line ${i}: "${line}"`);
-          
-          if (company === 'N/A' && line.toLowerCase().includes('company')) {
-            const parts = line.split(':');
-            if (parts.length >= 2) {
-              company = parts.slice(1).join(':').trim();
-              console.log(`   ✅ Found company in line ${i}: "${company}"`);
-            }
-          }
-          
-          if (position === 'N/A' && line.toLowerCase().includes('position')) {
-            const parts = line.split(':');
-            if (parts.length >= 2) {
-              position = parts.slice(1).join(':').trim();
-              console.log(`   ✅ Found position in line ${i}: "${position}"`);
-            }
-          }
-        }
-      }
-      
-      // Method 3: Extract from original JD if AI completely failed
-      if (company === 'N/A' || position === 'N/A') {
-        console.log('⚠️ AI extraction completely failed, parsing JD directly...');
-        const jdLines = jobDescription.split('\n').slice(0, 30);
-        
-        for (let i = 0; i < jdLines.length; i++) {
-          const line = jdLines[i].trim();
-          
-          if (!line || line.length < 3) continue;
-          
-          console.log(`   JD Line ${i}: "${line.substring(0, 80)}..."`);
-          
-          // Find position (usually first meaningful line with job-related keywords)
-          if (position === 'N/A' && line.length > 5 && line.length < 100) {
-            const jobKeywords = /engineer|developer|architect|manager|analyst|specialist|lead|senior|director|consultant|designer/i;
-            if (jobKeywords.test(line) && !line.toLowerCase().includes('company') && !line.toLowerCase().includes('location')) {
-              position = line;
-              console.log(`   ✅ Found position from JD line ${i}: "${position}"`);
-            }
-          }
-          
-          // Find company
-          if (company === 'N/A') {
-            // Try common patterns
-            if (line.match(/^Company:\s*(.+)/i)) {
-              company = line.match(/^Company:\s*(.+)/i)[1].trim();
-              console.log(`   ✅ Found company from JD line ${i}: "${company}"`);
-            } else if (line.match(/^Employer:\s*(.+)/i)) {
-              company = line.match(/^Employer:\s*(.+)/i)[1].trim();
-              console.log(`   ✅ Found company from JD line ${i}: "${company}"`);
-            } else if (line.match(/\bat\s+([A-Z][A-Za-z\s&.]{2,30})(?:\s|$)/)) {
-              const match = line.match(/\bat\s+([A-Z][A-Za-z\s&.]{2,30})(?:\s|$)/);
-              company = match[1].trim();
-              console.log(`   ✅ Found company from JD line ${i}: "${company}"`);
-            }
-          }
-          
-          if (company !== 'N/A' && position !== 'N/A') {
-            break;
-          }
-        }
-      }
-      
-      console.log('\n📊 FINAL EXTRACTION RESULT:');
-      console.log(`   🏢 Company: "${company}"`);
-      console.log(`   💼 Position: "${position}"\n`);
-      
-      return { company, position };
-      
-    } catch (error) {
-      console.error('❌ Failed to extract job details:', error.message);
-      console.error('Error stack:', error.stack);
-      return { company: 'N/A', position: 'N/A' };
+
+    console.log('🔍 Calling AI for extraction...');
+    const response = await generateAIContent(extractionPrompt, aiProvider, apiKey);
+
+    console.log('\n🔍 FULL AI EXTRACTION RESPONSE:');
+    console.log('═'.repeat(60));
+    console.log(response);
+    console.log('═'.repeat(60));
+    console.log('\n');
+
+    let company = 'N/A';
+    let position = 'N/A';
+
+    // Method 1: Try exact pattern match
+    console.log('🔍 Trying regex extraction...');
+    const companyMatch = response.match(/COMPANY:\s*(.+?)(?:\n|$)/i);
+    if (companyMatch && companyMatch[1]) {
+      company = companyMatch[1].trim();
+      console.log(`   ✅ Regex found company: "${company}"`);
+    } else {
+      console.log('   ❌ Regex did NOT find company pattern');
     }
+
+    const positionMatch = response.match(/POSITION:\s*(.+?)(?:\n|$)/i);
+    if (positionMatch && positionMatch[1]) {
+      position = positionMatch[1].trim();
+      console.log(`   ✅ Regex found position: "${position}"`);
+    } else {
+      console.log('   ❌ Regex did NOT find position pattern');
+    }
+
+    // Method 2: If still N/A, try parsing line by line
+    if (company === 'N/A' || position === 'N/A') {
+      console.log('⚠️ Regex failed, trying line-by-line parsing...');
+      const lines = response.split('\n');
+
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+        console.log(`   Line ${i}: "${line}"`);
+
+        if (company === 'N/A' && line.toLowerCase().includes('company')) {
+          const parts = line.split(':');
+          if (parts.length >= 2) {
+            company = parts.slice(1).join(':').trim();
+            console.log(`   ✅ Found company in line ${i}: "${company}"`);
+          }
+        }
+
+        if (position === 'N/A' && line.toLowerCase().includes('position')) {
+          const parts = line.split(':');
+          if (parts.length >= 2) {
+            position = parts.slice(1).join(':').trim();
+            console.log(`   ✅ Found position in line ${i}: "${position}"`);
+          }
+        }
+      }
+    }
+
+    // Method 3: Extract from original JD if AI completely failed
+    if (company === 'N/A' || position === 'N/A') {
+      console.log('⚠️ AI extraction completely failed, parsing JD directly...');
+      const jdLines = jobDescription.split('\n').slice(0, 30);
+
+      for (let i = 0; i < jdLines.length; i++) {
+        const line = jdLines[i].trim();
+
+        if (!line || line.length < 3) continue;
+
+        console.log(`   JD Line ${i}: "${line.substring(0, 80)}..."`);
+
+        // Find position (usually first meaningful line with job-related keywords)
+        if (position === 'N/A' && line.length > 5 && line.length < 100) {
+          const jobKeywords = /engineer|developer|architect|manager|analyst|specialist|lead|senior|director|consultant|designer/i;
+          if (jobKeywords.test(line) && !line.toLowerCase().includes('company') && !line.toLowerCase().includes('location')) {
+            position = line;
+            console.log(`   ✅ Found position from JD line ${i}: "${position}"`);
+          }
+        }
+
+        // Find company
+        if (company === 'N/A') {
+          // Try common patterns
+          if (line.match(/^Company:\s*(.+)/i)) {
+            company = line.match(/^Company:\s*(.+)/i)[1].trim();
+            console.log(`   ✅ Found company from JD line ${i}: "${company}"`);
+          } else if (line.match(/^Employer:\s*(.+)/i)) {
+            company = line.match(/^Employer:\s*(.+)/i)[1].trim();
+            console.log(`   ✅ Found company from JD line ${i}: "${company}"`);
+          } else if (line.match(/\bat\s+([A-Z][A-Za-z\s&.]{2,30})(?:\s|$)/)) {
+            const match = line.match(/\bat\s+([A-Z][A-Za-z\s&.]{2,30})(?:\s|$)/);
+            company = match[1].trim();
+            console.log(`   ✅ Found company from JD line ${i}: "${company}"`);
+          }
+        }
+
+        if (company !== 'N/A' && position !== 'N/A') {
+          break;
+        }
+      }
+    }
+
+    console.log('\n📊 FINAL EXTRACTION RESULT:');
+    console.log(`   🏢 Company: "${company}"`);
+    console.log(`   💼 Position: "${position}"\n`);
+
+    return { company, position };
+
+  } catch (error) {
+    console.error('❌ Failed to extract job details:', error.message);
+    console.error('Error stack:', error.stack);
+    return { company: 'N/A', position: 'N/A' };
   }
+}
 
-    // Helper: Log optimization to Google Sheets
-    async function logToGoogleSheet(data) {
-        try {
-        console.log('📊 Step 8: Logging to Google Sheets...');
-        console.log('📊 Sheet ID:', TRACKING_SHEET_ID);
-    
-        const { 
-            companyName, 
-            position, 
-            resumeLink,
-            jobPostUrl,
-            contacts,
-            fileName 
-        } = data;
-        
-        // Simple date formatting
-        const today = new Date();
-        const month = String(today.getMonth() + 1).padStart(2, '0');
-        const day = String(today.getDate()).padStart(2, '0');
-        const year = today.getFullYear();
-        const formattedDate = `${month}/${day}/${year}`;
-        
-        console.log('📊 Formatted date:', formattedDate);
-        console.log('📊 Job Post URL:', jobPostUrl);
-        
-        // Get the sheet metadata
-        const sheetMetadata = await sheets.spreadsheets.get({
-            spreadsheetId: TRACKING_SHEET_ID
-        });
-        
-        const firstSheetName = sheetMetadata.data.sheets[0].properties.title;
-        console.log(`📊 Using sheet: ${firstSheetName}`);
-        
-        // Append with USER_ENTERED
-        const result = await sheets.spreadsheets.values.append({
-            spreadsheetId: TRACKING_SHEET_ID,
-            range: `${firstSheetName}!A:F`,
-            valueInputOption: 'USER_ENTERED',
-            insertDataOption: 'INSERT_ROWS',
-            requestBody: {
-            values: [[
-                companyName || 'N/A',
-                position || 'N/A',
-                formattedDate,
-                resumeLink || '',
-                jobPostUrl || 'Manual Input',
-                contacts || ''
-            ]]
-            }
-        });
-        
-        console.log('✅ Logged to Google Sheets:', result.data.updates.updatedRange);
-        return true;
-        
-        } catch (error) {
-        console.log('❌ Failed to log to Google Sheets:', error.message);
-        return false;
-        }
-    }
+// Helper: Log optimization to Google Sheets
+async function logToGoogleSheet(data) {
+  try {
+    console.log('📊 Step 8: Logging to Google Sheets...');
+    console.log('📊 Sheet ID:', TRACKING_SHEET_ID);
 
-    // Main optimization endpoint
-    app.post('/api/optimize-resume', async (req, res) => {
-        try {
-        const { 
-            jobUrl, 
-            currentPageUrl,
-            aiProvider, 
-            geminiKey1, 
-            geminiKey2, 
-            geminiKey3, 
-            chatgptApiKey, 
-            manualJobDescription 
-        } = req.body;
-        
-        console.log('\n📥 Request received:', {
-            hasJobUrl: !!jobUrl,
-            hasCurrentPageUrl: !!currentPageUrl,
-            hasManualJD: !!manualJobDescription,
-            manualJDLength: manualJobDescription ? manualJobDescription.length : 0,
-            aiProvider
-        });
-        
-        // Determine job post URL for tracking
-        const jobPostUrl = currentPageUrl || jobUrl || 'Manual Input';
-        console.log('🔗 Job Post URL for tracking:', jobPostUrl);
-    
+    const {
+      companyName,
+      position,
+      resumeLink,
+      jobPostUrl,
+      contacts,
+      fileName
+    } = data;
+
+    // Simple date formatting
+    const today = new Date();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    const year = today.getFullYear();
+    const formattedDate = `${month}/${day}/${year}`;
+
+    console.log('📊 Formatted date:', formattedDate);
+    console.log('📊 Job Post URL:', jobPostUrl);
+
+    // Get the sheet metadata
+    const sheetMetadata = await sheets.spreadsheets.get({
+      spreadsheetId: TRACKING_SHEET_ID
+    });
+
+    const firstSheetName = sheetMetadata.data.sheets[0].properties.title;
+    console.log(`📊 Using sheet: ${firstSheetName}`);
+
+    // Append with USER_ENTERED
+    const result = await sheets.spreadsheets.values.append({
+      spreadsheetId: TRACKING_SHEET_ID,
+      range: `${firstSheetName}!A:F`,
+      valueInputOption: 'USER_ENTERED',
+      insertDataOption: 'INSERT_ROWS',
+      requestBody: {
+        values: [[
+          companyName || 'N/A',
+          position || 'N/A',
+          formattedDate,
+          resumeLink || '',
+          jobPostUrl || 'Manual Input',
+          contacts || ''
+        ]]
+      }
+    });
+
+    console.log('✅ Logged to Google Sheets:', result.data.updates.updatedRange);
+    return true;
+
+  } catch (error) {
+    console.log('❌ Failed to log to Google Sheets:', error.message);
+    return false;
+  }
+}
+
+// Main optimization endpoint
+app.post('/api/optimize-resume', async (req, res) => {
+  try {
+    const {
+      jobUrl,
+      currentPageUrl,
+      aiProvider,
+      geminiKey1,
+      geminiKey2,
+      geminiKey3,
+      chatgptApiKey,
+      manualJobDescription
+    } = req.body;
+
+    console.log('\n📥 Request received:', {
+      hasJobUrl: !!jobUrl,
+      hasCurrentPageUrl: !!currentPageUrl,
+      hasManualJD: !!manualJobDescription,
+      manualJDLength: manualJobDescription ? manualJobDescription.length : 0,
+      aiProvider
+    });
+
+    // Determine job post URL for tracking
+    const jobPostUrl = currentPageUrl || jobUrl || 'Manual Input';
+    console.log('🔗 Job Post URL for tracking:', jobPostUrl);
+
     // Validation
     const hasManualJD = manualJobDescription && manualJobDescription.trim().length > 0;
     const hasJobUrl = jobUrl && jobUrl.trim().length > 0;
-    
+
     if (!hasManualJD && !hasJobUrl) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         error: 'Job URL or manual job description is required',
         details: 'Please provide either a job URL or paste the job description manually'
       });
     }
-    
+
     if (!aiProvider) {
       return res.status(400).json({ error: 'AI provider is required' });
     }
-    
+
     // Validate API keys
     if (aiProvider === 'gemini') {
       if (!geminiKey1 || !geminiKey2 || !geminiKey3) {
@@ -350,21 +350,21 @@ async function extractJobDetails(jobDescription, aiProvider, apiKey) {
     }
 
     console.log(`\n🚀 Starting optimization with ${aiProvider.toUpperCase()}`);
-    
+
     let jobDescription;
     let contentSource;
-    
+
     // PRIORITY 1: Manual JD
     if (hasManualJD) {
       console.log('📝 MODE: MANUAL JD INPUT');
       console.log(`📊 Manual JD length: ${manualJobDescription.length.toLocaleString()} characters`);
-      
+
       jobDescription = manualJobDescription.trim();
       contentSource = 'manual_input';
-      
+
       console.log('✅ Using manual job description - SKIPPING URL FETCH');
-      
-    } 
+
+    }
     // PRIORITY 2: URL Fetch
     else if (hasJobUrl) {
       console.log('🌐 MODE: URL FETCH');
@@ -373,14 +373,14 @@ async function extractJobDetails(jobDescription, aiProvider, apiKey) {
 
       // Step 1: Fetch job page
       console.log('📄 Step 1: Fetching job page from URL...');
-      
+
       let jobResponse;
       let retries = 3;
-      
+
       for (let i = 0; i < retries; i++) {
         try {
           console.log(`   Attempt ${i + 1}/${retries}...`);
-          
+
           jobResponse = await axios.get(jobUrl, {
             headers: {
               'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
@@ -393,20 +393,20 @@ async function extractJobDetails(jobDescription, aiProvider, apiKey) {
             maxContentLength: Infinity,
             maxBodyLength: Infinity
           });
-          
+
           console.log(`✅ Job page fetched (${jobResponse.data.length.toLocaleString()} characters)`);
           break;
-          
+
         } catch (error) {
           console.log(`   ❌ Attempt ${i + 1} failed:`, error.message);
-          
+
           if (i === retries - 1) {
             return res.status(500).json({
               error: 'Failed to fetch job page',
               details: `Could not access the job URL after ${retries} attempts. Please try using Manual JD Input mode instead.`
             });
           }
-          
+
           console.log(`   ⏳ Waiting 2 seconds before retry...`);
           await new Promise(resolve => setTimeout(resolve, 2000));
         }
@@ -429,9 +429,9 @@ Location: [location]
 
 HTML:
 ${jobResponse.data}`;
-      
+
       const extractionKey = aiProvider === 'gemini' ? geminiKey1 : chatgptApiKey;
-      
+
       try {
         jobDescription = await generateAIContent(jdPrompt, aiProvider, extractionKey);
         console.log(`✅ Job description extracted (${jobDescription.length.toLocaleString()} chars)`);
@@ -470,235 +470,175 @@ ${jobResponse.data}`;
 
     // Step 4: Generate optimization points
     console.log('💡 Step 4: Generating optimization points...');
-    
-    const optimizationPrompt = `You are an expert ATS analyzer. Generate UNLIMITED, DETAILED optimization points to achieve 92-100 percent ATS match.
 
-ORIGINAL RESUME:
+    const optimizationPrompt = `You are an expert ATS analyzer. Generate UNLIMITED, DETAILED optimization points to achieve 92–100% ATS match.
+
+===========================
+INPUT RESUME:
 ${originalResume}
 
-JOB DESCRIPTION:
+INPUT JOB DESCRIPTION:
 ${jobDescription}
+===========================
 
-YOUR MISSION: Analyze every section and generate specific, actionable points. No limits on number of points.
+YOUR MISSION:
+Analyze EVERY section of the resume and generate specific, actionable optimization points that guarantee a 92–100% ATS match.
 
-===== SUMMARY SECTION ANALYSIS =====
+No limits. Produce as many points as needed.
+
+----------------------------------------------------
+===== SUMMARY SECTION ANALYSIS (MANDATORY FORMAT) =====
+----------------------------------------------------
 
 REQUIREMENTS:
-- Summary must be in bullet point format (use • symbol)
-- Generate as many points as needed for 92-100 percent ATS match
-- Specify exact bullet number and exact changes
-
-For each summary optimization point, provide:
+• Summary MUST remain in bullet format using "•"
+• Add, modify, or expand bullets to match JD keywords
+• Each point must specify WHAT to add, WHERE to add it, and WHY
 
 SUMMARY POINT FORMAT:
-What: Add specific keyword or phrase
-Where: Summary Bullet X (specify which bullet number, or "Add new bullet")
-Why: Mentioned in JD OR Required skill OR Increases ATS match
 
-EXAMPLE SUMMARY POINTS:
-
-POINT 1:
+POINT X:
 Section: Summary
-What: Add keywords "Spring Cloud" and "API Gateway"
-Where: Summary Bullet 2 (the one about backend development)
-Why: Mentioned 3 times in JD as required skills
-
-POINT 2:
-Section: Summary
-What: Add keyword "container orchestration"
-Where: Summary Bullet 4 (the one about cloud development)
-Why: Exact phrase used in JD requirements section
-
-POINT 3:
-Section: Summary
-What: Add new bullet about CI/CD automation
-Where: Add new Summary Bullet 10
-Why: CI/CD mentioned 5 times in JD but not emphasized in current summary
-
-Generate ALL summary points needed to match JD keywords.
-
-===== SKILLS SECTION ANALYSIS =====
-
-For each skill change needed, provide THREE types of points:
-
-TYPE 1 - ADD SKILLS:
-What: Add skill name
-Where: Skills Section - Category Name
-Position: Beginning OR End of category
-Bold: YES if mentioned in JD, NO if not
-Why: Required in JD OR Commonly expected for role
-
-TYPE 2 - DELETE SKILLS:
-What: Remove skill name
-Where: Skills Section - Category Name
-Why: Not relevant to this JD OR Outdated OR Not in JD
-
-TYPE 3 - MODIFY/BOLD SKILLS:
-What: Bold existing skill name
-Where: Skills Section - Category Name
-Why: Mentioned in JD
-
-TYPE 4 - REORDER SKILLS:
-What: Move skill to beginning of category
-Where: Skills Section - Category Name
-Why: Mentioned in JD, should be prioritized
-
-EXAMPLE SKILLS POINTS:
-
-POINT 5:
-Section: Skills
-Type: ADD
-What: Add PostgreSQL
-Where: Databases category
-Position: Beginning (first position)
-Bold: YES
-Why: Mentioned 4 times in JD as required database
-
-POINT 6:
-Section: Skills
-Type: ADD
-What: Add MongoDB
-Where: Databases category
-Position: Beginning (after PostgreSQL)
-Bold: YES
-Why: Mentioned in JD as required NoSQL database
-
-POINT 7:
-Section: Skills
-Type: BOLD
-What: Bold Spring Boot
-Where: Backend Development category
-Why: Mentioned 6 times in JD requirements
-
-POINT 8:
-Section: Skills
-Type: REORDER
-What: Move Kubernetes to beginning
-Where: DevOps and CI/CD category
-Bold: YES
-Why: Critical requirement in JD, mentioned 8 times
-
-POINT 9:
-Section: Skills
-Type: DELETE
-What: Remove EJB
-Where: Backend Development category
-Why: Not mentioned in JD, outdated technology
-
-POINT 10:
-Section: Skills
-Type: ADD
-What: Add GraphQL
-Where: Backend Development category
-Position: After RESTful APIs
-Bold: YES
-Why: Required API technology mentioned in JD
-
-Generate points for EVERY skill that needs to be:
-- Added (with exact category and position)
-- Deleted (with reason)
-- Bolded (because in JD)
-- Reordered (to prioritize JD skills)
-
-===== EXPERIENCE SECTION ANALYSIS =====
-
-For EACH company in experience section, generate specific points:
-
-EXPERIENCE POINT FORMAT:
-Company: [Company Name]
-Bullet: [Bullet number, e.g., Bullet 3]
-What: Add keyword/phrase OR Enhance with technology
-Where: Exact position in bullet (beginning, middle, after specific phrase)
-Bold: List all tools/technologies to bold that are in JD
-Why: Matches JD requirement OR Improves ATS score
-
-EXAMPLE EXPERIENCE POINTS:
-
-POINT 15:
-Section: Experience
-Company: LPL Financial
-Bullet: Bullet 1
-What: Add "Spring Cloud" and "API Gateway" after "Spring Boot microservices"
-Enhance to: "Architected 15+ Spring Boot microservices with Spring Cloud and API Gateway"
-Bold: Spring Boot, microservices, Spring Cloud, API Gateway
-Why: All four technologies mentioned in JD requirements
-
-POINT 16:
-Section: Experience
-Company: LPL Financial
-Bullet: Bullet 3
-What: Add "Kafka Streams" and "Schema Registry" to Kafka description
-Enhance to: "Apache Kafka with Kafka Streams and Schema Registry"
-Bold: Apache Kafka, Kafka Streams, Schema Registry, event-driven architecture
-Why: JD requires Kafka expertise with these specific components
-
-POINT 17:
-Section: Experience
-Company: Athenahealth
-Bullet: Bullet 1
-What: Add "FHIR" and "HL7" if healthcare platform
-Enhance to: "HIPAA-compliant healthcare platform using Spring Boot, FHIR, and HL7"
-Bold: Spring Boot, FHIR, HL7, HIPAA
-Why: Healthcare interoperability standards mentioned in JD
-
-POINT 18:
-Section: Experience
-Company: YES Bank
-Bullet: Bullet 4
-What: Add "Redis caching" and "connection pooling"
-Enhance to: "Redis caching layer achieving 85% hit rate with HikariCP connection pooling"
-Bold: Redis, HikariCP, connection pooling
-Why: Caching and performance optimization mentioned in JD
-
-POINT 19:
-Section: Experience
-Company: Comcast
-Bullet: Bullet 2
-What: Add "OAuth2" and "JWT" to security description
-Enhance to: "Spring Security with OAuth2 authentication and JWT tokens"
-Bold: Spring Security, OAuth2, JWT
-Why: Security technologies explicitly required in JD
-
-Generate points for EVERY company and EVERY bullet that can be enhanced with JD keywords.
-
-===== CONSOLIDATION POINTS =====
-
-POINT FORMAT:
-What: Merge category A into category B
-How: Specify which skills go where
-Why: Category A has only X skills
+What: Add specific keyword/phrase (exact text to paste)
+Where: Summary Bullet X (or “Add new bullet”)
+Why: JD requirement OR ATS score improvement
+Scale: Rate the importance 1–10
 
 EXAMPLE:
-POINT 25:
+POINT 1:
+Section: Summary
+What: Add “Spring Cloud”, “API Gateway”, “Eureka”
+Where: Summary Bullet 2
+Why: These are listed in JD and critical for ATS score
+Scale: 10
+
+Generate EVERY missing keyword from JD and align it to an exact bullet.
+
+----------------------------------------------------
+===== HARD SKILLS OUTPUT FORMAT RULE (CRITICAL) =====
+----------------------------------------------------
+
+Your output MUST generate the SKILLS section in a STRICT pipe-table format EXACTLY as shown below:
+
+SKILLS
+
+ Category Name               | Skill1, Skill2, Skill3, ...                                                               
+ Category Name               | Skill1, Skill2, Skill3, ...                                                               
+
+RULES:
+1. Every row MUST follow the format:
+   | Category Name | comma-separated skills |
+2. NO bullets, NO markdown tables, NO multiline wrapping inside rows.
+3. Category name ALWAYS on the left, skills ALWAYS on the right.
+4. JD skills MUST be bolded using **double-asterisks**.
+5. Each category is ONE row only.
+6. Skills must NOT spill to the next line.
+7. Do NOT add extra paragraphs or spacing inside the table.
+
+----------------------------------------------------
+===== SKILLS SECTION ANALYSIS (GENERATE POINTS) =====
+----------------------------------------------------
+
+For each skill category:
+
+TYPE 1 - ADD SKILL  
+What: Skill name  
+Where: Skills → Category Name  
+Position: Beginning OR End  
+Bold: YES if mentioned in JD  
+Why: Required for ATS
+
+TYPE 2 - DELETE SKILL  
+What: Skill name  
+Where: Category Name  
+Why: Outdated or irrelevant to JD
+
+TYPE 3 - MODIFY/BOLD SKILL  
+What: Skill name  
+Where: Category Name  
+Why: Mentioned in JD and must appear bold
+
+TYPE 4 - REORDER SKILL  
+What: Skill name  
+Where: Category Name  
+Why: JD-important skills must appear first
+
+EXAMPLE:
+POINT 12:
+Section: Skills
+Type: ADD
+What: PostgreSQL
+Where: Databases
+Position: Beginning
+Bold: YES
+Why: JD requires PostgreSQL
+
+Generate:  
+✓ All additions  
+✓ All deletions  
+✓ All reorderings  
+✓ All bolding updates  
+✓ All category merges if needed  
+
+----------------------------------------------------
+===== EXPERIENCE SECTION ANALYSIS =====
+----------------------------------------------------
+
+For EACH COMPANY and EACH BULLET, generate improvements by reading INPUT JOB DESCRIPTION and whichever things bold make sure add in experience section too.
+
+EXPERIENCE POINT FORMAT:
+
+POINT X:
+Section: Experience
+Company: [Company Name]
+Bullet: X
+What: Exact phrase(s) to add (metrics + JD keywords)
+Where: Insert location (beginning / after phrase / end)
+Bold: List all skills that must be bolded
+Why: Required by JD OR boosts ATS
+
+EXAMPLE:
+POINT 17:
+Section: Experience
+Company: LPL Financial
+Bullet: 1
+What: Add “Spring Cloud”, “API Gateway”, “Eureka”
+Where: After “Spring Boot microservices”
+Bold: Spring Boot, microservices, Spring Cloud, API Gateway, Eureka
+Why: Required distributed systems skills in JD
+
+Create 40–60+ points if needed.
+
+----------------------------------------------------
+===== CONSOLIDATION / MERGING =====
+----------------------------------------------------
+
+POINT FORMAT:
 Section: Skills
 Type: MERGE
-What: Merge "JavaScript Ecosystem" category
-How: Move Node.js to Backend Development, Move React and Redux to Frontend Development
-Why: JavaScript Ecosystem has only 3 skills, too small for separate category
+What: Merge Category A into Category B
+How: Explicit list of moves
+Why: Category has too few skills OR JD expects combined category
 
+----------------------------------------------------
 ===== FILENAME SUGGESTION =====
+----------------------------------------------------
 
+OUTPUT:
 FILENAME: Lokesh_Para_[Position]_[Company]
 
-===== SUMMARY OF POINT GENERATION =====
+----------------------------------------------------
+===== OUTPUT FORMAT FOR THIS OPTIMIZATION PROMPT =====
+----------------------------------------------------
 
-Generate points for:
-✓ Summary: What to add, which bullet, why (unlimited points)
-✓ Skills - Add: What, where, position, bold yes/no, why
-✓ Skills - Delete: What, where, why
-✓ Skills - Bold: What, where, why
-✓ Skills - Reorder: What, where, why
-✓ Experience: Company, bullet number, what to add, what to bold, why (all companies)
-✓ Consolidation: What to merge, how, why
+Return ONLY optimization points in this format:
 
-GOAL: Generate 40, 50, 60+ points if needed for 92-100 percent ATS match. Do not limit yourself.
-
-Output format:
 POINT 1:
 Section: Summary
 What: ...
 Where: ...
 Why: ...
+Scale: 1–10
 
 POINT 2:
 Section: Skills
@@ -706,16 +646,29 @@ Type: ADD
 What: ...
 Where: ...
 Position: ...
+Bold: YES/NO
+Why: ...
+
+POINT 3:
+Section: Experience
+Company: ...
+Bullet: ...
+What: ...
+Where: ...
 Bold: ...
 Why: ...
 
-Continue for ALL needed optimizations.`;
+Continue generating points until ALL JD-related keywords, architecture styles, cloud, devops, databases, microservices patterns, and soft requirements are covered.
+
+GOAL:
+Cover EVERY missing keyword from JD and generate the maximum possible ATS alignment (92–100%).
+`;
 
     const analysisKey = aiProvider === 'gemini' ? geminiKey2 : chatgptApiKey;
     const optimizationPoints = await generateAIContent(optimizationPrompt, aiProvider, analysisKey);
     const pointCount = (optimizationPoints.match(/POINT \d+:/g) || []).length;
     console.log(`✅ Generated ${pointCount} optimization points`);
-
+    console.log(`✅ optimization points -----> ${optimizationPoints} `);
     // Extract filename
     let suggestedFileName = null;
     const filenameMatch = optimizationPoints.match(/FILENAME:\s*(.+?)(?:\n|$)/i);
@@ -734,220 +687,74 @@ Continue for ALL needed optimizations.`;
 
     // Step 5: Rewrite resume
     console.log('✍️ Step 5: Rewriting resume...');
-    
-    const rewritePrompt = `You are an ATS optimization expert. Rewrite the resume applying EVERY optimization point while maintaining original format.
 
-ORIGINAL RESUME (maintain this exact formatting):
+    const rewritePrompt = `You are an ATS optimization expert. Rewrite the resume applying EVERY optimization point exactly as specified.
+
+===========================
+INPUT RESUME:
 ${originalResume}
 
-OPTIMIZATION POINTS (apply every single one):
+INPUT OPTIMIZATION POINTS:
 ${optimizationPoints}
 
-JOB DESCRIPTION (for keyword reference and bolding):
+INPUT JOB DESCRIPTION:
 ${jobDescription}
+===========================
 
-===== MANDATORY RULES =====
+===== RULES FOR REWRITING =====
 
-1. Maintain EXACT structure from original resume
-2. Apply EVERY optimization point without exception
-3. Bold ALL JD-mentioned keywords using **keyword**
-4. Use original resume's formatting style
-
-===== SUMMARY SECTION REWRITE =====
-
-FORMAT: Bullet points with • symbol (as in original)
-
-PROCESS:
-1. Start with original summary bullets
-2. For each optimization point labeled "Section: Summary":
-   - Find the specified bullet number
-   - Add the specified keywords/phrases
-   - Bold any keyword that appears in JD using **keyword**
-3. If optimization says "Add new bullet", create new bullet at end
-4. No limit on number of bullets - add as many as optimization points require
-
-BOLDING RULE:
-Read JD and bold ANY technology, tool, skill, or methodology mentioned:
-- **Spring Boot**, **microservices**, **Kubernetes**, **Docker**
-- **Agile**, **CI/CD**, **TDD**
-- **PostgreSQL**, **MongoDB**, **Redis**
-- **AWS**, **Azure**, **cloud-native**
-
-EXAMPLE:
-Original: • Expert in backend development with Spring ecosystem
-Point says: Add "Spring Cloud" and "API Gateway"
-Output: • Expert in **backend development** with **Spring ecosystem** (**Spring Boot**, **Spring Cloud**, **API Gateway**)
-
-===== SKILLS SECTION REWRITE =====
-
-FORMAT: Table format (as in original)
-Category Name | skill1, skill2, skill3
-
-PROCESS FOR EACH CATEGORY:
-
-STEP 1 - COLLECT ALL SKILLS:
-- Start with skills from original resume category
-- Add skills from optimization points (Type: ADD)
-- Remove skills from optimization points (Type: DELETE)
-
-STEP 2 - IDENTIFY JD SKILLS:
-- Check JD for each skill
-- Check optimization points for "Bold: YES"
-- Mark all JD-mentioned skills for bolding
-
-STEP 3 - ORDER SKILLS:
-- JD-mentioned skills FIRST (all bolded)
-- Non-JD skills AFTER (not bolded)
-- Within JD skills, order by importance/frequency in JD
-
-STEP 4 - FORMAT:
-Category Name | **jd-skill1**, **jd-skill2**, **jd-skill3**, other-skill1, other-skill2
-
-EXAMPLE:
-
-Original:
-Databases | MySQL, PostgreSQL, MongoDB, Redis, Oracle
-
-Optimization points say:
-- Bold PostgreSQL (in JD)
-- Bold MongoDB (in JD)
-- Add DynamoDB (Bold: YES)
-- Move JD skills to beginning
-
-Output:
-Databases | **PostgreSQL**, **MongoDB**, **DynamoDB**, **Redis**, MySQL, Oracle
-
-(Redis bolded if mentioned in JD, otherwise not)
-
-===== EXPERIENCE SECTION REWRITE =====
-
-FORMAT: Maintain exact format from original resume
-- Company Name | Location     Dates
-- • Bullet points
-
-PROCESS FOR EACH COMPANY:
-
-STEP 1 - READ OPTIMIZATION POINTS:
-Look for all points labeled:
-- Section: Experience
-- Company: [Company Name]
-- Bullet: [Bullet Number]
-
-STEP 2 - ENHANCE SPECIFIED BULLETS:
-For each optimization point:
-- Find the exact bullet number specified
-- Add the keywords/phrases as specified
-- Bold ALL tools/technologies mentioned in the optimization point's "Bold:" section
-- Bold ANY additional JD-mentioned terms
-
-STEP 3 - BOLDING IN EXPERIENCE:
-Bold EVERY occurrence of:
-- Technologies in JD (Spring Boot, React, Kafka, Docker, Kubernetes)
-- Methodologies in JD (Agile, Scrum, CI/CD, TDD, microservices)
-- Cloud platforms in JD (AWS, Azure, GCP)
-- Databases in JD (PostgreSQL, MongoDB, Redis)
-- Tools in JD (Jenkins, Git, Terraform)
-
-EXAMPLE:
-
-Original bullet:
-- Architected 15+ Spring Boot microservices processing $500M+ daily transactions
-
-Optimization point says:
-Company: LPL Financial
-Bullet: Bullet 1
-What: Add "Spring Cloud (API Gateway, Eureka)" after "Spring Boot microservices"
-Bold: Spring Boot, microservices, Spring Cloud, API Gateway, Eureka
-
-Output:
-- Architected 15+ **Spring Boot** **microservices** with **Spring Cloud** (**API Gateway**, **Eureka**) processing $500M+ daily transactions
-
-===== APPLYING OPTIMIZATION POINTS =====
-
-POINT TYPES AND APPLICATION:
-
-TYPE: Summary
-ACTION: 
-- Find bullet number specified in "Where:"
-- Add content from "What:"
-- Bold JD keywords
-
-TYPE: Skills - ADD
-ACTION:
-- Add skill to specified category
-- Place at position specified (Beginning/End)
-- Bold if "Bold: YES"
-
-TYPE: Skills - DELETE
-ACTION:
-- Remove skill from specified category
-
-TYPE: Skills - BOLD
-ACTION:
-- Find skill in category
-- Change to **skill**
-
-TYPE: Skills - REORDER
-ACTION:
-- Move skill to beginning with other JD skills
-- Bold it
-
-TYPE: Experience
-ACTION:
-- Find company and bullet number
-- Add enhancement from "What:"
-- Bold all items listed in "Bold:"
-
-TYPE: MERGE
-ACTION:
-- Move skills as specified
-- Delete original category
-- Apply bolding rules
-
-===== VERIFICATION BEFORE OUTPUT =====
-
-Check:
-✓ Every optimization point applied
-✓ All summary bullets have JD keywords bolded
-✓ Skills section: JD skills first and bolded in each category
-✓ Experience: All specified bullets enhanced
-✓ Experience: All JD technologies bolded throughout
-✓ Original formatting maintained
-✓ All metrics and numbers preserved
-
-===== OUTPUT STRUCTURE =====
-
-Lokesh Para
-Software Engineer
-Contact info
-
-PROFESSIONAL SUMMARY
-- Bullet with **JD keywords** bolded
-- Bullet with **JD keywords** bolded
-- As many bullets as optimization points created
+1. Maintain EXACT original resume structure.
+2. Apply EVERY optimization point without exception.
+3. Bold ALL JD keywords using **double-asterisks**.
+4. Preserve all metrics, responsibilities, and layout.
+5. DO NOT change the name, title, or contact information.
+6. SKILLS SECTION MUST FOLLOW THE EXACT PIPE TABLE FORMAT:
 
 SKILLS
-Programming Languages | **JD-lang**, **JD-lang**, other-lang
-Backend Development | **JD-tech**, **JD-tech**, other-tech
-(All categories with JD skills first and bolded)
 
-PROFESSIONAL EXPERIENCE
-Company | Location     Dates
-- Enhanced bullet with **JD tools** bolded
-- Enhanced bullet with **JD tools** bolded
-(All bullets enhanced per optimization points)
+Category Name               | Skill1, Skill2, Skill3, ...                                                                
+Category Name               | Skill1, Skill2, Skill3, ...                                                                
 
-EDUCATION
-(Same as original)
+If the skills appear in ANY other format, REWRITE them to match this exact layout.
 
-TARGET: 92-100 percent ATS match with all JD keywords properly emphasized.
+7. SUMMARY MUST BE bullet points starting with “•”.
+8. EXPERIENCE bullets must remain bullets starting with “•”.
+9. Every optimization point must be applied to the correct bullet, category, or section.
 
-Return ONLY the complete resume. No explanations.`;
-    
+===== HOW TO HANDLE SUMMARY =====
+• Start from original bullets  
+• For each optimization point: add, enhance, or rewrite bullets  
+• Bold all JD keywords  
+• Add new bullets when specified  
+• KEEP all bullets detailed and metric-driven
+
+===== HOW TO HANDLE SKILLS (CRITICAL) =====
+• Build table EXACTLY in pipe format  
+• JD skills FIRST and bolded  
+• Non-JD skills AFTER  
+• One row per category  
+• No line breaks inside rows  
+• No bullets, no markdown tables, no hyphens
+
+===== HOW TO HANDLE EXPERIENCE =====
+For each optimization point:
+• Find the exact bullet  
+• Add the new keywords/phrases  
+• Bold all JD terms  
+• Insert enhancements exactly where instructed  
+• Preserve metrics and clarity  
+
+===== FINAL OUTPUT =====
+Return ONLY the fully rewritten resume in its final, polished form.
+
+Do NOT return explanations.
+`;
+
 
     const rewriteKey = aiProvider === 'gemini' ? geminiKey3 : chatgptApiKey;
     const optimizedResume = await generateAIContent(rewritePrompt, aiProvider, rewriteKey);
     console.log(`✅ Resume rewritten (${optimizedResume.length} chars)`);
+    console.log(`Rewrite resume ======> ${optimizedResume}`);
 
     // Step 6: Convert to HTML
     console.log('🎨 Step 6: Converting to HTML...');
@@ -955,14 +762,14 @@ Return ONLY the complete resume. No explanations.`;
 
     // Step 7: Upload to Google Drive
     console.log('☁️ Step 7: Uploading to Google Drive...');
-    
+
     let fileName = suggestedFileName;
     if (!fileName) {
       const timestamp = new Date().toISOString().replace(/[-:]/g, '').split('.')[0];
       fileName = `Lokesh_Para_Optimized_${timestamp}`;
     }
     console.log(`📄 Filename: ${fileName}`);
-    
+
     const file = await drive.files.create({
       requestBody: {
         name: fileName,
@@ -1014,9 +821,9 @@ Return ONLY the complete resume. No explanations.`;
 
   } catch (error) {
     console.error('❌ Error:', error.message);
-    res.status(500).json({ 
-      error: 'Resume optimization failed', 
-      details: error.message 
+    res.status(500).json({
+      error: 'Resume optimization failed',
+      details: error.message
     });
   }
 });
@@ -1025,7 +832,7 @@ Return ONLY the complete resume. No explanations.`;
 function extractTextFromDoc(doc) {
   let text = '';
   const content = doc.body.content;
-  
+
   for (const element of content) {
     if (element.paragraph?.elements) {
       for (const elem of element.paragraph.elements) {
@@ -1051,8 +858,9 @@ function extractTextFromDoc(doc) {
   return text;
 }
 
-// Helper: Convert to styled HTML
-// Helper: Convert to styled HTML
+// 🔥 UPDATED convertToStyledHTML - Handles ALL 4 skill formats
+// Replace your entire convertToStyledHTML function with this:
+
 function convertToStyledHTML(text) {
   const lines = text.split('\n');
   let html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>
@@ -1075,16 +883,16 @@ function convertToStyledHTML(text) {
   let skillsTableOpen = false;
   let currentCategory = '';
   let currentSkills = '';
-  
-  // Helper function to convert **text** to <strong>text</strong>
+
+  // Helper: Convert **text** to <strong>text</strong>
   function convertBold(text) {
     return text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
   }
-  
-  // Helper function to add a skill row to table
+
+  // Helper: Add skill row to table
   function addSkillRow(category, skills) {
     if (category && skills) {
-      const cleanCategory = category.trim().replace(/\*\*/g, '').replace(/\*/g, '');
+      const cleanCategory = category.trim().replace(/\*\*/g, '').replace(/\*/g, '').replace(/\|/g, '');
       const boldSkills = convertBold(skills.trim());
       html += `  <tr>\n`;
       html += `    <td class="skills-category">${cleanCategory}</td>\n`;
@@ -1092,46 +900,97 @@ function convertToStyledHTML(text) {
       html += `  </tr>\n`;
     }
   }
-  
+
+  // Helper: Check if line is a category name
+  function isLikelyCategory(line) {
+    // Clean the line
+    const cleaned = line.replace(/\|/g, '').trim();
+
+    // Too long to be category
+    if (cleaned.length > 100) return false;
+
+    // Has many commas (likely skills)
+    if ((cleaned.match(/,/g) || []).length > 2) return false;
+
+    // Starts with lowercase (likely skills)
+    if (cleaned[0] && cleaned[0] !== cleaned[0].toUpperCase()) return false;
+
+    // Common category patterns
+    const categoryPatterns = [
+      /^Programming Languages?/i,
+      /^Java.*Ecosystem/i,
+      /^Backend/i,
+      /^Front.*End/i,
+      /^Microservices/i,
+      /^Database/i,
+      /^AI\/ML/i,
+      /^ORM/i,
+      /^Messaging/i,
+      /^Cloud/i,
+      /^DevOps/i,
+      /^Testing/i,
+      /^Security/i,
+      /^Monitoring/i,
+      /^Methodologies/i,
+      /^Data.*Lake/i,
+      /^Query.*Engine/i
+    ];
+
+    for (const pattern of categoryPatterns) {
+      if (pattern.test(cleaned)) return true;
+    }
+
+    // Capitalized and short (likely category)
+    if (cleaned.length < 50 && cleaned[0] === cleaned[0].toUpperCase()) {
+      return true;
+    }
+
+    return false;
+  }
+
   for (let i = 0; i < lines.length; i++) {
     let line = lines[i].trim();
     if (!line) continue;
-    
+
+    // Skip table header lines (markdown style)
+    if (line.startsWith('|---') || line.startsWith('| ---')) continue;
+    if (line.match(/^\|\s*Category\s+Name\s*\|/i)) continue;
+
     // Header: Name
     if (i < 3 && line.includes('Lokesh')) {
       html += `<div class="name">${line}</div>\n`;
       continue;
     }
-    
+
     // Header: Title
     if (i <= 3 && (line.includes('Developer') || line.includes('Engineer')) && line.length < 60) {
       html += `<div class="title">${line}</div>\n`;
       continue;
     }
-    
+
     // Header: Contact
     if ((line.includes('@') || line.includes('|')) && i < 6) {
       html += `<div class="contact">${line}</div>\n`;
       continue;
     }
-    
-    // Section Headers (PROFESSIONAL SUMMARY, SKILLS, EXPERIENCE, EDUCATION)
-    if (line === line.toUpperCase() && line.length > 3 && !line.startsWith('*')) {
-      // Save pending skill row if any
+
+    // Section Headers
+    if (line === line.toUpperCase() && line.length > 3 && !line.startsWith('*') && !line.startsWith('|')) {
+      // Save pending skill row
       if (inSkills && currentCategory && currentSkills) {
         addSkillRow(currentCategory, currentSkills);
         currentCategory = '';
         currentSkills = '';
       }
-      
-      // Close skills table if open
+
+      // Close skills table
       if (skillsTableOpen) {
         html += `</table>\n`;
         skillsTableOpen = false;
         inSkills = false;
       }
-      
-      // Check if this is SKILLS section
+
+      // Check if SKILLS section
       if (line.includes('SKILL')) {
         inSkills = true;
         html += `<div class="section-header">${line}</div>\n`;
@@ -1143,101 +1002,138 @@ function convertToStyledHTML(text) {
       }
       continue;
     }
-    
-    // Skills section content
+
+    // SKILLS SECTION PROCESSING
     if (inSkills && skillsTableOpen) {
-      // Check if this line is a category name (no comma, no parentheses at start, capitalized)
-      const isCategory = !line.includes(',') && 
-                        !line.startsWith('*') && 
-                        line.length < 80 &&
-                        !line.includes('(') &&
-                        line[0] === line[0].toUpperCase() &&
-                        !line.match(/^(AWS|GCP|Azure|ETL|CI\/CD|API|JUnit|REST)/);
-      
-      // Check if line has pipe separator (Category | Skills format)
-      if (line.includes('|') && !line.includes('@')) {
-        // Save previous row if any
+
+      // FORMAT 1: Markdown table format with | on both sides
+      // | Programming Languages | Java, Python, SQL |
+      if (line.startsWith('|') && line.endsWith('|')) {
+        // Save previous row
         if (currentCategory && currentSkills) {
           addSkillRow(currentCategory, currentSkills);
+          currentCategory = '';
+          currentSkills = '';
         }
-        
-        // Parse pipe-separated format
-        const parts = line.split('|');
-        currentCategory = parts[0].trim();
-        currentSkills = parts.slice(1).join('|').trim();
+
+        // Parse markdown table row
+        const parts = line.split('|').filter(p => p.trim());
+        if (parts.length >= 2) {
+          currentCategory = parts[0].trim();
+          currentSkills = parts.slice(1).join('|').trim();
+
+          // Only add if it looks like actual content (not header)
+          if (!currentCategory.match(/Category.*Name/i) && currentSkills.length > 0) {
+            addSkillRow(currentCategory, currentSkills);
+            currentCategory = '';
+            currentSkills = '';
+          }
+        }
+        continue;
+      }
+
+      // FORMAT 2: Aligned format with single pipe
+      // Programming Languages        | Java, Python, SQL
+      if (line.includes('|') && !line.startsWith('|')) {
+        // Save previous row
+        if (currentCategory && currentSkills) {
+          addSkillRow(currentCategory, currentSkills);
+          currentCategory = '';
+          currentSkills = '';
+        }
+
+        // Parse pipe-separated
+        const pipeIndex = line.indexOf('|');
+        currentCategory = line.substring(0, pipeIndex).trim();
+        currentSkills = line.substring(pipeIndex + 1).trim();
+
         addSkillRow(currentCategory, currentSkills);
         currentCategory = '';
         currentSkills = '';
+        continue;
       }
-      // Check if line has colon separator (Category: Skills format)
-      else if (line.includes(':') && line.indexOf(':') < 60) {
-        // Save previous row if any
+
+      // FORMAT 3: Colon separator
+      // Programming Languages: Java, Python, SQL
+      if (line.includes(':') && line.indexOf(':') < 60) {
+        // Save previous row
         if (currentCategory && currentSkills) {
           addSkillRow(currentCategory, currentSkills);
+          currentCategory = '';
+          currentSkills = '';
         }
-        
-        // Parse colon-separated format
+
         const colonIdx = line.indexOf(':');
         currentCategory = line.substring(0, colonIdx).trim();
         currentSkills = line.substring(colonIdx + 1).trim();
+
         addSkillRow(currentCategory, currentSkills);
         currentCategory = '';
         currentSkills = '';
+        continue;
       }
-      // Line is a category name (starts with capital, no comma)
-      else if (isCategory) {
-        // Save previous row if any
+
+      // FORMAT 4: Multi-line (category on one line, skills on next)
+      // Programming Languages
+      // Java, Python, SQL
+
+      // Check if this line is a category name
+      if (isLikelyCategory(line)) {
+        // Save previous category if any
         if (currentCategory && currentSkills) {
           addSkillRow(currentCategory, currentSkills);
         }
-        
-        // This is a new category, next line(s) will be skills
-        currentCategory = line;
+
+        // Store this as current category
+        currentCategory = line.replace(/\|/g, '').trim();
         currentSkills = '';
+        continue;
       }
-      // Line is skills (continuation of previous category)
-      else if (currentCategory) {
-        // Append skills to current category
+
+      // If we have a current category and this line has skills (commas or long text)
+      if (currentCategory && (line.includes(',') || line.length > 50)) {
+        // This line contains skills for current category
         if (currentSkills) {
           currentSkills += ', ' + line;
         } else {
           currentSkills = line;
         }
+        continue;
       }
-      
+
+      // Unknown format - skip
       continue;
     }
-    
+
     // Company headers (contains |)
-    if (line.includes('|') && !line.startsWith('•') && !line.includes('@')) {
+    if (line.includes('|') && !line.startsWith('•') && !line.includes('@') && !inSkills) {
       html += `<div class="company-header">${line.replace(/\*\*/g, '')}</div>\n`;
       continue;
     }
-    
-    // Bullet points (Summary and Experience)
+
+    // Bullet points
     if (line.startsWith('•') || line.startsWith('*')) {
       let bulletContent = line.replace(/^[•*]\s*/, '');
-      // Convert **keyword** to <strong>keyword</strong>
       bulletContent = convertBold(bulletContent);
       html += `<ul><li>${bulletContent}</li></ul>\n`;
       continue;
     }
-    
+
     // Regular paragraphs
     let paraContent = convertBold(line);
     html += `<p>${paraContent}</p>\n`;
   }
-  
+
   // Save any pending skill row
   if (inSkills && currentCategory && currentSkills) {
     addSkillRow(currentCategory, currentSkills);
   }
-  
-  // Close skills table if still open
+
+  // Close skills table
   if (skillsTableOpen) {
     html += `</table>\n`;
   }
-  
+
   return html + `</body></html>`;
 }
 
@@ -1245,7 +1141,7 @@ function convertToStyledHTML(text) {
 async function setDocumentFormatting(documentId) {
   try {
     console.log('📐 Setting page margins and line spacing...');
-    
+
     const requests = [
       {
         updateDocumentStyle: {
