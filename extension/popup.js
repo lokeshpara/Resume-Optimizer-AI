@@ -1,19 +1,26 @@
-// Backend server URL
+// Backend server URLs
 const BACKEND_URL = 'http://localhost:3000';
+const ANALYSIS_URL = 'http://localhost:3001';
 
 // Global state to track current mode
 let currentMode = null; // 'paste' or 'url'
+let currentAction = 'optimize'; // 'analyze' or 'optimize'
 
 // Wait for DOM to be fully loaded
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
   // DOM elements - States
   const modeSelectionState = document.getElementById('modeSelectionState');
+  const actionSelectionState = document.getElementById('actionSelectionState');
   const pasteJdState = document.getElementById('pasteJdState');
   const urlModeState = document.getElementById('urlModeState');
   const loadingState = document.getElementById('loadingState');
   const successState = document.getElementById('successState');
   const errorState = document.getElementById('errorState');
   const settingsRequired = document.getElementById('settingsRequired');
+
+  // Action selection buttons
+  const selectAnalyzeMode = document.getElementById('selectAnalyzeMode');
+  const selectOptimizeMode = document.getElementById('selectOptimizeMode');
 
   // Mode selection buttons
   const selectPasteMode = document.getElementById('selectPasteMode');
@@ -51,6 +58,23 @@ document.addEventListener('DOMContentLoaded', function() {
   checkSettings();
   checkServerStatus();
 
+  // Action selection listeners
+  if (selectAnalyzeMode) {
+    selectAnalyzeMode.addEventListener('click', () => {
+      currentAction = 'analyze';
+      showState('modeSelection');
+      updateButtonTexts();
+    });
+  }
+
+  if (selectOptimizeMode) {
+    selectOptimizeMode.addEventListener('click', () => {
+      currentAction = 'optimize';
+      showState('modeSelection');
+      updateButtonTexts();
+    });
+  }
+
   // Mode selection event listeners
   if (selectPasteMode) {
     selectPasteMode.addEventListener('click', () => {
@@ -71,7 +95,7 @@ document.addEventListener('DOMContentLoaded', function() {
   if (backFromPaste) {
     backFromPaste.addEventListener('click', () => {
       currentMode = null;
-      showState('modeSelection');
+      showState('actionSelection');
       // Clear input
       if (jobDescriptionInput) jobDescriptionInput.value = '';
       if (charCount) charCount.textContent = '0';
@@ -82,14 +106,15 @@ document.addEventListener('DOMContentLoaded', function() {
   if (backFromUrl) {
     backFromUrl.addEventListener('click', () => {
       currentMode = null;
-      showState('modeSelection');
+      showState('actionSelection');
     });
   }
 
   if (backToModeSelection) {
     backToModeSelection.addEventListener('click', () => {
       currentMode = null;
-      showState('modeSelection');
+      currentAction = 'optimize';
+      showState('actionSelection');
     });
   }
 
@@ -100,75 +125,113 @@ document.addEventListener('DOMContentLoaded', function() {
   if (optimizeAnother) {
     optimizeAnother.addEventListener('click', () => {
       currentMode = null;
-      showState('modeSelection');
-      // Clear inputs
-      if (jobDescriptionInput) jobDescriptionInput.value = '';
-      if (charCount) charCount.textContent = '0';
-      if (charWarning) charWarning.style.display = 'none';
+      currentAction = 'optimize';
+      showState('actionSelection');
     });
   }
 
-  // Settings button - only the top-right icon
+  // Settings button
   if (settingsBtn) {
-    settingsBtn.addEventListener('click', openSettings);
+    settingsBtn.addEventListener('click', () => {
+      chrome.runtime.openOptionsPage();
+    });
   }
 
-  // Character counter for paste mode
+  // Character counter for job description
   if (jobDescriptionInput) {
-    jobDescriptionInput.addEventListener('input', function() {
-      const length = this.value.length;
-      
-      if (charCount) {
-        charCount.textContent = length.toLocaleString();
-        
-        // Color feedback
+    jobDescriptionInput.addEventListener('input', () => {
+      const text = jobDescriptionInput.value;
+      const length = text.length;
+
+      if (charCount) charCount.textContent = length.toLocaleString();
+
+      if (charWarning) {
         if (length < 100) {
-          charCount.style.color = '#ef4444';
-          if (charWarning) {
-            charWarning.style.display = 'inline';
-            charWarning.textContent = '⚠️ Too short (min 100 chars)';
-          }
-        } else if (length < 500) {
-          charCount.style.color = '#f59e0b';
-          if (charWarning) {
-            charWarning.style.display = 'inline';
-            charWarning.textContent = '✓ Acceptable';
-          }
+          charWarning.textContent = 'Needs at least 100 characters';
+          charWarning.style.display = 'inline';
+          charWarning.style.color = '#ef4444';
+        } else if (length < 300) {
+          charWarning.textContent = 'Consider adding more details';
+          charWarning.style.display = 'inline';
+          charWarning.style.color = '#f59e0b';
         } else {
-          charCount.style.color = '#10b981';
-          if (charWarning) {
-            charWarning.style.display = 'inline';
-            charWarning.textContent = '✓ Good length';
-          }
+          charWarning.style.display = 'none';
         }
       }
     });
+  }
+
+  // Update button texts based on current action
+  function updateButtonTexts() {
+    const pasteBtnText = document.getElementById('pasteBtnText');
+    const urlBtnText = document.getElementById('urlBtnText');
+    const loadingTitle = document.getElementById('loadingTitle');
+
+    if (currentAction === 'analyze') {
+      if (pasteBtnText) pasteBtnText.textContent = '📊 Analyze Resume';
+      if (urlBtnText) urlBtnText.textContent = '📊 Analyze Resume';
+      if (loadingTitle) loadingTitle.textContent = 'Analyzing Your Resume';
+    } else {
+      if (pasteBtnText) pasteBtnText.textContent = '⚡ Optimize Resume';
+      if (urlBtnText) urlBtnText.textContent = '⚡ Optimize Resume';
+      if (loadingTitle) loadingTitle.textContent = 'Optimizing Your Resume';
+    }
+  }
+
+  // Show specific state
+  function showState(stateName) {
+    // Map of state names to elements
+    const states = {
+      'actionSelection': actionSelectionState,
+      'modeSelection': modeSelectionState,
+      'pasteJd': pasteJdState,
+      'urlMode': urlModeState,
+      'loading': loadingState,
+      'success': successState,
+      'error': errorState,
+      'settingsRequired': settingsRequired
+    };
+
+    // Hide all states
+    Object.values(states).forEach(state => {
+      if (state) state.style.display = 'none';
+    });
+
+    // Show requested state
+    const targetState = states[stateName];
+    if (targetState) {
+      targetState.style.display = 'block';
+    }
   }
 
   // Check if settings are configured
   function checkSettings() {
-    chrome.storage.local.get(['aiProvider', 'geminiKey1', 'geminiKey2', 'geminiKey3', 'chatgptApiKey'], (result) => {
-      const { aiProvider, geminiKey1, geminiKey2, geminiKey3, chatgptApiKey } = result;
-      
-      let settingsComplete = false;
-      
-      if (aiProvider === 'gemini') {
-        settingsComplete = geminiKey1 && geminiKey2 && geminiKey3;
-        if (settingsComplete && currentProvider) {
-          currentProvider.textContent = `Gemini AI`;
-        }
-      } else if (aiProvider === 'chatgpt') {
-        settingsComplete = chatgptApiKey;
-        if (settingsComplete && currentProvider) {
-          currentProvider.textContent = `ChatGPT GPT-4`;
+    chrome.storage.local.get([
+      'aiProvider', 'geminiKey1', 'geminiKey2', 'geminiKey3',
+      'chatgptApiKey', 'chatgptKey2', 'chatgptKey3'
+    ], (result) => {
+      const provider = result.aiProvider;
+
+      // Update provider badge
+      if (currentProvider) {
+        if (provider === 'gemini') {
+          currentProvider.textContent = 'Gemini AI';
+        } else if (provider === 'chatgpt') {
+          currentProvider.textContent = 'ChatGPT';
+        } else {
+          currentProvider.textContent = 'Not configured';
         }
       }
-      
-      if (!settingsComplete) {
-        showState('settingsRequired');
-        if (currentProvider) currentProvider.textContent = 'Not configured';
+
+      // Check if keys are set
+      const hasKeys = provider === 'gemini'
+        ? (result.geminiKey1 && result.geminiKey2 && result.geminiKey3)
+        : (result.chatgptApiKey && result.chatgptKey2 && result.chatgptKey3);
+
+      if (provider && hasKeys) {
+        showState('actionSelection');
       } else {
-        showState('modeSelection');
+        showState('settingsRequired');
       }
     });
   }
@@ -176,331 +239,321 @@ document.addEventListener('DOMContentLoaded', function() {
   // Check server status
   async function checkServerStatus() {
     try {
-      const response = await fetch(`${BACKEND_URL}/health`, { timeout: 3000 });
-      if (response.ok) {
-        if (serverStatus) serverStatus.className = 'status-dot online';
-        if (serverText) serverText.textContent = 'Server online';
-      } else {
-        if (serverStatus) serverStatus.className = 'status-dot offline';
-        if (serverText) serverText.textContent = 'Server offline';
+      const [optResponse, anaResponse] = await Promise.all([
+        fetch(`${BACKEND_URL}/health`, { method: 'GET', signal: AbortSignal.timeout(5000) }).catch(() => null),
+        fetch(`${ANALYSIS_URL}/health`, { method: 'GET', signal: AbortSignal.timeout(5000) }).catch(() => null)
+      ]);
+
+      const optOk = optResponse?.ok;
+      const anaOk = anaResponse?.ok;
+
+      if (serverStatus && serverText) {
+        if (optOk && anaOk) {
+          serverStatus.style.background = '#10b981';
+          serverText.textContent = 'Both servers online';
+        } else if (optOk) {
+          serverStatus.style.background = '#f59e0b';
+          serverText.textContent = 'Optimize ready';
+        } else if (anaOk) {
+          serverStatus.style.background = '#f59e0b';
+          serverText.textContent = 'Analysis ready';
+        } else {
+          serverStatus.style.background = '#ef4444';
+          serverText.textContent = 'Servers offline';
+        }
       }
     } catch (error) {
-      if (serverStatus) serverStatus.className = 'status-dot offline';
-      if (serverText) serverText.textContent = 'Server offline - Start backend';
+      if (serverStatus && serverText) {
+        serverStatus.style.background = '#ef4444';
+        serverText.textContent = 'Servers offline';
+      }
     }
+  }
+
+  // Get current tab URL
+  async function getCurrentTabUrl() {
+    return new Promise((resolve) => {
+      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        if (tabs && tabs[0]) {
+          resolve(tabs[0].url);
+        } else {
+          resolve(null);
+        }
+      });
+    });
   }
 
   // Update current URL display
   async function updateCurrentUrl() {
-    try {
-      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-      if (currentUrl && tab && tab.url) {
-        const url = new URL(tab.url);
-        currentUrl.textContent = url.hostname;
-      }
-    } catch (error) {
-      if (currentUrl) {
-        currentUrl.textContent = 'Unable to detect current page';
-      }
+    const url = await getCurrentTabUrl();
+    if (currentUrl) {
+      currentUrl.textContent = url || 'Could not get URL';
     }
   }
 
-  // Open settings page
-  function openSettings() {
-    chrome.runtime.openOptionsPage();
-  }
-
-    // Main optimization function
-    async function optimizeResume(mode) {
-        try {
-        currentMode = mode;
-        
-        // Get current tab - ALWAYS capture URL regardless of mode
-        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-        const currentPageUrl = tab.url || 'Unknown';
-        
-        console.log(`🔗 Current page URL: ${currentPageUrl}`);
-    
-        let manualJobDescription = null;
-    
-        // Validate based on mode
-        if (mode === 'paste') {
-            manualJobDescription = jobDescriptionInput.value.trim();
-            
-            if (!manualJobDescription) {
-            showError('Please paste the job description in the text area');
-            return;
-            }
-    
-            if (manualJobDescription.length < 100) {
-            showError('Job description is too short. Please paste the complete job description (at least 100 characters).');
-            return;
-            }
-    
-            console.log(`📝 Paste mode: ${manualJobDescription.length} characters`);
-            console.log(`🔗 Will log URL: ${currentPageUrl}`);
-            
-        } else if (mode === 'url') {
-            if (!currentPageUrl || currentPageUrl.startsWith('chrome://') || currentPageUrl.startsWith('chrome-extension://')) {
-            showError('Please navigate to a job posting page first');
-            return;
-            }
-    
-            console.log(`🌐 URL mode: ${currentPageUrl}`);
-        }
-    
-        // Get saved settings
-        const settings = await chrome.storage.local.get([
-            'aiProvider', 
-            'geminiKey1', 
-            'geminiKey2', 
-            'geminiKey3', 
-            'chatgptApiKey'
-        ]);
-    
-        const { aiProvider, geminiKey1, geminiKey2, geminiKey3, chatgptApiKey } = settings;
-    
-        // Validate settings
-        if (!aiProvider) {
-            showError('Please configure your AI provider in Settings first');
-            return;
-        }
-    
-        if (aiProvider === 'gemini' && (!geminiKey1 || !geminiKey2 || !geminiKey3)) {
-            showError('Please configure all 3 Gemini API keys in Settings');
-            return;
-        }
-    
-        if (aiProvider === 'chatgpt' && !chatgptApiKey) {
-            showError('Please configure your ChatGPT API key in Settings');
-            return;
-        }
-    
-        // Show loading state
-        showState('loading');
-        
-        // Get progress bar element
-        const progressFill = document.getElementById('progressFill');
-        if (progressFill) progressFill.style.width = '0%';
-        
-        // Update loading steps based on mode
-        const steps = mode === 'paste' 
-            ? [
-                { text: 'Processing manual job description...', delay: 0, progress: 25, step: 0 },
-                { text: 'Analyzing resume vs job requirements...', delay: 8000, progress: 50, step: 1 },
-                { text: 'Generating optimization points...', delay: 15000, progress: 75, step: 2 },
-                { text: 'Creating formatted document...', delay: 25000, progress: 90, step: 3 }
-            ]
-            : [
-                { text: 'Fetching job page from URL...', delay: 0, progress: 20, step: 0 },
-                { text: 'Extracting job description...', delay: 5000, progress: 40, step: 0 },
-                { text: 'Analyzing resume vs job requirements...', delay: 13000, progress: 60, step: 1 },
-                { text: 'Generating optimization points...', delay: 20000, progress: 80, step: 2 },
-                { text: 'Creating formatted document...', delay: 30000, progress: 95, step: 3 }
-            ];
-    
-        let currentStepIndex = 0;
-        const stepInterval = setInterval(() => {
-            if (currentStepIndex < steps.length) {
-            const currentStep = steps[currentStepIndex];
-            
-            // Update loading text
-            if (loadingStep) {
-                loadingStep.textContent = currentStep.text;
-            }
-            
-            // Update progress bar
-            if (progressFill) {
-                progressFill.style.width = currentStep.progress + '%';
-            }
-            
-            // Update step indicators
-            updateProgressStep(currentStep.step);
-            
-            currentStepIndex++;
-            }
-        }, mode === 'paste' ? 8000 : 7000);
-    
-        // Prepare request body
-        const requestBody = {
-            aiProvider,
-            currentPageUrl: currentPageUrl  // NEW: Always send current page URL
-        };
-    
-        // Add appropriate content based on mode
-        if (mode === 'paste') {
-            requestBody.manualJobDescription = manualJobDescription;
-            console.log('📝 Sending manual JD + current URL');
-        } else {
-            requestBody.jobUrl = currentPageUrl;
-            console.log('🌐 Sending URL for fetching');
-        }
-    
-        // Add API keys based on provider
-        if (aiProvider === 'gemini') {
-            requestBody.geminiKey1 = geminiKey1;
-            requestBody.geminiKey2 = geminiKey2;
-            requestBody.geminiKey3 = geminiKey3;
-        } else {
-            requestBody.chatgptApiKey = chatgptApiKey;
-        }
-    
-        console.log('📤 Sending request to backend...', {
-            mode,
-            hasManualJD: !!manualJobDescription,
-            currentPageUrl: currentPageUrl,
-            aiProvider
-        });
-    
-        // Call backend API
-        const response = await fetch(`${BACKEND_URL}/api/optimize-resume`, {
-            method: 'POST',
-            headers: {
-            'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(requestBody)
-        });
-    
-        clearInterval(stepInterval);
-    
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.details || error.error || 'Server error occurred');
-        }
-    
-        const data = await response.json();
-    
-        console.log('✅ Optimization complete:', data);
-    
-        // Show success state
-        showSuccess(data);
-    
-        // Save to history
-        saveToHistory(currentPageUrl, data, mode);
-    
-        } catch (error) {
-        console.error('❌ Error:', error);
-        showError(error.message || 'Failed to optimize resume. Please try again.');
-        }
+  // Update loading step
+  function updateLoadingStep(message, progress) {
+    if (loadingStep) {
+      loadingStep.textContent = message;
     }
 
-  // Show different states
-  function showState(state) {
-    // Hide all states
-    const states = [modeSelectionState, pasteJdState, urlModeState, loadingState, successState, errorState, settingsRequired];
-    states.forEach(s => {
-      if (s) s.style.display = 'none';
+    // Update progress bar
+    const progressFill = document.getElementById('progressFill');
+    if (progressFill) {
+      progressFill.style.width = progress + '%';
+    }
+
+    // Update step indicators
+    const steps = [
+      document.getElementById('step1'),
+      document.getElementById('step2'),
+      document.getElementById('step3'),
+      document.getElementById('step4')
+    ];
+
+    const activeStep = Math.ceil(progress / 25);
+    steps.forEach((step, index) => {
+      if (step) {
+        if (index < activeStep) {
+          step.classList.add('active');
+        } else {
+          step.classList.remove('active');
+        }
+      }
     });
+  }
 
-    // Show requested state
-    switch (state) {
-      case 'modeSelection':
-        if (modeSelectionState) modeSelectionState.style.display = 'block';
-        break;
-      case 'pasteJd':
-        if (pasteJdState) pasteJdState.style.display = 'block';
-        break;
-      case 'urlMode':
-        if (urlModeState) urlModeState.style.display = 'block';
-        break;
-      case 'loading':
-        if (loadingState) loadingState.style.display = 'block';
-        break;
-      case 'success':
-        if (successState) successState.style.display = 'block';
-        break;
-      case 'error':
-        if (errorState) errorState.style.display = 'block';
-        break;
-      case 'settingsRequired':
-        if (settingsRequired) settingsRequired.style.display = 'block';
-        break;
+  // CONTINUED IN PART 2...
+  // PART 2 - Main Functions
+
+  // Handle Analysis (NEW FUNCTION)
+  async function handleAnalyze(jobDescription, jobUrl) {
+    try {
+      updateLoadingStep('Analyzing resume...', 20);
+
+      const settings = await chrome.storage.local.get([
+        'aiProvider', 'geminiKey1', 'geminiKey2', 'geminiKey3',
+        'chatgptApiKey', 'chatgptKey2', 'chatgptKey3'
+      ]);
+
+      const response = await fetch(`${ANALYSIS_URL}/api/analyze-resume`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jobUrl: jobUrl || null,
+          currentPageUrl: jobUrl || null,
+          aiProvider: settings.aiProvider,
+          geminiKey1: settings.geminiKey1,  // For Score 1
+          geminiKey2: settings.geminiKey2,  // For Score 2
+          geminiKey3: settings.geminiKey3,  // For Score 3 & 4
+          chatgptApiKey: settings.chatgptApiKey,
+          chatgptKey2: settings.chatgptKey2,
+          chatgptKey3: settings.chatgptKey3,
+          manualJobDescription: jobDescription || null
+        })
+      });
+
+      updateLoadingStep('Processing analysis...', 50);
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Analysis failed');
+      }
+
+      updateLoadingStep('Complete!', 100);
+
+      console.log('Analysis data:', data);
+
+      // Store data in chrome.storage for results page
+      await chrome.storage.local.set({ analysisResults: data });
+
+      // Open results in new tab
+      chrome.tabs.create({
+        url: chrome.runtime.getURL('results.html')
+      });
+
+      // Close popup after a moment
+      setTimeout(() => window.close(), 500);
+
+    } catch (error) {
+      console.error('Analysis error:', error);
+      showError(`Analysis failed: ${error.message}`);
+    }
+  }
+
+  // Main optimization function
+  async function optimizeResume(mode) {
+    // Validate mode
+    if (!mode) {
+      showError('Invalid mode');
+      return;
+    }
+
+    // Get job description based on mode
+    let jobDescription = null;
+    let jobUrl = null;
+
+    if (mode === 'paste') {
+      if (!jobDescriptionInput) {
+        showError('Job description input not found');
+        return;
+      }
+
+      jobDescription = jobDescriptionInput.value.trim();
+
+      if (!jobDescription) {
+        showError('Please paste a job description');
+        return;
+      }
+
+      if (jobDescription.length < 100) {
+        showError('Job description is too short. Please paste the complete description (at least 100 characters).');
+        return;
+      }
+    } else if (mode === 'url') {
+      jobUrl = await getCurrentTabUrl();
+
+      if (!jobUrl) {
+        showError('Could not get current page URL');
+        return;
+      }
+    }
+
+    // Show loading state
+    showState('loading');
+    updateLoadingStep('Preparing...', 0);
+
+    // Check if this is analysis or optimization
+    if (currentAction === 'analyze') {
+      return await handleAnalyze(jobDescription, jobUrl);
+    }
+
+    // Continue with optimization...
+    try {
+      // Step 1: Get settings
+      updateLoadingStep('Loading settings...', 10);
+
+      const settings = await chrome.storage.local.get([
+        'aiProvider', 'geminiKey1', 'geminiKey2', 'geminiKey3',
+        'chatgptApiKey', 'chatgptKey2', 'chatgptKey3'
+      ]);
+
+      if (!settings.aiProvider) {
+        throw new Error('AI provider not configured');
+      }
+
+      // Build request body
+      const requestBody = {
+        aiProvider: settings.aiProvider,
+        geminiKey1: settings.geminiKey1 || null,
+        geminiKey2: settings.geminiKey2 || null,
+        geminiKey3: settings.geminiKey3 || null,
+        chatgptApiKey: settings.chatgptApiKey || null,
+        chatgptKey2: settings.chatgptKey2 || null,
+        chatgptKey3: settings.chatgptKey3 || null,
+      };
+
+      if (mode === 'paste') {
+        requestBody.manualJobDescription = jobDescription;
+        requestBody.jobUrl = null;
+        requestBody.currentPageUrl = null;
+      } else {
+        requestBody.manualJobDescription = null;
+        requestBody.jobUrl = jobUrl;
+        requestBody.currentPageUrl = jobUrl;
+      }
+
+      // Step 2: Send request
+      updateLoadingStep('Extracting job description...', 25);
+
+      const response = await fetch(`${BACKEND_URL}/api/optimize-resume`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(requestBody)
+      });
+
+      updateLoadingStep('Analyzing requirements...', 50);
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Optimization failed');
+      }
+
+      // Step 3: Show success
+      updateLoadingStep('Creating optimized resume...', 75);
+
+      // Wait a moment
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      updateLoadingStep('Complete!', 100);
+
+      // Show success state
+      showSuccess(data);
+
+    } catch (error) {
+      console.error('Optimization error:', error);
+      showError(error.message || 'An error occurred');
     }
   }
 
   // Show success state
   function showSuccess(data) {
-    if (viewLink) viewLink.href = data.links.editInGoogleDocs;
-    if (pdfLink) pdfLink.href = data.links.downloadPDF;
-    
-    // Show tracking sheet link if available
-    const trackingSheetLink = document.getElementById('trackingSheetLink');
-    if (trackingSheetLink && data.links.trackingSheet) {
-      trackingSheetLink.href = data.links.trackingSheet;
-      trackingSheetLink.style.display = 'flex';
-    }
-    
-    const pointsText = data.optimizationPoints 
-      ? `${data.optimizationPoints} optimizations applied`
-      : 'Resume optimized successfully';
-    if (optimizationCount) optimizationCount.textContent = pointsText;
-
-    // Display filename
-    const fileNameSpan = document.getElementById('fileName');
-    if (fileNameSpan && data.fileName) {
-      fileNameSpan.textContent = data.fileName;
-    }
-
-    // Display company and position
-    const companyNameEl = document.getElementById('companyName');
-    const positionNameEl = document.getElementById('positionName');
-    
-    if (companyNameEl && data.companyName) {
-      companyNameEl.textContent = data.companyName;
-    }
-    
-    if (positionNameEl && data.position) {
-      positionNameEl.textContent = data.position;
-    }
-
-    // Animate progress bar to 100%
-    const progressFill = document.getElementById('progressFill');
-    if (progressFill) {
-      progressFill.style.width = '100%';
-    }
-
     showState('success');
+
+    // Update optimization count
+    if (optimizationCount && data.optimizationPoints) {
+      optimizationCount.textContent = `${data.optimizationPoints} optimization points applied`;
+    }
+
+    // Update company and position
+    if (data.company) {
+      const companyEl = document.getElementById('companyName');
+      if (companyEl) companyEl.textContent = data.company;
+    }
+
+    if (data.position) {
+      const positionEl = document.getElementById('positionName');
+      if (positionEl) positionEl.textContent = data.position;
+    }
+
+    // Update file name
+    if (data.fileName) {
+      const fileNameEl = document.getElementById('fileName');
+      if (fileNameEl) fileNameEl.textContent = `📄 ${data.fileName}`;
+    }
+
+    // Update links
+    if (data.links) {
+      if (viewLink && data.links.editInGoogleDocs) {
+        viewLink.href = data.links.editInGoogleDocs;
+      }
+
+      if (pdfLink && data.links.downloadPDF) {
+        pdfLink.href = data.links.downloadPDF;
+      }
+
+      // Optional: tracking sheet
+      const trackingLink = document.getElementById('trackingSheetLink');
+      if (trackingLink && data.links.trackingSheet) {
+        trackingLink.href = data.links.trackingSheet;
+        trackingLink.style.display = 'block';
+      }
+    }
   }
 
   // Show error state
   function showError(message) {
-    if (errorMessage) errorMessage.textContent = message;
     showState('error');
+
+    if (errorMessage) {
+      errorMessage.textContent = message || 'An unknown error occurred';
+    }
   }
 
-  // Update progress step indicator
-  function updateProgressStep(index) {
-    const steps = document.querySelectorAll('.step-item');
-    steps.forEach((step, i) => {
-      if (i <= index) {
-        step.classList.add('active');
-      } else {
-        step.classList.remove('active');
-      }
-    });
-  }
-
-  // Save to history
-  function saveToHistory(jobUrl, data, mode) {
-    chrome.storage.local.get(['history'], (result) => {
-      const history = result.history || [];
-      history.unshift({
-        jobUrl: mode === 'paste' ? 'Manual JD Input' : jobUrl,
-        timestamp: new Date().toISOString(),
-        documentId: data.documentId,
-        fileName: data.fileName,
-        links: data.links,
-        aiProvider: data.aiProvider,
-        contentSource: data.contentSource,
-        optimizationPoints: data.optimizationPoints,
-        mode: mode
-      });
-      
-      if (history.length > 50) {
-        history.pop();
-      }
-      
-      chrome.storage.local.set({ history });
-    });
-  }
 });
+
+// END OF FILE

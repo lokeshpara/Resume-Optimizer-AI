@@ -45,7 +45,7 @@ async function generateWithGemini(prompt, apiKey) {
         console.log('🔑 Using Gemini for analysis...');
         const genAI = new GoogleGenerativeAI(apiKey);
         const model = genAI.getGenerativeModel({
-            model: 'gemini-1.5-flash',
+            model: 'gemini-2.0-flash',
             generationConfig: {
                 temperature: 0.7,
                 maxOutputTokens: 8192
@@ -137,8 +137,12 @@ app.post('/api/analyze-resume', async (req, res) => {
             jobUrl,
             currentPageUrl,
             aiProvider,
-            geminiKey1,
+            geminiKey1,      // For Score 1 & extraction
+            geminiKey2,      // For Score 2
+            geminiKey3,      // For Score 3 & 4
             chatgptApiKey,
+            chatgptKey2,
+            chatgptKey3,
             manualJobDescription
         } = req.body;
 
@@ -152,8 +156,15 @@ app.post('/api/analyze-resume', async (req, res) => {
             });
         }
 
-        const apiKey = aiProvider === 'gemini' ? geminiKey1 : chatgptApiKey;
-        if (!apiKey) {
+        // Select API keys for different operations (avoid rate limits)
+        const extractionKey = aiProvider === 'gemini' ? geminiKey1 : chatgptApiKey;
+        const score1Key = aiProvider === 'gemini' ? geminiKey1 : chatgptApiKey;
+        const score2Key = aiProvider === 'gemini' ? geminiKey2 : (chatgptKey2 || chatgptApiKey);
+        const score3Key = aiProvider === 'gemini' ? geminiKey3 : (chatgptKey3 || chatgptApiKey);
+        const score4Key = aiProvider === 'gemini' ? geminiKey3 : chatgptApiKey; // Reuse key3
+
+        // Validate we have at least one key
+        if (!extractionKey) {
             return res.status(400).json({ error: 'API key required' });
         }
 
@@ -176,7 +187,7 @@ ${jobResponse.data}
 
 Return only the job description text.`;
 
-                jobDescription = await generateAIContent(extractPrompt, aiProvider, apiKey);
+                jobDescription = await generateAIContent(extractPrompt, aiProvider, extractionKey);
                 console.log('✅ JD extracted');
             } catch (error) {
                 console.log('⚠️ URL fetch failed, using manual JD if provided');
@@ -224,7 +235,7 @@ EXPERIENCE MATCH: [0-100]
 OVERALL BREAKDOWN:
 [Detailed explanation of the score]`;
 
-        const score1Response = await generateAIContent(score1Prompt, aiProvider, apiKey);
+        const score1Response = await generateAIContent(score1Prompt, aiProvider, score1Key);
         const score1 = parseInt(score1Response.match(/SCORE:\s*(\d+)/)?.[1] || '0');
         console.log(`✅ Resume-JD Match: ${score1}%`);
 
@@ -264,7 +275,7 @@ RESPONSIBILITIES MATCH: [0-100]
 OVERALL BREAKDOWN:
 [Detailed explanation of how well experience fits the role]`;
 
-        const score2Response = await generateAIContent(score2Prompt, aiProvider, apiKey);
+        const score2Response = await generateAIContent(score2Prompt, aiProvider, score2Key);
         const score2 = parseInt(score2Response.match(/SCORE:\s*(\d+)/)?.[1] || '0');
         console.log(`✅ Experience-Role Fit: ${score2}%`);
 
@@ -298,7 +309,7 @@ ESTIMATED IMPACT:
 OVERALL BREAKDOWN:
 [Explain the potential after optimization]`;
 
-        const score3Response = await generateAIContent(score3Prompt, aiProvider, apiKey);
+        const score3Response = await generateAIContent(score3Prompt, aiProvider, score3Key);
         const score3 = parseInt(score3Response.match(/SCORE:\s*(\d+)/)?.[1] || '0');
         console.log(`✅ Post-Optimization Potential: ${score3}%`);
 
@@ -310,7 +321,7 @@ ${jobDescription.substring(0, 1000)}
 
 Return ONLY the company name, nothing else.`;
 
-        const companyName = (await generateAIContent(companyPrompt, aiProvider, apiKey)).trim();
+        const companyName = (await generateAIContent(companyPrompt, aiProvider, extractionKey)).trim();
         console.log(`✅ Company: ${companyName}`);
 
         // SCORE 4: Selection Probability Score
@@ -367,7 +378,7 @@ COMPETITION LEVEL: [0-100]
 OVERALL BREAKDOWN:
 [Detailed explanation of selection probability considering all factors]`;
 
-        const score4Response = await generateAIContent(score4Prompt, aiProvider, apiKey);
+        const score4Response = await generateAIContent(score4Prompt, aiProvider, score4Key);
         const score4 = parseInt(score4Response.match(/SCORE:\s*(\d+)/)?.[1] || '0');
         console.log(`✅ Selection Probability: ${score4}%`);
 

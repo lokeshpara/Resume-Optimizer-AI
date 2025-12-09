@@ -308,6 +308,8 @@ app.post('/api/optimize-resume', async (req, res) => {
       geminiKey2,
       geminiKey3,
       chatgptApiKey,
+      chatgptKey2,
+      chatgptKey3,
       manualJobDescription
     } = req.body;
 
@@ -388,7 +390,7 @@ app.post('/api/optimize-resume', async (req, res) => {
               'Accept-Language': 'en-US,en;q=0.9',
               'Connection': 'keep-alive'
             },
-            timeout: 30000,
+            timeout: 40000,
             maxRedirects: 5,
             maxContentLength: Infinity,
             maxBodyLength: Infinity
@@ -431,6 +433,8 @@ HTML:
 ${jobResponse.data}`;
 
       const extractionKey = aiProvider === 'gemini' ? geminiKey1 : chatgptApiKey;
+      const analysisKey = aiProvider === 'gemini' ? geminiKey2 : (chatgptKey2 || chatgptApiKey);
+      const rewriteKey = aiProvider === 'gemini' ? geminiKey3 : (chatgptKey3 || chatgptApiKey);
 
       try {
         jobDescription = await generateAIContent(jdPrompt, aiProvider, extractionKey);
@@ -484,62 +488,84 @@ ${jobDescription}
 YOUR MISSION:
 Analyze EVERY section of the resume and generate specific, actionable optimization points that guarantee a 92–100% ATS match.
 
-No limits. Produce as many points as needed.
+No limits. Produce as many points but don't produce less than 20 points produce more points as needed.
+
+
+----------------------------------------------------
+===== GLOBAL BOLDING RULES (CRITICAL) =====
+----------------------------------------------------
+• ALL JD keywords and JD skills MUST be bolded in ALL sections:
+  – Summary
+  – Skills
+  – Experience
+• Do NOT bold unrelated terms.
+• Bold EXACT matches or closely related skill phrases.
 
 ----------------------------------------------------
 ===== SUMMARY SECTION ANALYSIS (MANDATORY FORMAT) =====
 ----------------------------------------------------
 
-REQUIREMENTS:
+UPDATED SUMMARY RULES (CRITICAL):
 • Summary MUST remain in bullet format using "•"
-• Add, modify, or expand bullets to match JD keywords
-• Each point must specify WHAT to add, WHERE to add it, and WHY
+• EACH summary bullet MUST be a full, professional sentence — NOT a short JD keyword
+• Do NOT generate any short or fragment bullets
+• Every added bullet must include:
+  – metrics
+  – scale
+  – reliability
+  – performance impact
+  – distributed system context
+  – cloud or event-driven experience when relevant
+• New bullets must incorporate JD keywords but as part of complete sentences
 
 SUMMARY POINT FORMAT:
 
 POINT X:
 Section: Summary
-What: Add specific keyword/phrase (exact text to paste)
+What: A FULL rewritten bullet (a complete sentence containing JD keywords, achievements, metrics)
 Where: Summary Bullet X (or “Add new bullet”)
 Why: JD requirement OR ATS score improvement
-Scale: Rate the importance 1–10
+Scale: Importance 1-10
 
 EXAMPLE:
 POINT 1:
 Section: Summary
-What: Add “Spring Cloud”, “API Gateway”, “Eureka”
-Where: Summary Bullet 2
-Why: These are listed in JD and critical for ATS score
-Scale: 10
+What: Add a complete bullet such as:
+"• Delivered distributed, low-latency services across microservice architectures, improving system responsiveness by over 40% while supporting millions of user interactions."
+Where: Add new bullet
+Why: JD requires low-latency, high-reliability systems
+Scale: 1-10
 
-Generate EVERY missing keyword from JD and align it to an exact bullet.
 
 ----------------------------------------------------
 ===== HARD SKILLS OUTPUT FORMAT RULE (CRITICAL) =====
 ----------------------------------------------------
 
-Your output MUST generate the SKILLS section in a STRICT pipe-table format EXACTLY as shown below:
+Your output MUST generate optimization points that enforce the SKILLS section in the EXACT pipe-table format:
 
 SKILLS
 
- Category Name               | Skill1, Skill2, Skill3, ...                                                               
- Category Name               | Skill1, Skill2, Skill3, ...                                                               
+ Category Name               | Skill1, Skill2, Skill3, ...
+ Category Name               | Skill1, Skill2, Skill3, ...
 
-RULES:
+STRICT RULES:
 1. Every row MUST follow the format:
    | Category Name | comma-separated skills |
-2. NO bullets, NO markdown tables, NO multiline wrapping inside rows.
-3. Category name ALWAYS on the left, skills ALWAYS on the right.
-4. JD skills MUST be bolded using **double-asterisks**.
-5. Each category is ONE row only.
-6. Skills must NOT spill to the next line.
-7. Do NOT add extra paragraphs or spacing inside the table.
+2. NO bullets, NO markdown tables, NO line breaks.
+3. Category name ALWAYS on the left.
+4. Skills ALWAYS on the right.
+5. ALL JD keywords and JD skills MUST be bolded using **double-asterisks** across the entire resume:
+   – Summary
+   – Skills
+   – Experience
+6. Bolding of JD keywords is automatic and does NOT require optimization point instructions.
+7. One row per category.
 
 ----------------------------------------------------
 ===== SKILLS SECTION ANALYSIS (GENERATE POINTS) =====
 ----------------------------------------------------
 
-For each skill category:
+For each skill category, generate:
 
 TYPE 1 - ADD SKILL  
 What: Skill name  
@@ -550,18 +576,21 @@ Why: Required for ATS
 
 TYPE 2 - DELETE SKILL  
 What: Skill name  
-Where: Category Name  
 Why: Outdated or irrelevant to JD
 
 TYPE 3 - MODIFY/BOLD SKILL  
 What: Skill name  
 Where: Category Name  
-Why: Mentioned in JD and must appear bold
+Why: Mentioned in JD and must appear bold (in Skills table ONLY)
 
 TYPE 4 - REORDER SKILL  
 What: Skill name  
-Where: Category Name  
-Why: JD-important skills must appear first
+Why: JD-important skills should appear first
+
+TYPE 5 - MERGE CATEGORY  
+What: Merge category A into category B  
+How: List skills moving  
+Why: JD expects combined category
 
 EXAMPLE:
 POINT 12:
@@ -573,18 +602,15 @@ Position: Beginning
 Bold: YES
 Why: JD requires PostgreSQL
 
-Generate:  
-✓ All additions  
-✓ All deletions  
-✓ All reorderings  
-✓ All bolding updates  
-✓ All category merges if needed  
-
 ----------------------------------------------------
 ===== EXPERIENCE SECTION ANALYSIS =====
 ----------------------------------------------------
 
-For EACH COMPANY and EACH BULLET, generate improvements by reading INPUT JOB DESCRIPTION and whichever things bold make sure add in experience section too.
+UPDATED EXPERIENCE RULES:
+• DO NOT generate tiny keyword-only additions
+• Every update MUST be a meaningful phrase added to a bullet
+• MUST integrate JD keywords in a natural, metric-oriented way
+• ALL JD keywords and JD skills MUST be bolded automatically inside every Experience bullet.
 
 EXPERIENCE POINT FORMAT:
 
@@ -592,22 +618,20 @@ POINT X:
 Section: Experience
 Company: [Company Name]
 Bullet: X
-What: Exact phrase(s) to add (metrics + JD keywords)
+What: Insert a complete enhancement phrase (NOT just keywords). Include JD terms but in full, meaningful context.
 Where: Insert location (beginning / after phrase / end)
-Bold: List all skills that must be bolded
-Why: Required by JD OR boosts ATS
+Bold: List exact JD keywords that must be bolded in this bullet (ALL JD keywords must be bolded automatically)
+Why: JD requirement OR ATS boost
 
 EXAMPLE:
 POINT 17:
 Section: Experience
 Company: LPL Financial
 Bullet: 1
-What: Add “Spring Cloud”, “API Gateway”, “Eureka”
+What: Add “delivered low-latency, high-reliability services improving responsiveness by 40%”
 Where: After “Spring Boot microservices”
-Bold: Spring Boot, microservices, Spring Cloud, API Gateway, Eureka
-Why: Required distributed systems skills in JD
-
-Create 40–60+ points if needed.
+Bold: low-latency, high-reliability (ONLY if required)
+Why: JD emphasizes low-latency and reliability
 
 ----------------------------------------------------
 ===== CONSOLIDATION / MERGING =====
@@ -617,8 +641,8 @@ POINT FORMAT:
 Section: Skills
 Type: MERGE
 What: Merge Category A into Category B
-How: Explicit list of moves
-Why: Category has too few skills OR JD expects combined category
+How: List specific moves
+Why: JD expects these categories to be combined
 
 ----------------------------------------------------
 ===== FILENAME SUGGESTION =====
@@ -628,16 +652,17 @@ OUTPUT:
 FILENAME: Lokesh_Para_[Position]_[Company]
 
 ----------------------------------------------------
-===== OUTPUT FORMAT FOR THIS OPTIMIZATION PROMPT =====
+===== OUTPUT FORMAT =====
 ----------------------------------------------------
 
-Return ONLY optimization points in this format:
+Return ONLY optimization points in this EXACT format:
 
 POINT 1:
 Section: Summary
 What: ...
 Where: ...
 Why: ...
+Bold: Yes/No
 Scale: 1–10
 
 POINT 2:
@@ -655,16 +680,16 @@ Company: ...
 Bullet: ...
 What: ...
 Where: ...
-Bold: ...
+Bold: Yes/No
 Why: ...
 
-Continue generating points until ALL JD-related keywords, architecture styles, cloud, devops, databases, microservices patterns, and soft requirements are covered.
+Continue generating points until ALL JD-related keywords, architecture styles, cloud services, performance requirements, databases, event streaming, testing, monitoring, and soft skills are fully covered.
 
 GOAL:
-Cover EVERY missing keyword from JD and generate the maximum possible ATS alignment (92–100%).
+Maximize ATS alignment (92–100%) by covering EVERY missing keyword from the JD with complete, professional bullet sentences — never short fragments.
 `;
 
-    const analysisKey = aiProvider === 'gemini' ? geminiKey2 : chatgptApiKey;
+    const analysisKey = aiProvider === 'gemini' ? geminiKey2 : (chatgptKey2 || chatgptApiKey);
     const optimizationPoints = await generateAIContent(optimizationPrompt, aiProvider, analysisKey);
     const pointCount = (optimizationPoints.match(/POINT \d+:/g) || []).length;
     console.log(`✅ Generated ${pointCount} optimization points`);
@@ -701,57 +726,77 @@ INPUT JOB DESCRIPTION:
 ${jobDescription}
 ===========================
 
-===== RULES FOR REWRITING =====
+===== GLOBAL RULES FOR REWRITING =====
 
 1. Maintain EXACT original resume structure.
 2. Apply EVERY optimization point without exception.
-3. Bold ALL JD keywords using **double-asterisks**.
-4. Preserve all metrics, responsibilities, and layout.
-5. DO NOT change the name, title, or contact information.
-6. SKILLS SECTION MUST FOLLOW THE EXACT PIPE TABLE FORMAT:
+3. Bold ALL JD keywords and JD skill terms automatically across the entire resume:
+   – Summary
+   – Skills
+   – Experience
+4. Bolding is automatic and does NOT require optimization point instructions. 
+   Only skip bolding if an optimization point explicitly says NOT to bold a term.
+5. Preserve all metrics, achievements, and section order.
+6. Do NOT change name, title, or contact information.
+
+----------------------------------------------------
+===== SUMMARY REWRITE RULES =====
+----------------------------------------------------
+• Summary MUST be a list of “•” bullets.
+• Each bullet MUST be a full, detailed, professional sentence.
+• ABSOLUTELY NO short keyword bullets.
+• Every added bullet must express:
+  – distributed systems
+  – low latency
+  – high reliability
+  – scale
+  – performance improvements
+  – collaboration
+  – cloud or event-driven architecture (when relevant)
+• Writing style must match a senior-level Fortune 500 resume.
+
+----------------------------------------------------
+===== SKILLS REWRITE RULES (CRITICAL) =====
+----------------------------------------------------
+
+SKILLS SECTION MUST FOLLOW EXACTLY:
 
 SKILLS
 
-Category Name               | Skill1, Skill2, Skill3, ...                                                                
-Category Name               | Skill1, Skill2, Skill3, ...                                                                
+Category Name               | Skill1, Skill2, Skill3, ...
+Category Name               | Skill1, Skill2, Skill3, ...
 
-If the skills appear in ANY other format, REWRITE them to match this exact layout.
+STRICT:
+• One line per category.
+• No wrapping to new lines.
+• JD skills MUST be bolded ONLY here.
+• No bolding outside Skills unless explicitly instructed.
 
-7. SUMMARY MUST BE bullet points starting with “•”.
-8. EXPERIENCE bullets must remain bullets starting with “•”.
-9. Every optimization point must be applied to the correct bullet, category, or section.
+----------------------------------------------------
+===== EXPERIENCE REWRITE RULES =====
+----------------------------------------------------
 
-===== HOW TO HANDLE SUMMARY =====
-• Start from original bullets  
-• For each optimization point: add, enhance, or rewrite bullets  
-• Bold all JD keywords  
-• Add new bullets when specified  
-• KEEP all bullets detailed and metric-driven
-
-===== HOW TO HANDLE SKILLS (CRITICAL) =====
-• Build table EXACTLY in pipe format  
-• JD skills FIRST and bolded  
-• Non-JD skills AFTER  
-• One row per category  
-• No line breaks inside rows  
-• No bullets, no markdown tables, no hyphens
-
-===== HOW TO HANDLE EXPERIENCE =====
 For each optimization point:
-• Find the exact bullet  
-• Add the new keywords/phrases  
-• Bold all JD terms  
-• Insert enhancements exactly where instructed  
-• Preserve metrics and clarity  
+• Locate the exact bullet and integrate enhancements naturally.
+• Add complete phrases (not short keywords).
+• Preserve metrics and meaning.
+• Only bold when optimization point requires.
 
+----------------------------------------------------
+===== EDUCATION SECTION =====
+---------------------------------------------------
+
+----------------------------------------------------
 ===== FINAL OUTPUT =====
+----------------------------------------------------
+
 Return ONLY the fully rewritten resume in its final, polished form.
 
 Do NOT return explanations.
 `;
 
 
-    const rewriteKey = aiProvider === 'gemini' ? geminiKey3 : chatgptApiKey;
+    const rewriteKey = aiProvider === 'gemini' ? geminiKey3 : (chatgptKey3 || chatgptApiKey);
     const optimizedResume = await generateAIContent(rewritePrompt, aiProvider, rewriteKey);
     console.log(`✅ Resume rewritten (${optimizedResume.length} chars)`);
     console.log(`Rewrite resume ======> ${optimizedResume}`);
@@ -869,10 +914,32 @@ function convertToStyledHTML(text) {
   .title{font-size:12pt;font-weight:bold;text-align:center;margin-bottom:2pt}
   .contact{font-size:10pt;text-align:center;margin-bottom:12pt}
   .section-header{font-size:14pt;font-weight:bold;margin-top:12pt;margin-bottom:6pt}
-  .skills-table{width:100%;border-collapse:collapse;margin-top:6pt;margin-bottom:12pt}
-  .skills-table td{padding:4pt 8pt;vertical-align:top;border:none}
-  .skills-category{font-weight:bold;width:25%;font-size:10.5pt}
-  .skills-list{width:75%;font-size:10.5pt}
+  .skills-table{
+  width:100%;
+  border-collapse:collapse;
+  margin-top:6pt;
+  margin-bottom:12pt;
+  border:1pt solid #000;
+}
+
+.skills-table td{
+  padding:6pt 10pt;
+  vertical-align:top;
+  border:1pt solid #000;
+}
+
+.skills-category{
+  font-weight:bold;
+  width:28%;
+  font-size:10.5pt;
+  background:#f7f7f7;
+}
+
+.skills-list{
+  width:72%;
+  font-size:10.5pt;
+}
+
   .company-header{font-size:11.5pt;font-weight:bold;margin-top:8pt;margin-bottom:4pt}
   p{margin:4pt 0;text-align:justify}
   ul{margin:2pt 0;padding-left:0.25in}

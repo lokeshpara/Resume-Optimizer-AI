@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Resume Analysis Results</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 30px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        .company-info {
+            padding: 20px 40px;
+            background: #f8f9fa;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .company-info h2 {
+            font-size: 20px;
+            color: #333;
+        }
+
+        .scores-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            padding: 40px;
+        }
+
+        .score-card {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+            transition: transform 0.3s;
+        }
+
+        .score-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .score-card .icon {
+            font-size: 40px;
+            margin-bottom: 10px;
+        }
+
+        .score-card .label {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .score-card .score {
+            font-size: 48px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .score-card .score.excellent {
+            color: #28a745;
+        }
+
+        .score-card .score.good {
+            color: #17a2b8;
+        }
+
+        .score-card .score.moderate {
+            color: #ffc107;
+        }
+
+        .score-card .score.low {
+            color: #dc3545;
+        }
+
+        .score-card .indicator {
+            font-size: 20px;
+        }
+
+        .summary-section {
+            padding: 40px;
+            background: #f0f4ff;
+        }
+
+        .summary-section h3 {
+            font-size: 20px;
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .avg-score {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .avg-score .number {
+            font-size: 64px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .avg-score .label {
+            font-size: 18px;
+            color: #666;
+        }
+
+        .recommendation {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .recommendation h4 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .strengths,
+        .improvements {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .strengths h4 {
+            color: #28a745;
+            margin-bottom: 10px;
+        }
+
+        .improvements h4 {
+            color: #dc3545;
+            margin-bottom: 10px;
+        }
+
+        ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        ul li {
+            padding: 8px 0;
+            padding-left: 25px;
+            position: relative;
+        }
+
+        ul li::before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #28a745;
+            font-weight: bold;
+        }
+
+        .improvements ul li::before {
+            content: "→";
+            color: #dc3545;
+        }
+
+        .detailed-reports {
+            padding: 40px;
+        }
+
+        .detailed-reports h3 {
+            font-size: 24px;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .report-card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .report-card h4 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+
+        .report-card pre {
+            background: white;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            font-size: 12px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .actions {
+            padding: 40px;
+            text-align: center;
+            border-top: 2px solid #e0e0e0;
+        }
+
+        .actions button {
+            padding: 15px 40px;
+            font-size: 16px;
+            font-weight: 600;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            margin: 0 10px;
+            transition: all 0.3s;
+        }
+
+        .optimize-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .optimize-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .download-btn {
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+
+        .download-btn:hover {
+            background: #f0f4ff;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>📊 Resume Analysis Results</h1>
+            <p>Comprehensive 4-Score Analysis</p>
+        </div>
+
+        <!-- Company Info -->
+        <div class="company-info">
+            <h2 id="companyName">Loading...</h2>
+        </div>
+
+        <!-- Scores Grid -->
+        <div class="scores-grid">
+            <div class="score-card">
+                <div class="icon">📄</div>
+                <div class="label">Resume-JD Match</div>
+                <div class="score" id="score1">--</div>
+                <div class="indicator" id="indicator1">--</div>
+            </div>
+
+            <div class="score-card">
+                <div class="icon">💼</div>
+                <div class="label">Experience-Role Fit</div>
+                <div class="score" id="score2">--</div>
+                <div class="indicator" id="indicator2">--</div>
+            </div>
+
+            <div class="score-card">
+                <div class="icon">🚀</div>
+                <div class="label">Post-Optimization</div>
+                <div class="score" id="score3">--</div>
+                <div class="indicator" id="indicator3">--</div>
+            </div>
+
+            <div class="score-card">
+                <div class="icon">🎯</div>
+                <div class="label">Selection Probability</div>
+                <div class="score" id="score4">--</div>
+                <div class="indicator" id="indicator4">--</div>
+            </div>
+        </div>
+
+        <!-- Summary Section -->
+        <div class="summary-section">
+            <h3>Overall Analysis</h3>
+
+            <div class="avg-score">
+                <div class="number" id="avgScore">--</div>
+                <div class="label">Average Score</div>
+            </div>
+
+            <div class="recommendation">
+                <h4>💡 Recommendation</h4>
+                <p id="recommendation">Loading...</p>
+            </div>
+
+            <div class="strengths">
+                <h4>✅ Strengths</h4>
+                <ul id="strengthsList">
+                    <li>Loading...</li>
+                </ul>
+            </div>
+
+            <div class="improvements">
+                <h4>🎯 Areas for Improvement</h4>
+                <ul id="improvementsList">
+                    <li>Loading...</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Detailed Reports -->
+        <div class="detailed-reports">
+            <h3>📝 Detailed Analysis Reports</h3>
+
+            <div class="report-card">
+                <h4>1. Resume-JD Match Analysis</h4>
+                <pre id="report1">Loading...</pre>
+            </div>
+
+            <div class="report-card">
+                <h4>2. Experience-Role Fit Analysis</h4>
+                <pre id="report2">Loading...</pre>
+            </div>
+
+            <div class="report-card">
+                <h4>3. Post-Optimization Potential</h4>
+                <pre id="report3">Loading...</pre>
+            </div>
+
+            <div class="report-card">
+                <h4>4. Selection Probability Analysis</h4>
+                <pre id="report4">Loading...</pre>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="actions">
+            <button class="optimize-btn" onclick="optimizeNow()">
+                🚀 Optimize Resume Now
+            </button>
+            <button class="download-btn" onclick="downloadReport()">
+                📥 Download PDF Report
+            </button>
+        </div>
+    </div>
+
+    <script src="results.js"></script>
+</body>
+
+</html>
