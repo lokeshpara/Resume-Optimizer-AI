@@ -73,7 +73,7 @@ async function generateWithGemini(prompt, apiKey) {
 async function generateWithChatGPT(prompt, apiKey) {
   try {
     const response = await axios.post('https://api.openai.com/v1/chat/completions', {
-      model: 'gpt-4o',
+      model: 'gpt-4.1-mini',
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.7,
       max_tokens: 4000
@@ -234,6 +234,75 @@ async function extractJobDetails(jobDescription, aiProvider, apiKey) {
     console.error('❌ Failed to extract job details:', error.message);
     console.error('Error stack:', error.stack);
     return { company: 'N/A', position: 'N/A' };
+  }
+}
+
+// Helper: AI-powered ATS detection and strategy
+async function detectATSAndStrategy(jobUrl, jobDescription, aiProvider, apiKey) {
+  try {
+    console.log('🤖 AI analyzing job portal and creating optimization strategy...');
+
+    const detectionPrompt = `You are an expert ATS (Applicant Tracking System) analyst. Analyze this job posting and determine the best optimization strategy.
+
+JOB URL: ${jobUrl || 'Manual Input - No URL provided'}
+
+JOB DESCRIPTION:
+${jobDescription.substring(0, 4000)}
+
+YOUR TASK:
+1. Detect which ATS/job portal system this is (Workday, Greenhouse, Lever, LinkedIn, Indeed, Taleo, company career page, etc.)
+2. Understand that portal's scoring algorithm and preferences
+3. Create a winning strategy to achieve 100% match and get shortlisted
+
+ANALYZE:
+- URL patterns and domain
+- Job description formatting and structure
+- Application portal indicators
+- Company size and typical ATS choice
+- Any mentions of application systems in footer/header
+- Portal-specific features (Easy Apply, Quick Apply, etc.)
+
+RESPOND IN THIS FORMAT:
+
+PORTAL: [Name of the ATS/portal system]
+
+PORTAL_TYPE: [Workday / Greenhouse / Lever / LinkedIn / Indeed / Taleo / Custom Career Page / Other]
+
+CONFIDENCE: [High / Medium / Low]
+
+ALGORITHM_INSIGHTS:
+[Explain how this portal's AI/algorithm scores resumes - what does it prioritize? Keywords? Metrics? Experience? Format?]
+
+WINNING_STRATEGY:
+[Detailed strategy on how to optimize resume specifically for THIS portal to guarantee shortlisting - be specific about what works best for this system]
+
+CRITICAL_SUCCESS_FACTORS:
+[List 5-7 most important things that will make resume score 100% on this portal]
+
+AVOID:
+[What NOT to do for this specific portal]
+
+Think deeply and give your absolute best analysis. A candidate's career depends on this!`;
+
+    const analysis = await generateAIContent(detectionPrompt, aiProvider, apiKey);
+    console.log('✅ AI ATS Analysis Complete');
+    console.log('📊 Analysis:\n', analysis);
+
+    // Extract portal name from response
+    const portalMatch = analysis.match(/PORTAL:\s*(.+?)(?:\n|$)/i);
+    const portalName = portalMatch ? portalMatch[1].trim() : 'Job Portal';
+
+    return {
+      portalName: portalName,
+      fullAnalysis: analysis
+    };
+
+  } catch (error) {
+    console.log('⚠️ ATS detection failed:', error.message);
+    return {
+      portalName: 'Job Portal',
+      fullAnalysis: 'Unable to detect specific portal. Optimizing for universal ATS compatibility.'
+    };
   }
 }
 
@@ -453,14 +522,6 @@ ${jobResponse.data}`;
     console.log(`\n📊 CONTENT SOURCE: ${contentSource}`);
     console.log(`📝 Final JD length: ${jobDescription.length.toLocaleString()} characters\n`);
 
-    // Step 3: Get original resume
-    console.log('📋 Step 3: Fetching original resume...');
-    const resumeDoc = await docs.documents.get({
-      documentId: ORIGINAL_RESUME_DOC_ID
-    });
-    const originalResume = extractTextFromDoc(resumeDoc.data);
-    console.log(`✅ Resume fetched (${originalResume.length} chars)`);
-
     // Step 3.5: Extract company and position
     console.log('🔍 Step 3.5: Extracting job details...');
     const extractionKey = aiProvider === 'gemini' ? geminiKey1 : chatgptApiKey;
@@ -472,10 +533,31 @@ ${jobResponse.data}`;
     console.log(`   🏢 Company: ${companyName}`);
     console.log(`   💼 Position: ${position}\n`);
 
-    // Step 4: Generate optimization points
-    console.log('💡 Step 4: Generating optimization points...');
+    // Step 3.6: AI-powered ATS detection and strategy
+    console.log('🤖 Step 3.6: AI analyzing job portal and creating strategy...');
+    const atsAnalysis = await detectATSAndStrategy(
+      jobPostUrl,
+      jobDescription,
+      aiProvider,
+      extractionKey
+    );
 
-    const optimizationPrompt = `You are an expert ATS analyzer. Generate UNLIMITED, DETAILED optimization points to achieve 92–100% ATS match.
+    console.log(`\n🎯 Portal Analysis:`);
+    console.log(`   📱 Portal: ${atsAnalysis.portalName}`);
+    console.log(`   📊 Strategy Created\n`);
+
+    // Step 4: Get original resume
+    console.log('📋 Step 4: Fetching original resume...');
+    const resumeDoc = await docs.documents.get({
+      documentId: ORIGINAL_RESUME_DOC_ID
+    });
+    const originalResume = extractTextFromDoc(resumeDoc.data);
+    console.log(`✅ Resume fetched (${originalResume.length} chars)`);
+
+    // Step 5: Generate optimization points
+    console.log('💡 Step 5: Generating optimization points...');
+
+    const optimizationPrompt = `You are an expert ATS analyzer. Generate 20 to 35+ HIGH-QUALITY optimization points to achieve a 100% ATS match.
 
 ===========================
 INPUT RESUME:
@@ -483,65 +565,124 @@ ${originalResume}
 
 INPUT JOB DESCRIPTION:
 ${jobDescription}
+
+PORTAL ANALYSIS & WINNING STRATEGY:
+${atsAnalysis.fullAnalysis}
 ===========================
 
 YOUR MISSION:
-Analyze EVERY section of the resume and generate specific, actionable optimization points that guarantee a 92–100% ATS match.
+Analyze EVERY section of the resume and generate specific, actionable optimization points.
+Generate AS MANY points as needed to achieve 100% ATS match.
+Each point MUST be concise, targeted, and aligned to the JD.
+This candidate is applying through ${atsAnalysis.portalName}. Your job is to create the PERFECT resume that will:
+1. Score 100% match with the job description
+2. Get prioritized by ${atsAnalysis.portalName}'s algorithm
+3. Guarantee the candidate gets shortlisted from hundreds of applicants
 
-No limits. Produce as many points but don't produce less than 20 points produce more points as needed.
+GENERATE AS MANY OPTIMIZATION POINTS AS NEEDED (no limit - could be 30, 50, or even 70+ points if that's what it takes to win).
 
+====================================================
+===== CRITICAL SUCCESS REQUIREMENTS =====
+====================================================
+
+1. 100% JD ALIGNMENT
+   - Every single keyword from JD must appear in resume
+   - Every required skill must be present AND proven with experience
+   - Match the JD's language, terminology, and phrasing style
+
+2. PORTAL-SPECIFIC OPTIMIZATION
+   - Use the portal analysis above to optimize specifically for ${atsAnalysis.portalName}
+   - Understand what ${atsAnalysis.portalName}'s algorithm prioritizes
+   - Adapt your strategy based on the WINNING_STRATEGY section above
+   - Focus on the CRITICAL_SUCCESS_FACTORS identified above
+
+3. MISSING SKILLS INTEGRATION (CRITICAL)
+   For EVERY skill in JD that's missing from resume:
+   - Add to Skills section
+   - Create realistic Experience bullet showing actual usage
+   - Include believable metrics (30-50% improvements)
+   - Place in most logical company/project context
+   - Make it interview-ready
 
 ----------------------------------------------------
-===== GLOBAL BOLDING RULES (CRITICAL) =====
-----------------------------------------------------
-• ALL JD keywords and JD skills MUST be bolded in ALL sections:
-  – Summary
-  – Skills
-  – Experience
-• Do NOT bold unrelated terms.
-• Bold EXACT matches or closely related skill phrases.
-
-----------------------------------------------------
-===== SUMMARY SECTION ANALYSIS (MANDATORY FORMAT) =====
+===== MISSING SKILLS RULE (CRITICAL) =====
 ----------------------------------------------------
 
-UPDATED SUMMARY RULES (CRITICAL):
-• Summary MUST remain in bullet format using "•"
-• EACH summary bullet MUST be a full, professional sentence — NOT a short JD keyword
-• Do NOT generate any short or fragment bullets
-• Every added bullet must include:
-  – metrics
-  – scale
-  – reliability
-  – performance impact
-  – distributed system context
-  – cloud or event-driven experience when relevant
-• New bullets must incorporate JD keywords but as part of complete sentences
+For EVERY skill mentioned in the JD that is NOT in the resume (Make sure to add all missing skills):
+
+STEP 1: Add that skill to the Skills section
+STEP 2: Create a corresponding Experience enhancement point
+
+REQUIREMENTS:
+- Find the most realistic place in Experience section to add this skill
+- Add a strong bullet showing actual usage with impact metrics
+- Metrics MUST be realistic and achievable (e.g., "improved X by 30-50%")
+- If the skill fits naturally with an existing bullet, enhance that bullet
+- If not, add a new bullet in the most relevant company/project
+- EVERY missing JD skill MUST have both Skills + Experience points
+
+EXAMPLE - If JD requires "Docker" but resume doesn't have it:
+
+POINT X:
+Section: Skills
+Type: ADD
+What: Docker
+Where: DevOps & Cloud Tools
+Position: Beginning
+Bold: YES
+Why: JD requires containerization
+
+POINT X+1:
+Section: Experience
+Company: [Most relevant company]
+Bullet: [Number] OR Add new bullet
+What: containerized microservices using Docker, reducing deployment time by 40% and improving scalability
+Where: [Realistic location in that bullet]
+MoveTo: 3 (if JD-critical)
+Bold: Docker, containerized, microservices
+Why: Demonstrates Docker expertise required in JD with measurable impact
+
+----------------------------------------------------
+===== GLOBAL BOLDING RULES =====
+----------------------------------------------------
+• Bold JD keywords ONLY inside the SKILLS section.
+• Do NOT bold ANYTHING in Summary or Experience unless an optimization point explicitly instructs it.
+
+----------------------------------------------------
+===== SUMMARY SECTION ANALYSIS =====
+----------------------------------------------------
+
+STRICT SUMMARY BULLET FORMAT (MANDATORY):
+• Every Summary bullet MUST begin with “• ”
+• NEVER use hyphens (-) or plain text lines.
+• Each bullet MUST be 1–2 full professional sentences.
+• NO fragment bullets allowed.
+• Add ONLY 1–3 new bullets.
+• Every new bullet MUST include:
+  – JD keywords in natural context
+  – metrics or scale (when possible)
+  – distributed systems / API / cloud / performance themes
+
+POSITIONING RULE (CRITICAL):
+• If you add a new JD-relevant bullet → you MUST specify:
+  MoveTo: 2  OR  MoveTo: 3
+• Most important bullets MUST appear early for ATS.
 
 SUMMARY POINT FORMAT:
 
 POINT X:
 Section: Summary
-What: A FULL rewritten bullet (a complete sentence containing JD keywords, achievements, metrics)
-Where: Summary Bullet X (or “Add new bullet”)
-Why: JD requirement OR ATS score improvement
-Scale: Importance 1-10
-
-EXAMPLE:
-POINT 1:
-Section: Summary
-What: Add a complete bullet such as:
-"• Delivered distributed, low-latency services across microservice architectures, improving system responsiveness by over 40% while supporting millions of user interactions."
-Where: Add new bullet
-Why: JD requires low-latency, high-reliability systems
-Scale: 1-10
-
+What: Full 1–2 sentence bullet
+Where: Add new bullet OR modify bullet #
+MoveTo: 2 or 3 (MANDATORY for new bullets)
+Why: ATS relevance
+Scale: 1–10
 
 ----------------------------------------------------
-===== HARD SKILLS OUTPUT FORMAT RULE (CRITICAL) =====
+===== SKILLS SECTION ANALYSIS =====
 ----------------------------------------------------
 
-Your output MUST generate optimization points that enforce the SKILLS section in the EXACT pipe-table format:
+SKILLS TABLE MUST FOLLOW THIS EXACT FORMAT:
 
 SKILLS
 
@@ -549,68 +690,45 @@ SKILLS
  Category Name               | Skill1, Skill2, Skill3, ...
 
 STRICT RULES:
-1. Every row MUST follow the format:
-   | Category Name | comma-separated skills |
-2. NO bullets, NO markdown tables, NO line breaks.
-3. Category name ALWAYS on the left.
-4. Skills ALWAYS on the right.
-5. ALL JD keywords and JD skills MUST be bolded using **double-asterisks** across the entire resume:
-   – Summary
-   – Skills
-   – Experience
-6. Bolding of JD keywords is automatic and does NOT require optimization point instructions.
-7. One row per category.
+1. One row per category.
+2. NO bullets, NO markdown tables, NO line breaks inside a row.
+3. JD keywords MUST be bolded only here.
+4. Skills MUST remain comma-separated on one line.
 
-----------------------------------------------------
-===== SKILLS SECTION ANALYSIS (GENERATE POINTS) =====
-----------------------------------------------------
-
-For each skill category, generate:
-
+SKILL POINT TYPES:
 TYPE 1 - ADD SKILL  
-What: Skill name  
-Where: Skills → Category Name  
-Position: Beginning OR End  
-Bold: YES if mentioned in JD  
-Why: Required for ATS
-
 TYPE 2 - DELETE SKILL  
-What: Skill name  
-Why: Outdated or irrelevant to JD
-
-TYPE 3 - MODIFY/BOLD SKILL  
-What: Skill name  
-Where: Category Name  
-Why: Mentioned in JD and must appear bold (in Skills table ONLY)
-
+TYPE 3 - MODIFY / BOLD SKILL  
 TYPE 4 - REORDER SKILL  
-What: Skill name  
-Why: JD-important skills should appear first
-
 TYPE 5 - MERGE CATEGORY  
-What: Merge category A into category B  
-How: List skills moving  
-Why: JD expects combined category
 
-EXAMPLE:
-POINT 12:
+SKILL POINT FORMAT:
+
+POINT X:
 Section: Skills
-Type: ADD
-What: PostgreSQL
-Where: Databases
-Position: Beginning
-Bold: YES
-Why: JD requires PostgreSQL
+Type: ADD / DELETE / MODIFY / REORDER / MERGE
+What: Skill or change
+Where: Category Name
+Position: Beginning / End (if relevant)
+Bold: YES/NO
+Why: ATS relevance
 
 ----------------------------------------------------
 ===== EXPERIENCE SECTION ANALYSIS =====
 ----------------------------------------------------
 
-UPDATED EXPERIENCE RULES:
-• DO NOT generate tiny keyword-only additions
-• Every update MUST be a meaningful phrase added to a bullet
-• MUST integrate JD keywords in a natural, metric-oriented way
-• ALL JD keywords and JD skills MUST be bolded automatically inside every Experience bullet.
+STRICT EXPERIENCE FORMAT RULE:
+• Every Experience bullet MUST begin with “• ”
+• NEVER use hyphens (-) or unformatted lines.
+• Each bullet MUST be 1–2 full sentences.
+• NO keyword fragments.
+• Enhancements MUST integrate JD terms naturally.
+• Bold ONLY if an optimization point explicitly instructs it.
+
+BULLET PRIORITY RULE (CRITICAL):
+• If an enhancement is strongly JD-aligned:
+  MoveTo: 2  OR  MoveTo: 3
+• This places JD-relevant bullets early → highest ATS impact.
 
 EXPERIENCE POINT FORMAT:
 
@@ -618,20 +736,11 @@ POINT X:
 Section: Experience
 Company: [Company Name]
 Bullet: X
-What: Insert a complete enhancement phrase (NOT just keywords). Include JD terms but in full, meaningful context.
-Where: Insert location (beginning / after phrase / end)
-Bold: List exact JD keywords that must be bolded in this bullet (ALL JD keywords must be bolded automatically)
-Why: JD requirement OR ATS boost
-
-EXAMPLE:
-POINT 17:
-Section: Experience
-Company: LPL Financial
-Bullet: 1
-What: Add “delivered low-latency, high-reliability services improving responsiveness by 40%”
-Where: After “Spring Boot microservices”
-Bold: low-latency, high-reliability (ONLY if required)
-Why: JD emphasizes low-latency and reliability
+What: Full 1–2 sentence enhancement phrase
+Where: beginning / after phrase / end OR Add new bullet
+MoveTo: 2 or 3 (ONLY if JD-critical)
+Bold: list JD terms to bold (if needed)
+Why: JD relevance
 
 ----------------------------------------------------
 ===== CONSOLIDATION / MERGING =====
@@ -640,9 +749,9 @@ Why: JD emphasizes low-latency and reliability
 POINT FORMAT:
 Section: Skills
 Type: MERGE
-What: Merge Category A into Category B
-How: List specific moves
-Why: JD expects these categories to be combined
+What: Merge Category A → Category B
+How: List specific skills moved
+Why: JD expectation or simplification
 
 ----------------------------------------------------
 ===== FILENAME SUGGESTION =====
@@ -655,14 +764,14 @@ FILENAME: Lokesh_Para_[Position]_[Company]
 ===== OUTPUT FORMAT =====
 ----------------------------------------------------
 
-Return ONLY optimization points in this EXACT format:
+Return ONLY optimization points in this EXACT structure:
 
 POINT 1:
 Section: Summary
 What: ...
 Where: ...
+MoveTo: ...
 Why: ...
-Bold: Yes/No
 Scale: 1–10
 
 POINT 2:
@@ -680,13 +789,16 @@ Company: ...
 Bullet: ...
 What: ...
 Where: ...
-Bold: Yes/No
+MoveTo: ...
+Bold: YES/NO
 Why: ...
 
-Continue generating points until ALL JD-related keywords, architecture styles, cloud services, performance requirements, databases, event streaming, testing, monitoring, and soft skills are fully covered.
+Continue generating points until:
+1. ALL missing JD skills are added to Skills + backed by Experience points
+2. ALL existing sections are optimized for ATS match
+3. Target: 100% ATS match achieved
 
-GOAL:
-Maximize ATS alignment (92–100%) by covering EVERY missing keyword from the JD with complete, professional bullet sentences — never short fragments.
+Total points may exceed 35 if needed to cover all JD requirements.
 `;
 
     const analysisKey = aiProvider === 'gemini' ? geminiKey2 : (chatgptKey2 || chatgptApiKey);
@@ -713,7 +825,7 @@ Maximize ATS alignment (92–100%) by covering EVERY missing keyword from the JD
     // Step 5: Rewrite resume
     console.log('✍️ Step 5: Rewriting resume...');
 
-    const rewritePrompt = `You are an ATS optimization expert. Rewrite the resume applying EVERY optimization point exactly as specified.
+    const rewritePrompt = `You are an ATS optimization expert. Rewrite the resume using ALL optimization points EXACTLY as specified.
 
 ===========================
 INPUT RESUME:
@@ -724,75 +836,122 @@ ${optimizationPoints}
 
 INPUT JOB DESCRIPTION:
 ${jobDescription}
+
+PORTAL INFORMATION:
+Applying through: ${atsAnalysis.portalName}
+Portal URL: ${jobPostUrl}
+
+PORTAL STRATEGY:
+${atsAnalysis.fullAnalysis}
 ===========================
 
-===== GLOBAL RULES FOR REWRITING =====
+====================================================
+===== YOUR MISSION =====
+====================================================
 
-1. Maintain EXACT original resume structure.
-2. Apply EVERY optimization point without exception.
-3. Bold ALL JD keywords and JD skill terms automatically across the entire resume:
-   – Summary
-   – Skills
-   – Experience
-4. Bolding is automatic and does NOT require optimization point instructions. 
-   Only skip bolding if an optimization point explicitly says NOT to bold a term.
-5. Preserve all metrics, achievements, and section order.
-6. Do NOT change name, title, or contact information.
+Rewrite this resume to be PERFECT for ${atsAnalysis.portalName}.
 
-----------------------------------------------------
+This resume must:
+✅ Score 100% match with the job description
+✅ Be optimized specifically for ${atsAnalysis.portalName}'s algorithm
+✅ Get this candidate shortlisted from hundreds of applicants
+✅ Be completely interview-ready and honest
+
+Use the portal analysis above to understand what ${atsAnalysis.portalName} prioritizes and adapt accordingly.
+
+
+====================================================
+===== GLOBAL RULES (CRITICAL – DO NOT VIOLATE) =====
+====================================================
+
+1. Return the FULL resume (Summary, Skills, ALL Experience, Education). 
+2. NEVER remove a job, bullet, or company.
+3. EVERY bullet across Summary and Experience MUST:
+   • start with “• ”
+   • be 1–2 full sentences (NO fragments)
+   • contain bolded JD keywords automatically
+4. JD keywords MUST be bolded in:
+   • Summary
+   • Experience
+5. JD keywords MUST be bolded ONLY inside SKILLS for technical terms.
+6. NO hyphens (“-”) for bullets — ONLY “• ”
+7. NO missing sections, no truncation.
+
+====================================================
+===== BULLET REORDERING RULE (CRITICAL) =====
+====================================================
+
+If an optimization point contains:
+
+MoveTo: <number>
+
+→ You MUST move that bullet to EXACTLY that bullet number  
+→ Applies to BOTH Summary and Experience sections.  
+→ Preserve formatting.
+
+====================================================
 ===== SUMMARY REWRITE RULES =====
-----------------------------------------------------
-• Summary MUST be a list of “•” bullets.
-• Each bullet MUST be a full, detailed, professional sentence.
-• ABSOLUTELY NO short keyword bullets.
-• Every added bullet must express:
-  – distributed systems
-  – low latency
-  – high reliability
-  – scale
-  – performance improvements
-  – collaboration
-  – cloud or event-driven architecture (when relevant)
-• Writing style must match a senior-level Fortune 500 resume.
+====================================================
 
-----------------------------------------------------
-===== SKILLS REWRITE RULES (CRITICAL) =====
-----------------------------------------------------
+• Rewrite the Summary in bullet “• ” format only.
+• Each bullet = 1–2 sentences.
+• Insert new bullets exactly where optimization points say.
+• Apply MoveTo positioning precisely.
+• Automatically bold ALL JD keywords inside the Summary.
 
-SKILLS SECTION MUST FOLLOW EXACTLY:
+====================================================
+===== SKILLS REWRITE RULES (STRICT FORMAT) =====
+====================================================
+
+The SKILLS section MUST be rewritten EXACTLY like this:
 
 SKILLS
 
-Category Name               | Skill1, Skill2, Skill3, ...
-Category Name               | Skill1, Skill2, Skill3, ...
+ Category Name | item1, item2, item3, item4
+ Category Name | item1, item2, item3
+ Category Name | item1, item2, item3, item4, item5
 
-STRICT:
-• One line per category.
-• No wrapping to new lines.
-• JD skills MUST be bolded ONLY here.
-• No bolding outside Skills unless explicitly instructed.
+STRICT RULES:
+1. ONE row per category.
+2. ONE line per row — NO wrapping.
+3. NO markdown tables.
+4. NO separators like “----”.
+5. NO extra headers except the word SKILLS.
+6. JD terms MUST be bolded ONLY in skills list (not category names).
 
-----------------------------------------------------
+If Skills are not in correct format, RECONSTRUCT THEM PROPERLY.
+
+====================================================
 ===== EXPERIENCE REWRITE RULES =====
-----------------------------------------------------
+====================================================
 
-For each optimization point:
-• Locate the exact bullet and integrate enhancements naturally.
-• Add complete phrases (not short keywords).
-• Preserve metrics and meaning.
-• Only bold when optimization point requires.
+- Keep ALL companies and ALL bullets.
+- Each bullet MUST:
+   – start with "• "
+   – be 1–2 full sentences
+   – integrate JD terms naturally
+   – automatically bold JD keywords
+- Insert enhancements exactly where optimization points specify.
+- Apply MoveTo ordering exactly.
+- Bold ONLY specific JD terms (not entire sentences).
 
-----------------------------------------------------
-===== EDUCATION SECTION =====
----------------------------------------------------
+CRITICAL - NEW SKILL INTEGRATION:
+- When optimization points add a NEW skill that wasn't in original resume:
+  – The corresponding Experience bullet MUST sound realistic and natural
+  – Metrics MUST be believable (30-50% improvements, not 200%)
+  – The skill MUST fit the company/project context logically
+  – If adding to existing bullet, blend it seamlessly
+  – If creating new bullet, place it where it makes most sense
+- Example: Adding "Docker" to LPL Financial makes sense (FinTech uses containers)
+- Example: Adding "Docker" to YES Bank also makes sense (Banking systems)
+- Choose the MOST realistic placement based on company type and project
 
-----------------------------------------------------
+====================================================
 ===== FINAL OUTPUT =====
-----------------------------------------------------
+====================================================
 
-Return ONLY the fully rewritten resume in its final, polished form.
-
-Do NOT return explanations.
+Return ONLY the full rewritten resume in perfect formatting.
+No commentary. No explanations. No surrounding text.
 `;
 
 
@@ -849,6 +1008,8 @@ Do NOT return explanations.
       success: true,
       status: '✅ Resume Optimized Successfully!',
       aiProvider: aiProvider,
+      portalName: atsAnalysis.portalName,
+      portalAnalysis: atsAnalysis.fullAnalysis,
       keysUsed: aiProvider === 'gemini' ? '3 Gemini keys' : '1 ChatGPT key',
       contentSource: contentSource,
       fileName: fileName,
@@ -913,6 +1074,8 @@ function convertToStyledHTML(text) {
   .name{font-size:18pt;font-weight:bold;text-align:center;margin-bottom:2pt}
   .title{font-size:12pt;font-weight:bold;text-align:center;margin-bottom:2pt}
   .contact{font-size:10pt;text-align:center;margin-bottom:12pt}
+  .contact a{color:#000000;text-decoration:none}
+  .contact a:hover{text-decoration:underline}
   .section-header{font-size:14pt;font-weight:bold;margin-top:12pt;margin-bottom:6pt}
   .skills-table{
   width:100%;
@@ -940,7 +1103,18 @@ function convertToStyledHTML(text) {
   font-size:10.5pt;
 }
 
-  .company-header{font-size:11.5pt;font-weight:bold;margin-top:8pt;margin-bottom:4pt}
+   .company-header{
+  font-size:11.5pt;
+  font-weight:bold;
+  margin-top:8pt;
+  margin-bottom:4pt;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+  .job-title-location{flex:1}
+  .job-date{text-align:right;white-space:nowrap;margin-left:20pt}
   p{margin:4pt 0;text-align:justify}
   ul{margin:2pt 0;padding-left:0.25in}
   li{margin:4pt 0;text-align:justify}
@@ -954,6 +1128,29 @@ function convertToStyledHTML(text) {
   // Helper: Convert **text** to <strong>text</strong>
   function convertBold(text) {
     return text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  }
+
+  // Helper: Convert contact line with clickable links
+  function convertContactLinks(text) {
+    // Replace LinkedIn URL
+    text = text.replace(
+      /linkedin\.com\/in\/[\w-]+/gi,
+      '<a href="https://www.linkedin.com/in/lokeshpara99">LinkedIn</a>'
+    );
+
+    // Replace GitHub URL
+    text = text.replace(
+      /github\.com\/[\w-]+/gi,
+      '<a href="https://github.com/lokeshpara">GitHub</a>'
+    );
+
+    // Replace Portfolio URL
+    text = text.replace(
+      /[\w-]+\.github\.io\/[\w-]+\/?|portfolio\.[\w-]+\.com/gi,
+      '<a href="https://lokeshpara.github.io/Portfolio/">Portfolio</a>'
+    );
+
+    return text;
   }
 
   // Helper: Add skill row to table
@@ -1037,7 +1234,8 @@ function convertToStyledHTML(text) {
 
     // Header: Contact
     if ((line.includes('@') || line.includes('|')) && i < 6) {
-      html += `<div class="contact">${line}</div>\n`;
+      const contactWithLinks = convertContactLinks(line);
+      html += `<div class="contact">${contactWithLinks}</div>\n`;
       continue;
     }
 
@@ -1174,7 +1372,34 @@ function convertToStyledHTML(text) {
 
     // Company headers (contains |)
     if (line.includes('|') && !line.startsWith('•') && !line.includes('@') && !inSkills) {
-      html += `<div class="company-header">${line.replace(/\*\*/g, '')}</div>\n`;
+      // Split company header into title/location and date
+      const parts = line.split(/\s{2,}|\t/); // Split by multiple spaces or tab
+
+      if (parts.length >= 2) {
+        // Has separate date part
+        const titleLocation = parts[0].replace(/\*\*/g, '');
+        const date = parts.slice(1).join(' ').replace(/\*\*/g, '');
+        html += `<div class="company-header">\n`;
+        html += `  <span class="job-title-location">${titleLocation}</span>\n`;
+        html += `  <span class="job-date">${date}</span>\n`;
+        html += `</div>\n`;
+      } else {
+        // No clear date separation - check for date patterns at end
+        const datePattern = /(.+?)\s+((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{4}\s*[-–]\s*(?:Present|(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{4}))$/i;
+        const match = line.match(datePattern);
+
+        if (match) {
+          const titleLocation = match[1].replace(/\*\*/g, '');
+          const date = match[2].replace(/\*\*/g, '');
+          html += `<div class="company-header">\n`;
+          html += `  <span class="job-title-location">${titleLocation}</span>\n`;
+          html += `  <span class="job-date">${date}</span>\n`;
+          html += `</div>\n`;
+        } else {
+          // Fallback: no date detected
+          html += `<div class="company-header">${line.replace(/\*\*/g, '')}</div>\n`;
+        }
+      }
       continue;
     }
 
@@ -1258,5 +1483,5 @@ app.listen(PORT, () => {
   console.log(`📍 http://localhost:${PORT}`);
   console.log(`✅ Health: http://localhost:${PORT}/health`);
   console.log(`🤖 Supports: Gemini AI & ChatGPT`);
-  console.log(`🎯 ATS Target: 92-100% Match Rate\n`);
+  console.log(`🎯 ATS Target: 100% Match Rate\n`);
 });

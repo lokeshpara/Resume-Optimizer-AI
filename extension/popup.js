@@ -411,6 +411,11 @@ document.addEventListener('DOMContentLoaded', function () {
         showError('Job description is too short. Please paste the complete description (at least 100 characters).');
         return;
       }
+
+      // Get current tab URL for tracking in Excel
+      jobUrl = await getCurrentTabUrl();
+      console.log('📋 Paste mode - Current tab URL:', jobUrl);
+
     } else if (mode === 'url') {
       jobUrl = await getCurrentTabUrl();
 
@@ -457,11 +462,13 @@ document.addEventListener('DOMContentLoaded', function () {
       if (mode === 'paste') {
         requestBody.manualJobDescription = jobDescription;
         requestBody.jobUrl = null;
-        requestBody.currentPageUrl = null;
+        requestBody.currentPageUrl = jobUrl || 'Manual Input';
+        console.log('📋 Sending paste mode request with URL:', requestBody.currentPageUrl);
       } else {
         requestBody.manualJobDescription = null;
         requestBody.jobUrl = jobUrl;
         requestBody.currentPageUrl = jobUrl;
+        console.log('🌐 Sending URL mode request with URL:', requestBody.currentPageUrl);
       }
 
       // Step 2: Send request
