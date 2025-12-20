@@ -897,6 +897,7 @@ MoveTo: <number>
 • Each bullet = 1–2 sentences.
 • Insert new bullets exactly where optimization points say.
 • Apply MoveTo positioning precisely.
+• Mention total years of experience ONLY ONCE across the entire Summary.
 • Automatically bold ALL JD keywords inside the Summary.
 
 ====================================================
@@ -918,6 +919,8 @@ STRICT RULES:
 4. NO separators like “----”.
 5. NO extra headers except the word SKILLS.
 6. JD terms MUST be bolded ONLY in skills list (not category names).
+7. Skill categorization MUST be technically correct even if ATS would accept incorrect grouping.
+8. Never sacrifice technical correctness for keyword stuffing.
 
 If Skills are not in correct format, RECONSTRUCT THEM PROPERLY.
 
@@ -1080,8 +1083,8 @@ function convertToStyledHTML(text) {
   .skills-table{
   width:100%;
   border-collapse:collapse;
-  margin-top:6pt;
-  margin-bottom:12pt;
+  margin-top:0pt;
+  margin-bottom:0pt;
   border:1pt solid #000;
 }
 
