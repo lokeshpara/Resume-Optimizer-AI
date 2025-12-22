@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Application Dashboard - Enhanced</title>
+    <link rel="stylesheet" href="/dashboard.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0"></script>
+</head>
+
+<body>
+
+    <div class="background"></div>
+
+    <div class="container">
+
+        <!-- Header -->
+        <header>
+            <div class="header-content">
+                <div>
+                    <h1>Application Dashboard</h1>
+                    <p class="subtitle">Track all your job applications in one place</p>
+                </div>
+                <div class="header-actions">
+                    <button class="btn-secondary" onclick="exportData()">
+                        📥 Export CSV
+                    </button>
+                    <button class="btn-primary" onclick="window.location.href='/add-application'">
+                        ➕ New Application
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Search & Filters -->
+        <section class="filters-section">
+            <div class="search-bar">
+                <input type="text" id="searchInput" placeholder="🔍 Search by company or position..."
+                    oninput="handleSearch()" />
+            </div>
+            <div class="filters">
+                <select id="statusFilter" onchange="applyFilters()">
+                    <option value="">All Statuses</option>
+                    <option value="Applied">Applied</option>
+                    <option value="Interview">Interview</option>
+                    <option value="Offer">Offer</option>
+                    <option value="Rejected">Rejected</option>
+                </select>
+
+                <select id="dateFilter" onchange="applyFilters()">
+                    <option value="all">All Time</option>
+                    <option value="7">Last 7 Days</option>
+                    <option value="30">Last 30 Days</option>
+                    <option value="90">Last 90 Days</option>
+                </select>
+
+                <button class="btn-clear" onclick="clearFilters()">Clear Filters</button>
+            </div>
+        </section>
+
+        <!-- KPIs -->
+        <section class="stats">
+            <div class="stat-card">
+                <span class="stat-icon">📊</span>
+                <div class="stat-content">
+                    <span class="stat-label">Total Applications</span>
+                    <h2 id="totalApps">—</h2>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <span class="stat-icon">🏢</span>
+                <div class="stat-content">
+                    <span class="stat-label">Companies Applied</span>
+                    <h2 id="companies">—</h2>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <span class="stat-icon">🎯</span>
+                <div class="stat-content">
+                    <span class="stat-label">Interview Rate</span>
+                    <h2 id="interviewRate">—</h2>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <span class="stat-icon">⏱️</span>
+                <div class="stat-content">
+                    <span class="stat-label">Avg Response Time</span>
+                    <h2 id="avgResponse">—</h2>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <span class="stat-icon">✅</span>
+                <div class="stat-content">
+                    <span class="stat-label">Offers Received</span>
+                    <h2 id="offers">—</h2>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <span class="stat-icon">📅</span>
+                <div class="stat-content">
+                    <span class="stat-label">This Week</span>
+                    <h2 id="thisWeek">—</h2>
+                </div>
+            </div>
+        </section>
+
+        <!-- Charts Row -->
+        <section class="charts-row">
+            <div class="card chart-card">
+                <h3>Applications Over Time</h3>
+                <canvas id="dailyChart"></canvas>
+            </div>
+
+            <div class="card chart-card">
+                <h3>Status Distribution</h3>
+                <canvas id="statusChart"></canvas>
+            </div>
+        </section>
+
+        <!-- Recent Activity -->
+        <section class="card">
+            <h3>Recent Activity</h3>
+            <div id="recentActivity" class="activity-feed"></div>
+        </section>
+
+        <!-- All Applications -->
+        <section class="card">
+            <div class="table-header">
+                <h3>All Applications (<span id="tableCount">0</span>)</h3>
+                <div class="table-actions">
+                    <select id="sortBy" onchange="applySorting()">
+                        <option value="date_desc">Date Applied (Newest)</option>
+                        <option value="date_asc">Date Applied (Oldest)</option>
+                        <option value="updated_desc">Recently Updated</option>
+                        <option value="company_asc">Company (A-Z)</option>
+                        <option value="company_desc">Company (Z-A)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Company</th>
+                            <th>Position</th>
+                            <th>Date Applied</th>
+                            <th>Status</th>
+                            <th>Last Updated</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="applicationsTable"></tbody>
+                </table>
+            </div>
+
+            <div id="noResults" class="no-results hidden">
+                <p>No applications found matching your filters</p>
+            </div>
+        </section>
+
+    </div>
+
+    <script src="/dashboard.js"></script>
+</body>
+
+</html>

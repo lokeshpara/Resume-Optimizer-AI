@@ -1,16 +1,38 @@
+require('dotenv').config();
+const { Pool } = require('pg');
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+});
+
 const express = require('express');
 const cors = require('cors');
 const axios = require('axios');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const { google } = require('googleapis');
-require('dotenv').config();
+
 
 const app = express();
+app.use(express.static('public'));
 const PORT = 3000;
 
 // Middleware
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// =====================================================
+// POSTGRESQL CONNECTION (Using DATABASE_URL)
+// =====================================================
+
+// Test connection
+pool.query('SELECT NOW()', (err, res) => {
+  if (err) {
+    console.error('❌ Database connection failed:', err);
+  } else {
+    console.log('✅ Database connected:', res.rows[0].now);
+  }
+});
 
 // Initialize Google APIs
 const oauth2Client = new google.auth.OAuth2(
@@ -305,6 +327,77 @@ Think deeply and give your absolute best analysis. A candidate's career depends 
     };
   }
 }
+
+async function logApplicationToDB({
+  companyName,
+  position,
+  resumeLink,
+  jobPostUrl,
+  jobDescription
+}) {
+  const today = new Date().toISOString().slice(0, 10);
+
+  // Option B: soft match (company + position + date)
+  const existing = await pool.query(
+    `
+    SELECT id FROM applications
+    WHERE company_name = $1
+      AND position_applied = $2
+      AND date_applied = $3
+    LIMIT 1
+    `,
+    [companyName, position, today]
+  );
+
+  if (existing.rows.length > 0) {
+    // UPDATE
+    await pool.query(
+      `
+      UPDATE applications
+      SET resume_link = $1,
+          jd_link = $2,
+          jd_text = $3
+      WHERE id = $4
+      `,
+      [
+        resumeLink,
+        jobPostUrl,
+        jobDescription,
+        existing.rows[0].id
+      ]
+    );
+
+    console.log('🟢 Application updated in DB');
+    return;
+  }
+
+  // INSERT
+  await pool.query(
+    `
+    INSERT INTO applications
+    (
+      company_name,
+      position_applied,
+      date_applied,
+      resume_link,
+      jd_link,
+      jd_text
+    )
+    VALUES ($1, $2, $3, $4, $5, $6)
+    `,
+    [
+      companyName,
+      position,
+      today,
+      resumeLink,
+      jobPostUrl,
+      jobDescription
+    ]
+  );
+
+  console.log('🟢 Application inserted into DB');
+}
+
 
 // Helper: Log optimization to Google Sheets
 async function logToGoogleSheet(data) {
@@ -849,7 +942,7 @@ ${atsAnalysis.fullAnalysis}
 ===== YOUR MISSION =====
 ====================================================
 
-Rewrite this resume to be PERFECT for ${atsAnalysis.portalName}.
+Rewrite this resume to be PERFECT like human written resume for ${atsAnalysis.portalName}.
 
 This resume must:
 ✅ Score 100% match with the job description
@@ -997,15 +1090,25 @@ No commentary. No explanations. No surrounding text.
     // Apply page formatting
     await setDocumentFormatting(fileId);
 
-    // Step 8: Log to Google Sheets
-    await logToGoogleSheet({
-      companyName: companyName,
-      position: position,
-      resumeLink: resumeLink,
-      jobPostUrl: jobPostUrl,
-      contacts: '',
-      fileName: fileName
+    // // Step 8: Log to Google Sheets
+    // await logToGoogleSheet({
+    //   companyName: companyName,
+    //   position: position,
+    //   resumeLink: resumeLink,
+    //   jobPostUrl: jobPostUrl,
+    //   contacts: '',
+    //   fileName: fileName
+    // });
+
+    // Step 8: Log to PostgreSQL
+    await logApplicationToDB({
+      companyName,
+      position,
+      resumeLink,
+      jobPostUrl,
+      jobDescription
     });
+
 
     res.json({
       success: true,
@@ -1488,3 +1591,656 @@ app.listen(PORT, () => {
   console.log(`🤖 Supports: Gemini AI & ChatGPT`);
   console.log(`🎯 ATS Target: 100% Match Rate\n`);
 });
+
+
+
+// =====================================================
+// DASHBOARD ENDPOINTS
+// =====================================================
+
+// GET /api/dashboard/summary - Enhanced KPIs
+app.get('/api/dashboard/summary', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT
+        COUNT(*) as total_applications,
+        COUNT(DISTINCT company_name) as unique_companies,
+        COUNT(*) FILTER (WHERE status IN ('Interview', 'Offer')) as interview_count,
+        COUNT(*) FILTER (WHERE status = 'Offer') as offers_received,
+        COUNT(*) FILTER (WHERE date_applied >= CURRENT_DATE - INTERVAL '7 days') as this_week_count,
+        AVG(CASE 
+          WHEN status != 'Applied' 
+          THEN EXTRACT(DAY FROM (updated_at - date_applied))
+          ELSE NULL 
+        END) as avg_response_time
+      FROM applications
+    `);
+
+    const data = result.rows[0];
+    const totalApps = parseInt(data.total_applications);
+    const interviewCount = parseInt(data.interview_count);
+    const interviewRate = totalApps > 0
+      ? Math.round((interviewCount / totalApps) * 100)
+      : 0;
+
+    res.json({
+      totalApplications: totalApps,
+      uniqueCompanies: parseInt(data.unique_companies),
+      interviewRate: interviewRate,
+      avgResponseTime: data.avg_response_time
+        ? Math.round(parseFloat(data.avg_response_time))
+        : null,
+      offersReceived: parseInt(data.offers_received),
+      thisWeekCount: parseInt(data.this_week_count)
+    });
+  } catch (error) {
+    console.error('Dashboard summary error:', error);
+    res.status(500).json({ error: 'Failed to load summary' });
+  }
+});
+
+// GET /api/dashboard/daily - Daily application count
+app.get('/api/dashboard/daily', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT 
+        date_applied,
+        COUNT(*) as count
+      FROM applications
+      WHERE date_applied >= CURRENT_DATE - INTERVAL '30 days'
+      GROUP BY date_applied
+      ORDER BY date_applied ASC
+    `);
+
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Daily chart error:', error);
+    res.status(500).json({ error: 'Failed to load daily data' });
+  }
+});
+
+// GET /api/dashboard/status-dist - Status distribution
+app.get('/api/dashboard/status-dist', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT 
+        status,
+        COUNT(*) as count,
+        ROUND(100.0 * COUNT(*) / SUM(COUNT(*)) OVER(), 2) as percentage
+      FROM applications
+      GROUP BY status
+      ORDER BY count DESC
+    `);
+
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Status distribution error:', error);
+    res.status(500).json({ error: 'Failed to load status distribution' });
+  }
+});
+
+// GET /api/dashboard/recent - Recent activity
+app.get('/api/dashboard/recent', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT 
+        id,
+        company_name,
+        position_applied,
+        status,
+        updated_at,
+        date_applied
+      FROM applications
+      ORDER BY updated_at DESC
+      LIMIT 10
+    `);
+
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Recent activity error:', error);
+    res.status(500).json({ error: 'Failed to load recent activity' });
+  }
+});
+
+// =====================================================
+// APPLICATIONS ENDPOINTS
+// =====================================================
+
+// GET /api/applications - With optional filters
+app.get('/api/applications', async (req, res) => {
+  try {
+    const { status, days, search } = req.query;
+
+    let query = 'SELECT * FROM applications WHERE 1=1';
+    const params = [];
+    let paramIndex = 1;
+
+    if (status) {
+      query += ` AND status = $${paramIndex}`;
+      params.push(status);
+      paramIndex++;
+    }
+
+    if (days) {
+      query += ` AND date_applied >= CURRENT_DATE - INTERVAL '${parseInt(days)} days'`;
+    }
+
+    if (search) {
+      query += ` AND search_vector @@ plainto_tsquery('english', $${paramIndex})`;
+      params.push(search);
+      paramIndex++;
+    }
+
+    query += ' ORDER BY date_applied DESC';
+
+    const result = await pool.query(query, params);
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Applications list error:', error);
+    res.status(500).json({ error: 'Failed to load applications' });
+  }
+});
+
+// GET /api/applications/:id - Get single application
+app.get('/api/applications/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await pool.query(
+      'SELECT * FROM applications WHERE id = $1',
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Application not found' });
+    }
+
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Get application error:', error);
+    res.status(500).json({ error: 'Failed to load application' });
+  }
+});
+
+// PUT /api/applications/:id - Update application
+app.put('/api/applications/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const fields = req.body;
+
+    const allowedFields = [
+      'company_name',
+      'position_applied',
+      'status',
+      'resume_link',
+      'jd_link',
+      'jd_text'
+    ];
+
+    const updates = [];
+    const values = [];
+    let paramIndex = 1;
+
+    for (const [key, value] of Object.entries(fields)) {
+      if (allowedFields.includes(key)) {
+        updates.push(`${key} = $${paramIndex}`);
+        values.push(value);
+        paramIndex++;
+      }
+    }
+
+    if (updates.length === 0) {
+      return res.status(400).json({ error: 'No valid fields to update' });
+    }
+
+    values.push(id);
+    const query = `
+      UPDATE applications 
+      SET ${updates.join(', ')}
+      WHERE id = $${paramIndex}
+      RETURNING *
+    `;
+
+    const result = await pool.query(query, values);
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Update application error:', error);
+    res.status(500).json({ error: 'Failed to update application' });
+  }
+});
+
+// DELETE /api/applications/:id - Delete application
+app.delete('/api/applications/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await pool.query('DELETE FROM applications WHERE id = $1', [id]);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Delete application error:', error);
+    res.status(500).json({ error: 'Failed to delete application' });
+  }
+});
+
+// =====================================================
+// NOTES ENDPOINTS
+// =====================================================
+
+// GET /api/applications/:id/notes - Get all notes for application
+app.get('/api/applications/:id/notes', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await pool.query(
+      'SELECT * FROM notes WHERE application_id = $1 ORDER BY created_at DESC',
+      [id]
+    );
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Get notes error:', error);
+    res.status(500).json({ error: 'Failed to load notes' });
+  }
+});
+
+// POST /api/applications/:id/notes - Add note to application
+app.post('/api/applications/:id/notes', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { note_text } = req.body;
+
+    if (!note_text || !note_text.trim()) {
+      return res.status(400).json({ error: 'Note text is required' });
+    }
+
+    const result = await pool.query(
+      'INSERT INTO notes (application_id, note_text) VALUES ($1, $2) RETURNING *',
+      [id, note_text.trim()]
+    );
+
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Add note error:', error);
+    res.status(500).json({ error: 'Failed to add note' });
+  }
+});
+
+// DELETE /api/notes/:noteId - Delete note
+app.delete('/api/notes/:noteId', async (req, res) => {
+  try {
+    const { noteId } = req.params;
+    await pool.query('DELETE FROM notes WHERE id = $1', [noteId]);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Delete note error:', error);
+    res.status(500).json({ error: 'Failed to delete note' });
+  }
+});
+
+// =====================================================
+// CONTACTS ENDPOINTS (NEW!)
+// =====================================================
+
+// GET /api/applications/:id/contacts - Get all contacts for application
+app.get('/api/applications/:id/contacts', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await pool.query(`
+      SELECT c.* 
+      FROM contacts c
+      JOIN application_contacts ac ON c.id = ac.contact_id
+      WHERE ac.application_id = $1
+      ORDER BY c.id DESC
+    `, [id]);
+
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Get contacts error:', error);
+    res.status(500).json({ error: 'Failed to load contacts' });
+  }
+});
+
+// POST /api/applications/:id/contacts - Create new contact and link to application
+app.post('/api/applications/:id/contacts', async (req, res) => {
+  const client = await pool.connect();
+
+  try {
+    const { id } = req.params;
+    const { full_name, email, linkedin_url, role, notes } = req.body;
+
+    if (!full_name || !full_name.trim()) {
+      return res.status(400).json({ error: 'Full name is required' });
+    }
+
+    await client.query('BEGIN');
+
+    // Create contact
+    const contactResult = await client.query(
+      `INSERT INTO contacts (full_name, email, linkedin_url, role, notes) 
+       VALUES ($1, $2, $3, $4, $5) 
+       RETURNING *`,
+      [
+        full_name.trim(),
+        email ? email.trim() : null,
+        linkedin_url ? linkedin_url.trim() : null,
+        role ? role.trim() : null,
+        notes ? notes.trim() : null
+      ]
+    );
+
+    const contactId = contactResult.rows[0].id;
+
+    // Link contact to application
+    await client.query(
+      'INSERT INTO application_contacts (application_id, contact_id) VALUES ($1, $2)',
+      [id, contactId]
+    );
+
+    await client.query('COMMIT');
+
+    res.json(contactResult.rows[0]);
+  } catch (error) {
+    await client.query('ROLLBACK');
+    console.error('Create contact error:', error);
+    res.status(500).json({ error: 'Failed to create contact' });
+  } finally {
+    client.release();
+  }
+});
+
+// GET /api/contacts/:id - Get single contact
+app.get('/api/contacts/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await pool.query(
+      'SELECT * FROM contacts WHERE id = $1',
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Contact not found' });
+    }
+
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Get contact error:', error);
+    res.status(500).json({ error: 'Failed to load contact' });
+  }
+});
+
+// PUT /api/contacts/:id - Update contact
+app.put('/api/contacts/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { full_name, email, linkedin_url, role, notes } = req.body;
+
+    if (!full_name || !full_name.trim()) {
+      return res.status(400).json({ error: 'Full name is required' });
+    }
+
+    const result = await pool.query(
+      `UPDATE contacts 
+       SET full_name = $1, email = $2, linkedin_url = $3, role = $4, notes = $5
+       WHERE id = $6
+       RETURNING *`,
+      [
+        full_name.trim(),
+        email ? email.trim() : null,
+        linkedin_url ? linkedin_url.trim() : null,
+        role ? role.trim() : null,
+        notes ? notes.trim() : null,
+        id
+      ]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Contact not found' });
+    }
+
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Update contact error:', error);
+    res.status(500).json({ error: 'Failed to update contact' });
+  }
+});
+
+// DELETE /api/applications/:appId/contacts/:contactId - Unlink and delete contact
+app.delete('/api/applications/:appId/contacts/:contactId', async (req, res) => {
+  const client = await pool.connect();
+
+  try {
+    const { appId, contactId } = req.params;
+
+    await client.query('BEGIN');
+
+    // Remove link
+    await client.query(
+      'DELETE FROM application_contacts WHERE application_id = $1 AND contact_id = $2',
+      [appId, contactId]
+    );
+
+    // Check if contact is linked to other applications
+    const linkCheck = await client.query(
+      'SELECT COUNT(*) as count FROM application_contacts WHERE contact_id = $1',
+      [contactId]
+    );
+
+    // If not linked to any other applications, delete the contact
+    if (parseInt(linkCheck.rows[0].count) === 0) {
+      await client.query('DELETE FROM contacts WHERE id = $1', [contactId]);
+    }
+
+    await client.query('COMMIT');
+
+    res.json({ success: true });
+  } catch (error) {
+    await client.query('ROLLBACK');
+    console.error('Delete contact error:', error);
+    res.status(500).json({ error: 'Failed to delete contact' });
+  } finally {
+    client.release();
+  }
+});
+
+// =====================================================
+// EXPORT ENDPOINT
+// =====================================================
+
+// GET /api/export/csv - Export applications as CSV
+app.get('/api/export/csv', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT 
+        company_name,
+        position_applied,
+        date_applied,
+        status,
+        resume_link,
+        jd_link
+      FROM applications
+      ORDER BY date_applied DESC
+    `);
+
+    const headers = ['Company', 'Position', 'Date Applied', 'Status', 'Resume Link', 'JD Link'];
+    const rows = result.rows.map(row => [
+      row.company_name,
+      row.position_applied,
+      row.date_applied,
+      row.status,
+      row.resume_link || '',
+      row.jd_link || ''
+    ]);
+
+    const csv = [
+      headers.join(','),
+      ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+    ].join('\n');
+
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename=applications_${new Date().toISOString().split('T')[0]}.csv`);
+    res.send(csv);
+  } catch (error) {
+    console.error('Export CSV error:', error);
+    res.status(500).json({ error: 'Failed to export data' });
+  }
+});
+
+// =====================================================
+// SERVE STATIC FILES
+// =====================================================
+
+app.use(express.static('public'));
+
+// Dashboard route
+app.get('/dashboard', (req, res) => {
+  res.sendFile(__dirname + '/public/dashboard.html');
+});
+
+// Application details route
+app.get('/application/:id', (req, res) => {
+  res.sendFile(__dirname + '/public/application.html');
+});
+
+// =====================================================
+// START SERVER
+// =====================================================
+
+
+app.listen(PORT, () => {
+  console.log(`\n🚀 Job Tracker Server Running!`);
+  console.log(`📍 http://localhost:${PORT}`);
+  console.log(`📊 Dashboard: http://localhost:${PORT}/dashboard\n`);
+});
+
+// =====================================================
+// ERROR HANDLING
+// =====================================================
+
+process.on('unhandledRejection', (err) => {
+  console.error('❌ Unhandled rejection:', err);
+});
+
+process.on('SIGTERM', async () => {
+  console.log('SIGTERM received, closing database pool...');
+  await pool.end();
+  process.exit(0);
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

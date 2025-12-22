@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Application Details - Enhanced</title>
+    <link rel="stylesheet" href="/application.css" />
+</head>
+
+<body>
+
+    <div class="background"></div>
+
+    <div class="container">
+        <a href="/dashboard" class="back">← Back to Dashboard</a>
+
+        <div class="card">
+
+            <!-- Company & Position -->
+            <div class="field">
+                <label>Company</label>
+                <div class="value-row">
+                    <h1 id="companyText"></h1>
+                    <button class="edit-btn" onclick="openEditor('company_name')">✎</button>
+                </div>
+            </div>
+
+            <div class="field">
+                <label>Position Applied</label>
+                <div class="value-row">
+                    <h2 id="positionText"></h2>
+                    <button class="edit-btn" onclick="openEditor('position_applied')">✎</button>
+                </div>
+            </div>
+
+            <!-- Meta Info -->
+            <div class="meta">
+                <div class="meta-item">
+                    <label>Status</label>
+                    <span id="statusText" class="status"></span>
+                    <button class="edit-btn small" onclick="openEditor('status')">✎</button>
+                </div>
+
+                <div class="meta-item">
+                    <label>Date Applied</label>
+                    <span id="dateText"></span>
+                </div>
+
+                <div class="meta-item">
+                    <label>Last Updated</label>
+                    <span id="updatedText"></span>
+                </div>
+            </div>
+
+            <!-- Links -->
+            <div class="field">
+                <label>Resume Link</label>
+                <div class="value-row">
+                    <a id="resumeLink" target="_blank"></a>
+                    <button class="edit-btn" onclick="openEditor('resume_link')">✎</button>
+                </div>
+            </div>
+
+            <div class="field">
+                <label>Job Posting Link</label>
+                <div class="value-row">
+                    <a id="jdLink" target="_blank"></a>
+                    <button class="edit-btn" onclick="openEditor('jd_link')">✎</button>
+                </div>
+            </div>
+
+            <!-- Job Description -->
+            <div class="field">
+                <label>Job Description</label>
+                <p class="hint">Full JD used for resume optimization</p>
+                <div class="jd-box">
+                    <pre id="jdText"></pre>
+                    <button class="edit-btn floating" onclick="openEditor('jd_text')">✎</button>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Notes Section -->
+        <div class="card">
+            <div class="section-header">
+                <h3>📝 Notes</h3>
+                <button class="btn-primary small" onclick="openNoteEditor()">+ Add Note</button>
+            </div>
+            <div id="notesList" class="notes-list"></div>
+        </div>
+
+        <!-- Contacts Section -->
+        <div class="card">
+            <div class="section-header">
+                <h3>👥 Contacts</h3>
+                <button class="btn-primary small" onclick="openContactEditor()">+ Add Contact</button>
+            </div>
+            <div id="contactsList" class="contacts-list"></div>
+        </div>
+
+        <!-- Delete Button -->
+        <button id="deleteBtn" class="delete-btn">🗑️ Delete Application</button>
+
+    </div>
+
+    <!-- Field Editor Popup -->
+    <div id="editorOverlay" class="overlay hidden">
+        <div class="editor-card">
+            <h3 id="editorTitle"></h3>
+            <p id="editorHint" class="hint"></p>
+
+            <textarea id="editorInput"></textarea>
+
+            <select id="editorSelect" class="hidden">
+                <option>Applied</option>
+                <option>Interview</option>
+                <option>Offer</option>
+                <option>Rejected</option>
+            </select>
+
+            <div class="editor-actions">
+                <button onclick="closeEditor()">Cancel</button>
+                <button class="primary" onclick="saveEditor()">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Note Editor Popup -->
+    <div id="noteOverlay" class="overlay hidden">
+        <div class="editor-card">
+            <h3>Add Note</h3>
+            <p class="hint">Add a note to track important information</p>
+
+            <textarea id="noteInput" placeholder="Enter your note here..."></textarea>
+
+            <div class="editor-actions">
+                <button onclick="closeNoteEditor()">Cancel</button>
+                <button class="primary" onclick="saveNote()">Save Note</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contact Editor Popup -->
+    <div id="contactOverlay" class="overlay hidden">
+        <div class="editor-card">
+            <h3 id="contactEditorTitle">Add Contact</h3>
+            <p class="hint">Track recruiters, referrals, and hiring managers</p>
+
+            <input type="hidden" id="contactId" />
+
+            <div class="form-group">
+                <label>Full Name *</label>
+                <input type="text" id="contactName" placeholder="John Doe" required />
+            </div>
+
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" id="contactEmail" placeholder="john@company.com" />
+            </div>
+
+            <div class="form-group">
+                <label>LinkedIn URL</label>
+                <input type="url" id="contactLinkedin" placeholder="https://linkedin.com/in/johndoe" />
+            </div>
+
+            <div class="form-group">
+                <label>Role</label>
+                <select id="contactRole">
+                    <option value="">Select Role</option>
+                    <option value="Recruiter">Recruiter</option>
+                    <option value="Hiring Manager">Hiring Manager</option>
+                    <option value="Referral">Referral</option>
+                    <option value="Team Member">Team Member</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Notes</label>
+                <textarea id="contactNotes" placeholder="Additional information..."></textarea>
+            </div>
+
+            <div class="editor-actions">
+                <button onclick="closeContactEditor()">Cancel</button>
+                <button class="primary" onclick="saveContact()">Save Contact</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Popup -->
+    <div id="deleteOverlay" class="overlay hidden">
+        <div class="delete-card">
+            <h3>Delete Application</h3>
+            <p class="hint">
+                This action will permanently delete this application and all associated notes and contacts.
+                This cannot be undone.
+            </p>
+
+            <div class="delete-actions">
+                <button id="cancelDelete">Cancel</button>
+                <button id="confirmDelete" class="danger">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/application.js"></script>
+</body>
+
+</html>

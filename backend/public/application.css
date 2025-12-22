@@ -1,0 +1,739 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+}
+
+/* ======================
+   Base Layout
+====================== */
+body {
+    background: #0f172a;
+    color: white;
+    min-height: 100vh;
+}
+
+.background {
+    position: fixed;
+    inset: 0;
+    background:
+        radial-gradient(circle at 20% 20%, rgba(59, 130, 246, 0.25), transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(147, 51, 234, 0.25), transparent 50%);
+    filter: blur(80px);
+    z-index: -1;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 40px 24px;
+}
+
+.back {
+    color: #93c5fd;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 20px;
+    transition: all 0.2s ease;
+}
+
+.back:hover {
+    color: #60a5fa;
+    transform: translateX(-4px);
+}
+
+/* ======================
+   Card
+====================== */
+.card {
+    margin-top: 20px;
+    backdrop-filter: blur(24px);
+    background: rgba(255, 255, 255, 0.10);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.45);
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    background: rgba(255, 255, 255, 0.12);
+}
+
+/* ======================
+   Section Header
+====================== */
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.section-header h3 {
+    font-size: 20px;
+    font-weight: 600;
+}
+
+/* ======================
+   Fields & Labels
+====================== */
+.field {
+    margin-bottom: 24px;
+}
+
+label {
+    font-size: 12px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: #cbd5f5;
+    font-weight: 600;
+    display: block;
+    margin-bottom: 8px;
+}
+
+.hint {
+    font-size: 12px;
+    color: #94a3b8;
+    margin-top: 4px;
+}
+
+/* ======================
+   Value Rows
+====================== */
+.value-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 6px;
+}
+
+.value-row h1 {
+    font-size: 32px;
+    font-weight: 700;
+    background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.value-row h2 {
+    font-size: 24px;
+    font-weight: 600;
+    color: #e5e7eb;
+}
+
+.value-row a {
+    color: #60a5fa;
+    text-decoration: none;
+    font-size: 15px;
+    transition: color 0.2s ease;
+}
+
+.value-row a:hover {
+    color: #93c5fd;
+    text-decoration: underline;
+}
+
+/* ======================
+   Edit Button (Hover Only)
+====================== */
+.edit-btn {
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    padding: 6px 10px;
+    cursor: pointer;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.2s ease;
+    color: white;
+    font-size: 14px;
+}
+
+.field:hover .edit-btn,
+.value-row:hover .edit-btn,
+.meta-item:hover .edit-btn,
+.jd-box:hover .edit-btn {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.edit-btn:hover {
+    background: rgba(255, 255, 255, 0.25);
+    transform: scale(1.05);
+}
+
+.edit-btn.small {
+    padding: 4px 8px;
+    font-size: 12px;
+}
+
+.edit-btn.floating {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+}
+
+/* ======================
+   Meta Section
+====================== */
+.meta {
+    display: flex;
+    gap: 32px;
+    margin: 24px 0;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.meta-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+}
+
+.meta-item label {
+    margin-bottom: 0;
+}
+
+.meta-item span {
+    color: #e5e7eb;
+    font-weight: 500;
+}
+
+/* Status Badge */
+.status {
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    display: inline-block;
+}
+
+.status.applied {
+    background: rgba(59, 130, 246, 0.2);
+    color: #93c5fd;
+}
+
+.status.interview {
+    background: rgba(168, 85, 247, 0.2);
+    color: #c4b5fd;
+}
+
+.status.offer {
+    background: rgba(34, 197, 94, 0.2);
+    color: #86efac;
+}
+
+.status.rejected {
+    background: rgba(239, 68, 68, 0.2);
+    color: #fca5a5;
+}
+
+/* ======================
+   Job Description
+====================== */
+.jd-box {
+    position: relative;
+    margin-top: 10px;
+}
+
+.jd-box pre {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 18px;
+    border-radius: 12px;
+    white-space: pre-wrap;
+    line-height: 1.7;
+    font-size: 14px;
+    color: #cbd5f5;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+/* ======================
+   Notes List
+====================== */
+.notes-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.note-item {
+    background: rgba(255, 255, 255, 0.08);
+    padding: 16px;
+    border-radius: 12px;
+    border-left: 3px solid #60a5fa;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.note-item:hover {
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.note-text {
+    color: #e5e7eb;
+    line-height: 1.6;
+    font-size: 14px;
+    margin-bottom: 10px;
+    white-space: pre-wrap;
+}
+
+.note-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    color: #94a3b8;
+}
+
+.note-delete {
+    background: rgba(239, 68, 68, 0.2);
+    color: #fca5a5;
+    border: none;
+    padding: 4px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 11px;
+    transition: all 0.2s ease;
+}
+
+.note-delete:hover {
+    background: rgba(239, 68, 68, 0.35);
+}
+
+.empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: #94a3b8;
+    font-size: 14px;
+}
+
+/* ======================
+   Contacts List
+====================== */
+.contacts-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+}
+
+.contact-card {
+    background: rgba(255, 255, 255, 0.08);
+    padding: 18px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.contact-card:hover {
+    background: rgba(255, 255, 255, 0.12);
+    transform: translateY(-2px);
+}
+
+.contact-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    margin-bottom: 12px;
+}
+
+.contact-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: #e5e7eb;
+}
+
+.contact-role {
+    display: inline-block;
+    padding: 3px 10px;
+    background: rgba(168, 85, 247, 0.2);
+    color: #c4b5fd;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    margin-top: 6px;
+}
+
+.contact-info {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.contact-info a {
+    color: #60a5fa;
+    text-decoration: none;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: color 0.2s ease;
+}
+
+.contact-info a:hover {
+    color: #93c5fd;
+}
+
+.contact-notes {
+    margin-top: 10px;
+    padding: 10px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 8px;
+    font-size: 13px;
+    color: #cbd5f5;
+    line-height: 1.5;
+}
+
+.contact-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.contact-btn {
+    flex: 1;
+    padding: 6px 12px;
+    border: none;
+    border-radius: 8px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-weight: 500;
+}
+
+.contact-btn.edit {
+    background: rgba(59, 130, 246, 0.2);
+    color: #93c5fd;
+}
+
+.contact-btn.edit:hover {
+    background: rgba(59, 130, 246, 0.3);
+}
+
+.contact-btn.delete {
+    background: rgba(239, 68, 68, 0.2);
+    color: #fca5a5;
+}
+
+.contact-btn.delete:hover {
+    background: rgba(239, 68, 68, 0.35);
+}
+
+/* ======================
+   Buttons
+====================== */
+.btn-primary {
+    padding: 10px 20px;
+    background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+}
+
+.btn-primary.small {
+    padding: 8px 16px;
+    font-size: 13px;
+}
+
+.delete-btn {
+    margin-top: 30px;
+    padding: 12px 20px;
+    border-radius: 12px;
+    background: rgba(239, 68, 68, 0.2);
+    color: #fca5a5;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.delete-btn:hover {
+    background: rgba(239, 68, 68, 0.35);
+    transform: translateY(-2px);
+}
+
+/* ======================
+   Overlay & Popups
+====================== */
+.overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    animation: fadeIn 0.2s ease;
+}
+
+.hidden {
+    display: none;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+/* ======================
+   Editor Card (Popup)
+====================== */
+.editor-card {
+    width: 90%;
+    max-width: 540px;
+    max-height: 85vh;
+    overflow-y: auto;
+    backdrop-filter: blur(24px);
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+    padding: 28px;
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+    animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.editor-card h3 {
+    font-size: 20px;
+    margin-bottom: 8px;
+}
+
+/* Form Inputs */
+.editor-card textarea,
+.editor-card select,
+.editor-card input {
+    width: 100%;
+    margin-top: 10px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+    padding: 12px;
+    color: white;
+    font-size: 14px;
+    transition: all 0.2s ease;
+}
+
+.editor-card textarea {
+    min-height: 120px;
+    max-height: 320px;
+    resize: vertical;
+    font-family: inherit;
+    line-height: 1.6;
+}
+
+.editor-card input:focus,
+.editor-card textarea:focus,
+.editor-card select:focus {
+    outline: none;
+    border-color: #60a5fa;
+    background: rgba(255, 255, 255, 0.15);
+    box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.1);
+}
+
+.editor-card input::placeholder,
+.editor-card textarea::placeholder {
+    color: #94a3b8;
+}
+
+.editor-card select option {
+    background-color: #1e293b;
+    color: #e5e7eb;
+}
+
+.form-group {
+    margin-bottom: 18px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 6px;
+}
+
+/* ======================
+   Editor Actions
+====================== */
+.editor-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 24px;
+}
+
+.editor-actions button {
+    padding: 10px 20px;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.editor-actions button:not(.primary) {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+.editor-actions button:not(.primary):hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.editor-actions .primary {
+    background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+    color: white;
+    box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3);
+}
+
+.editor-actions .primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(34, 197, 94, 0.4);
+}
+
+/* ======================
+   Delete Confirmation Popup
+====================== */
+.delete-card {
+    width: 90%;
+    max-width: 460px;
+    backdrop-filter: blur(24px);
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+    padding: 28px;
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+    animation: slideUp 0.3s ease;
+}
+
+.delete-card h3 {
+    font-size: 20px;
+    margin-bottom: 12px;
+    color: #fca5a5;
+}
+
+.delete-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 24px;
+}
+
+.delete-actions button {
+    padding: 10px 20px;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.delete-actions button:not(.danger) {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+.delete-actions button:not(.danger):hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.delete-actions .danger {
+    background: rgba(239, 68, 68, 0.8);
+    color: white;
+}
+
+.delete-actions .danger:hover {
+    background: rgba(239, 68, 68, 1);
+    transform: translateY(-2px);
+}
+
+/* ======================
+   Scrollbar
+====================== */
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* ======================
+   Responsive
+====================== */
+@media (max-width: 768px) {
+    .container {
+        padding: 24px 16px;
+    }
+
+    .value-row h1 {
+        font-size: 24px;
+    }
+
+    .value-row h2 {
+        font-size: 18px;
+    }
+
+    .meta {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+    }
+
+    .contacts-list {
+        grid-template-columns: 1fr;
+    }
+
+    .editor-card {
+        width: 95%;
+        padding: 20px;
+    }
+}
