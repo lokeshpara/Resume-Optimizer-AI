@@ -49,10 +49,14 @@ const docs = google.docs({ version: 'v1', auth: oauth2Client });
 const drive = google.drive({ version: 'v3', auth: oauth2Client });
 const sheets = google.sheets({ version: 'v4', auth: oauth2Client });
 
-// Configuration
 const ORIGINAL_RESUME_DOC_ID = process.env.ORIGINAL_RESUME_DOC_ID;
 const DRIVE_FOLDER_ID = process.env.DRIVE_FOLDER_ID;
 const TRACKING_SHEET_ID = process.env.TRACKING_SHEET_ID;
+
+// ADD THESE 4 NEW LINES:
+
+const FRONTEND_RESUME_DOC_ID = process.env.FRONTEND_RESUME_DOC_ID;
+const FULLSTACK_RESUME_DOC_ID = process.env.FULLSTACK_RESUME_DOC_ID;
 
 // AI Provider wrapper
 async function generateAIContent(prompt, provider, apiKey) {
@@ -324,6 +328,85 @@ Think deeply and give your absolute best analysis. A candidate's career depends 
     return {
       portalName: 'Job Portal',
       fullAnalysis: 'Unable to detect specific portal. Optimizing for universal ATS compatibility.'
+    };
+  }
+}
+
+// Helper: AI-powered resume selection based on JD analysis
+async function selectBestResume(jobDescription, aiProvider, apiKey) {
+  try {
+    console.log('🎯 Asking AI which resume is best for this JD...');
+
+    // Replace the selectBestResume function's selectionPrompt with this:
+
+const selectionPrompt = `You are an expert resume strategist. Analyze this job description and determine which specialized resume would be BEST to use as the base for optimization.
+
+JOB DESCRIPTION:
+${jobDescription.substring(0, 4000)}
+
+AVAILABLE RESUME TYPES (ONLY 2 OPTIONS):
+1. FRONTEND Resume: Specialized for pure frontend/UI roles
+   - Use when: 70%+ of JD focuses on React, Angular, Vue, UI/UX, CSS, frontend frameworks
+   - Examples: "Frontend Developer", "UI Engineer", "React Developer"
+
+2. FULLSTACK Resume: Balanced backend + frontend + cloud
+   - Use when: Role requires backend AND frontend, or unclear focus, or mentions full stack
+   - Examples: "Full Stack Developer", "Software Engineer", "Java Developer"
+
+ANALYSIS INSTRUCTIONS:
+1. Read job title carefully
+2. Count frontend vs backend vs cloud mentions in requirements
+3. Determine PRIMARY daily focus (what will candidate spend 60%+ time doing?)
+4. When in doubt → choose FULLSTACK (it's safer)
+
+SELECTION RULES:
+- If JD says "Frontend Developer" or "React Developer" → FRONTEND
+- If JD says "Full Stack" or lists both backend AND frontend → FULLSTACK  
+- If JD is unclear or mixed → FULLSTACK
+- If JD mentions Spring Boot, microservices, APIs heavily → FULLSTACK
+
+RESPOND IN THIS EXACT FORMAT (no other text):
+
+SELECTED_RESUME: [FRONTEND / FULLSTACK]
+
+CONFIDENCE: [High / Medium / Low]
+
+REASONING: [2-3 sentences explaining why this resume is the best choice]
+
+KEY_SKILLS_MATCH: [List 3-5 key skills from JD that match this resume type]
+
+Be decisive. Choose the resume that gives the candidate the BEST chance of getting an interview.`;
+    const analysis = await generateAIContent(selectionPrompt, aiProvider, apiKey);
+    console.log('📊 Resume Selection Analysis:\n', analysis);
+
+    // Extract selected resume from response
+    const resumeMatch = analysis.match(/SELECTED_RESUME:\s*(FRONTEND|FULLSTACK)/i);
+    const selectedResume = resumeMatch ? resumeMatch[1].toUpperCase() : 'FULLSTACK';
+    
+    const confidenceMatch = analysis.match(/CONFIDENCE:\s*(High|Medium|Low)/i);
+    const confidence = confidenceMatch ? confidenceMatch[1] : 'Medium';
+
+    const reasoningMatch = analysis.match(/REASONING:\s*(.+?)(?=\n\n|KEY_SKILLS_MATCH:|$)/is);
+    const reasoning = reasoningMatch ? reasoningMatch[1].trim() : 'Analysis completed';
+
+    console.log(`\n✅ AI Selected Resume: ${selectedResume}`);
+    console.log(`📊 Confidence: ${confidence}`);
+    console.log(`💡 Reasoning: ${reasoning}\n`);
+
+    return {
+      selectedResume: selectedResume,
+      confidence: confidence,
+      reasoning: reasoning,
+      fullAnalysis: analysis
+    };
+
+  } catch (error) {
+    console.log('⚠️ Resume selection failed, defaulting to FULLSTACK:', error.message);
+    return {
+      selectedResume: 'FULLSTACK',
+      confidence: 'Low',
+      reasoning: 'Selection failed, using full stack as safe default',
+      fullAnalysis: 'Selection analysis failed'
     };
   }
 }
@@ -639,10 +722,44 @@ ${jobResponse.data}`;
     console.log(`   📱 Portal: ${atsAnalysis.portalName}`);
     console.log(`   📊 Strategy Created\n`);
 
-    // Step 4: Get original resume
-    console.log('📋 Step 4: Fetching original resume...');
+    // Step 3.7: AI-powered resume selection
+    console.log('🎯 Step 3.7: AI selecting best resume for this JD...');
+    const resumeSelection = await selectBestResume(
+      jobDescription,
+      aiProvider,
+      extractionKey
+    );
+
+    // Map selected resume to document ID
+    let selectedResumeId;
+    let resumeType;
+    
+    switch (resumeSelection.selectedResume) {
+      case 'FRONTEND':
+        selectedResumeId = FRONTEND_RESUME_DOC_ID;
+        resumeType = 'Frontend Resume';
+        break;
+      case 'FULLSTACK':
+        selectedResumeId = FULLSTACK_RESUME_DOC_ID;
+        resumeType = 'Full Stack Resume';
+        break;
+      default:
+        selectedResumeId = FULLSTACK_RESUME_DOC_ID;
+        resumeType = 'Full Stack Resume';
+        break;
+    }
+
+    console.log(`\n📄 Resume Selection:`);
+    console.log(`   🎯 Selected: ${resumeSelection.selectedResume}`);
+    console.log(`   📊 Confidence: ${resumeSelection.confidence}`);
+    console.log(`   📋 Using: ${resumeType}`);
+    console.log(`   🆔 Document ID: ${selectedResumeId}`);
+    console.log(`   💡 Reasoning: ${resumeSelection.reasoning}\n`);
+
+    // Step 4: Get selected resume
+    console.log(`📋 Step 4: Fetching ${resumeType}...`);
     const resumeDoc = await docs.documents.get({
-      documentId: ORIGINAL_RESUME_DOC_ID
+      documentId: selectedResumeId
     });
     const originalResume = extractTextFromDoc(resumeDoc.data);
     console.log(`✅ Resume fetched (${originalResume.length} chars)`);
@@ -650,249 +767,269 @@ ${jobResponse.data}`;
     // Step 5: Generate optimization points
     console.log('💡 Step 5: Generating optimization points...');
 
-    const optimizationPrompt = `You are an expert ATS analyzer. Generate 20 to 35+ HIGH-QUALITY optimization points to achieve a 100% ATS match.
+    // Replace the optimizationPrompt variable with this:
 
-===========================
-INPUT RESUME:
+// Replace the optimizationPrompt variable with this:
+
+const optimizationPrompt = `You are a senior resume strategist specializing in making resumes look HUMAN-WRITTEN while strategically matching job requirements.
+
+====================================================
+CRITICAL CONTEXT
+====================================================
+
+The candidate has 90%+ ATS scores but ZERO interview responses.
+Problem: Resumes look AI-generated and keyword-stuffed.
+Solution: Make strategic, HUMAN changes that build trust with recruiters.
+
+====================================================
+INPUTS
+====================================================
+
+RESUME TYPE: ${resumeType}
+
+CURRENT RESUME:
 ${originalResume}
 
-INPUT JOB DESCRIPTION:
+JOB DESCRIPTION:
 ${jobDescription}
 
-PORTAL ANALYSIS & WINNING STRATEGY:
-${atsAnalysis.fullAnalysis}
-===========================
-
-YOUR MISSION:
-Analyze EVERY section of the resume and generate specific, actionable optimization points.
-Generate AS MANY points as needed to achieve 100% ATS match.
-Each point MUST be concise, targeted, and aligned to the JD.
-This candidate is applying through ${atsAnalysis.portalName}. Your job is to create the PERFECT resume that will:
-1. Score 100% match with the job description
-2. Get prioritized by ${atsAnalysis.portalName}'s algorithm
-3. Guarantee the candidate gets shortlisted from hundreds of applicants
-
-GENERATE AS MANY OPTIMIZATION POINTS AS NEEDED (no limit - could be 30, 50, or even 70+ points if that's what it takes to win).
+PORTAL: ${atsAnalysis.portalName}
 
 ====================================================
-===== CRITICAL SUCCESS REQUIREMENTS =====
+YOUR MISSION
 ====================================================
 
-1. 100% JD ALIGNMENT
-   - Every single keyword from JD must appear in resume
-   - Every required skill must be present AND proven with experience
-   - Match the JD's language, terminology, and phrasing style
+Generate 8-12 strategic optimization points that:
+✅ Add missing JD skills NATURALLY to both Experience and Skills sections
+✅ Reorder bullets to highlight most relevant experience first
+✅ Keep every change 100% interview-defensible
+✅ Make resume look human-written, not AI-generated
+✅ Target 85-92% ATS match (NOT 100% - that looks fake)
 
-2. PORTAL-SPECIFIC OPTIMIZATION
-   - Use the portal analysis above to optimize specifically for ${atsAnalysis.portalName}
-   - Understand what ${atsAnalysis.portalName}'s algorithm prioritizes
-   - Adapt your strategy based on the WINNING_STRATEGY section above
-   - Focus on the CRITICAL_SUCCESS_FACTORS identified above
+====================================================
+SKILL ADDITION STRATEGY (CRITICAL)
+====================================================
 
-3. MISSING SKILLS INTEGRATION (CRITICAL)
-   For EVERY skill in JD that's missing from resume:
-   - Add to Skills section
-   - Create realistic Experience bullet showing actual usage
-   - Include believable metrics (30-50% improvements)
-   - Place in most logical company/project context
-   - Make it interview-ready
+FOR EVERY MISSING SKILL IN JD:
 
-----------------------------------------------------
-===== MISSING SKILLS RULE (CRITICAL) =====
-----------------------------------------------------
+1. **Add to Skills Section**
+   - FIRST: Try to fit into EXISTING categories (minimize category count)
+   - ONLY create new category if skill truly doesn't fit anywhere
+   - Format: plain text, comma-separated, no bold
+   
+   **Category Placement Rules:**
+   - If new category needed AND JD heavily emphasizes it → Place HIGH (2nd-3rd position)
+   - If new category needed AND JD mentions as nice-to-have → Place LOW (near end)
+   - Default position: After related categories logically
+   
+   **Category Naming:**
+   - Use descriptive names for ATS + human readability
+   - Format: "Category Name & Related:" (use "&" not "and")
+   - Examples: "Machine Learning & AI:", "Cloud & DevOps:", "Testing & Quality Assurance:"
+   - DON'T use abbreviations: "ML/AI" → use "Machine Learning & AI"
+   
+   **Fitting Skills into Existing Categories (Minimize New Categories):**
+   - OAuth2, JWT, SAML → "Backend Frameworks" (not new "Security" category)
+   - Redis, Memcached → "Databases" (not new "Caching" category)
+   - Prometheus, Grafana → "Monitoring" or "DevOps" (not new "Observability" category)
+   - GraphQL → "Backend Frameworks" (not new "API" category)
+   - Tailwind, Sass → "Frontend Frameworks" (not new "CSS" category)
 
-For EVERY skill mentioned in the JD that is NOT in the resume (Make sure to add all missing skills):
+2. **Add to Experience Section** 
+   - Choose the company where it's MOST REALISTIC
+   - Add naturally to an existing bullet OR create new bullet
+   - Make it sound like you actually used it
+   - Use specific context (project name, metric, outcome)
+   - **BOLD the skill name** when adding to bullets (helps ATS + recruiter scanning)
+   - Example: "Built event-driven microservices using **Spring Boot** and **Apache Kafka**"
 
-STEP 1: Add that skill to the Skills section
-STEP 2: Create a corresponding Experience enhancement point
+SKILL ADDITION RULES:
 
-REQUIREMENTS:
-- Find the most realistic place in Experience section to add this skill
-- Add a strong bullet showing actual usage with impact metrics
-- Metrics MUST be realistic and achievable (e.g., "improved X by 30-50%")
-- If the skill fits naturally with an existing bullet, enhance that bullet
-- If not, add a new bullet in the most relevant company/project
-- EVERY missing JD skill MUST have both Skills + Experience points
+**Required Skills (JD says "required" or "must have"):**
+- MUST add to Skills section
+- MUST add to Experience (at most realistic company)
+- High priority - make it prominent
 
-EXAMPLE - If JD requires "Docker" but resume doesn't have it:
+**Nice-to-Have Skills (JD says "preferred" or "nice to have"):**
+- MUST add to Skills section
+- MUST add to Experience (at most realistic company)
+- Lower priority - can be subtle mention
 
-POINT X:
-Section: Skills
-Type: ADD
-What: Docker
-Where: DevOps & Cloud Tools
-Position: Beginning
-Bold: YES
-Why: JD requires containerization
+**Realistic Placement by Company:**
+- LPL Financial (current): Cloud, modern frameworks, recent technologies
+- Athenahealth: Healthcare tech, FHIR, compliance, data security
+- YES Bank: Payments, banking, security, transaction processing
+- Comcast: Media, streaming, content delivery, scalability
 
-POINT X+1:
-Section: Experience
-Company: [Most relevant company]
-Bullet: [Number] OR Add new bullet
-What: containerized microservices using Docker, reducing deployment time by 40% and improving scalability
-Where: [Realistic location in that bullet]
-MoveTo: 3 (if JD-critical)
-Bold: Docker, containerized, microservices
-Why: Demonstrates Docker expertise required in JD with measurable impact
+EXAMPLES OF NATURAL SKILL ADDITION:
 
-----------------------------------------------------
-===== GLOBAL BOLDING RULES =====
-----------------------------------------------------
-• Bold JD keywords ONLY inside the SKILLS section.
-• Do NOT bold ANYTHING in Summary or Experience unless an optimization point explicitly instructs it.
+❌ BAD (keyword stuffing):
+"Implemented microservices using Spring Boot, Kafka, Redis, Docker, Kubernetes, Jenkins"
 
-----------------------------------------------------
-===== SUMMARY SECTION ANALYSIS =====
-----------------------------------------------------
+✅ GOOD (natural integration with JD skills bolded):
+"Built event-driven microservices using **Spring Boot** and **Apache Kafka**, processing 2M+ daily transactions with **Redis** caching for sub-200ms response times"
 
-STRICT SUMMARY BULLET FORMAT (MANDATORY):
-• Every Summary bullet MUST begin with “• ”
-• NEVER use hyphens (-) or plain text lines.
-• Each bullet MUST be 1–2 full professional sentences.
-• NO fragment bullets allowed.
-• Add ONLY 1–3 new bullets.
-• Every new bullet MUST include:
-  – JD keywords in natural context
-  – metrics or scale (when possible)
-  – distributed systems / API / cloud / performance themes
+❌ BAD (obvious addition):
+"Worked with React, Angular, Vue, and Next.js for frontend development"
 
-POSITIONING RULE (CRITICAL):
-• If you add a new JD-relevant bullet → you MUST specify:
-  MoveTo: 2  OR  MoveTo: 3
-• Most important bullets MUST appear early for ATS.
+✅ GOOD (specific context with JD skills bolded):
+"Migrated legacy Angular application to **React 18** with **TypeScript**, reducing bundle size by 40% and improving load time to under 2 seconds"
 
-SUMMARY POINT FORMAT:
+**Bold Formatting Rules:**
+- ONLY bold skills that appear in the JD
+- Bold the skill name, not the entire phrase
+- Examples: "**Spring Boot**", "**Kafka**", "**React 18**", "**PostgreSQL**"
+- Don't bold common words: "using", "with", "implementing"
+- Don't bold in Skills section (plain text only there)
 
-POINT X:
-Section: Summary
-What: Full 1–2 sentence bullet
-Where: Add new bullet OR modify bullet #
-MoveTo: 2 or 3 (MANDATORY for new bullets)
-Why: ATS relevance
-Scale: 1–10
+====================================================
+BULLET REORDERING STRATEGY
+====================================================
 
-----------------------------------------------------
-===== SKILLS SECTION ANALYSIS =====
-----------------------------------------------------
+**ALWAYS move most JD-relevant bullet to position #1 at each company**
 
-SKILLS TABLE MUST FOLLOW THIS EXACT FORMAT:
+Recruiters spend 6 seconds scanning - first 2 bullets matter most.
 
-SKILLS
+Example:
+If JD emphasizes "Kafka event streaming":
+- Current order: 1,2,3,4,5,6
+- New order: 3,1,2,5,4,6 (if bullet #3 is about Kafka)
 
- Category Name               | Skill1, Skill2, Skill3, ...
- Category Name               | Skill1, Skill2, Skill3, ...
+====================================================
+HUMANIZATION RULES (NON-NEGOTIABLE)
+====================================================
 
-STRICT RULES:
-1. One row per category.
-2. NO bullets, NO markdown tables, NO line breaks inside a row.
-3. JD keywords MUST be bolded only here.
-4. Skills MUST remain comma-separated on one line.
+1. **Vary Action Verbs**
+   - Use: Architected, Built, Developed, Engineered, Created, Designed, Led
+   - Don't use "Implemented" more than 2 times in entire resume
+   - Don't start consecutive bullets with same verb
 
-SKILL POINT TYPES:
-TYPE 1 - ADD SKILL  
-TYPE 2 - DELETE SKILL  
-TYPE 3 - MODIFY / BOLD SKILL  
-TYPE 4 - REORDER SKILL  
-TYPE 5 - MERGE CATEGORY  
+2. **Natural Metrics**
+   - Only 40-50% of bullets should have metrics
+   - Use round numbers: 40%, 2M+, 99.9% (not 43.7% or 2.3M)
+   - Mix quantitative and qualitative impact
 
-SKILL POINT FORMAT:
+3. **Conversational Tech Language**
+   - Use real tech terms: Spring Boot, Kafka, React, PostgreSQL
+   - Avoid buzzwords: "cutting-edge", "revolutionary", "synergized"
+   - Sound like an engineer talking to another engineer
 
-POINT X:
-Section: Skills
-Type: ADD / DELETE / MODIFY / REORDER / MERGE
-What: Skill or change
-Where: Category Name
-Position: Beginning / End (if relevant)
-Bold: YES/NO
-Why: ATS relevance
+4. **Realistic Bullet Structure**
+   - Mix short (1 line) and long (2 lines) bullets
+   - Some bullets describe scope without metrics
+   - Vary technical depth (some simple, some detailed)
 
-----------------------------------------------------
-===== EXPERIENCE SECTION ANALYSIS =====
-----------------------------------------------------
+====================================================
+WHAT NOT TO CHANGE (ABSOLUTE RULES)
+====================================================
 
-STRICT EXPERIENCE FORMAT RULE:
-• Every Experience bullet MUST begin with “• ”
-• NEVER use hyphens (-) or unformatted lines.
-• Each bullet MUST be 1–2 full sentences.
-• NO keyword fragments.
-• Enhancements MUST integrate JD terms naturally.
-• Bold ONLY if an optimization point explicitly instructs it.
+❌ Company names, dates, job titles
+❌ Number of companies (keep all 4)
+❌ Certifications
+❌ Education
+❌ Contact information
+❌ Resume shouldn't exceed 2 pages
 
-BULLET PRIORITY RULE (CRITICAL):
-• If an enhancement is strongly JD-aligned:
-  MoveTo: 2  OR  MoveTo: 3
-• This places JD-relevant bullets early → highest ATS impact.
-
-EXPERIENCE POINT FORMAT:
-
-POINT X:
-Section: Experience
-Company: [Company Name]
-Bullet: X
-What: Full 1–2 sentence enhancement phrase
-Where: beginning / after phrase / end OR Add new bullet
-MoveTo: 2 or 3 (ONLY if JD-critical)
-Bold: list JD terms to bold (if needed)
-Why: JD relevance
-
-----------------------------------------------------
-===== CONSOLIDATION / MERGING =====
-----------------------------------------------------
-
-POINT FORMAT:
-Section: Skills
-Type: MERGE
-What: Merge Category A → Category B
-How: List specific skills moved
-Why: JD expectation or simplification
-
-----------------------------------------------------
-===== FILENAME SUGGESTION =====
-----------------------------------------------------
-
-OUTPUT:
-FILENAME: Lokesh_Para_[Position]_[Company]
-
-----------------------------------------------------
-===== OUTPUT FORMAT =====
-----------------------------------------------------
-
-Return ONLY optimization points in this EXACT structure:
+====================================================
+OPTIMIZATION POINT FORMAT
+====================================================
 
 POINT 1:
-Section: Summary
-What: ...
-Where: ...
-MoveTo: ...
-Why: ...
-Scale: 1–10
+Type: ADD_SKILL
+Skill: Apache Flink
+Where_Skills: Messaging & Streaming (existing category)
+Where_Experience: LPL Financial, Bullet 3
+Integration: "Extend existing Kafka bullet to mention **Flink** for stream processing with 500K events/sec throughput"
+Bold: YES (Flink is from JD)
+Priority: High
+Reasoning: JD lists Flink as required skill; fits existing "Messaging & Streaming" category; realistic since candidate has Kafka experience
 
 POINT 2:
-Section: Skills
-Type: ADD
-What: ...
-Where: ...
-Position: ...
-Bold: YES/NO
-Why: ...
+Type: REORDER_BULLETS
+Company: Athenahealth
+Current_Order: 1,2,3,4,5
+New_Order: 4,1,2,3,5
+Reasoning: JD emphasizes FHIR APIs - move FHIR bullet to position 1
 
 POINT 3:
-Section: Experience
-Company: ...
-Bullet: ...
-What: ...
-Where: ...
-MoveTo: ...
-Bold: YES/NO
-Why: ...
+Type: ADD_SKILL
+Skill: TensorFlow
+Where_Skills: NEW CATEGORY "Machine Learning & AI" (insert after Testing category)
+Justification: JD mentions ML for fraud detection; doesn't fit existing categories; JD moderately emphasizes it
+Where_Experience: YES Bank, New Bullet
+Integration: "Add new bullet: 'Implemented ML-based fraud detection using **TensorFlow** identifying suspicious transactions with 92% accuracy, preventing $5M+ in potential losses'"
+Bold: YES (TensorFlow is from JD)
+Priority: High
+Reasoning: JD requires ML experience; creating focused category shows specialization; realistic for banking fraud prevention
 
-Continue generating points until:
-1. ALL missing JD skills are added to Skills + backed by Experience points
-2. ALL existing sections are optimized for ATS match
-3. Target: 100% ATS match achieved
+POINT 4:
+Type: ADD_SKILL
+Skill: GraphQL
+Where_Skills: Backend Frameworks (existing category - DON'T create new "API" category)
+Where_Experience: LPL Financial, Modify Bullet 2
+Integration: "Update API bullet to mention both RESTful and **GraphQL** APIs"
+Bold: YES (GraphQL is from JD)
+Priority: Medium
+Reasoning: JD mentions GraphQL; fits naturally in Backend Frameworks; avoids unnecessary category expansion
 
-Total points may exceed 35 if needed to cover all JD requirements.
+POINT 5:
+Type: ADD_SKILL
+Skill: Terraform
+Where_Skills: Cloud & DevOps (existing category)
+Where_Experience: LPL Financial, Bullet 5
+Integration: "Update infrastructure bullet to include 'using **Terraform** for infrastructure as code deploying across 15+ AWS services'"
+Bold: YES (Terraform is from JD)
+Priority: Medium
+Reasoning: JD requires IaC experience; Terraform fits existing Cloud & DevOps category
+
+POINT 6:
+Type: ADD_SKILL
+Skill: PyTorch
+Where_Skills: Machine Learning & AI (use existing category created in Point 3)
+Where_Experience: YES Bank, Same bullet as TensorFlow
+Integration: "Extend ML bullet to mention '**TensorFlow** and **PyTorch** for model experimentation'"
+Bold: YES (PyTorch is from JD)
+Priority: Medium
+Reasoning: JD mentions PyTorch; fits into ML category already created; realistic to use both frameworks
+
+====================================================
+POINT TYPES YOU CAN USE
+====================================================
+
+1. **ADD_SKILL**: Add missing JD skill to both Skills and Experience
+2. **REORDER_BULLETS**: Change bullet order at a company
+3. **MODIFY_BULLET**: Update existing bullet to add skill/context
+4. **MERGE_BULLETS**: Combine two bullets (reduces count by 1)
+5. **ENHANCE_METRIC**: Make existing metric more specific/impressive
+
+====================================================
+QUALITY CHECKLIST
+====================================================
+
+Before returning, verify:
+□ Added ALL important JD skills to both Skills AND Experience
+□ Skills added to most realistic companies
+□ Reordered bullets to put most relevant first
+□ Every change sounds natural and interview-safe
+□ No keyword stuffing or robotic patterns
+□ Would a recruiter trust this resume?
+
+====================================================
+OUTPUT RULES
+====================================================
+
+Return 8-12 optimization points ONLY.
+NO preamble, explanations, or commentary.
+Start directly with "POINT 1:"
+
+Focus on HIGH-IMPACT changes:
+- Adding missing JD skills naturally
+- Reordering bullets for relevance
+- Subtle wording improvements
+
+Begin output:
 `;
+
 
     const analysisKey = aiProvider === 'gemini' ? geminiKey2 : (chatgptKey2 || chatgptApiKey);
     const optimizationPoints = await generateAIContent(optimizationPrompt, aiProvider, analysisKey);
@@ -918,137 +1055,353 @@ Total points may exceed 35 if needed to cover all JD requirements.
     // Step 5: Rewrite resume
     console.log('✍️ Step 5: Rewriting resume...');
 
-    const rewritePrompt = `You are an ATS optimization expert. Rewrite the resume using ALL optimization points EXACTLY as specified.
+    // Replace the rewritePrompt variable with this:
 
-===========================
-INPUT RESUME:
+// Replace the rewritePrompt variable with this:
+
+const rewritePrompt = `You are a senior technical resume writer. Your mission: Apply optimization points while keeping the resume HUMAN-WRITTEN and INTERVIEW-SAFE.
+
+====================================================
+SECTION 1: CRITICAL CONTEXT
+====================================================
+
+**The Problem:**
+- Candidate applied to 360+ jobs with 90%+ ATS scores
+- Got ZERO interview responses
+- Issue: Resumes look AI-generated to human recruiters
+
+**Your Solution:**
+- Apply optimization points precisely
+- Keep resume looking human-written
+- Target 85-92% ATS (NOT 100% - that looks fake)
+- Prioritize HUMAN TRUST over ATS scores
+
+====================================================
+SECTION 2: INPUTS
+====================================================
+
+RESUME TYPE: ${resumeType}
+
+ORIGINAL RESUME:
 ${originalResume}
 
-INPUT OPTIMIZATION POINTS:
+OPTIMIZATION POINTS TO APPLY:
 ${optimizationPoints}
 
-INPUT JOB DESCRIPTION:
+JOB DESCRIPTION:
 ${jobDescription}
 
-PORTAL INFORMATION:
-Applying through: ${atsAnalysis.portalName}
-Portal URL: ${jobPostUrl}
-
-PORTAL STRATEGY:
-${atsAnalysis.fullAnalysis}
-===========================
+PORTAL: ${atsAnalysis.portalName}
 
 ====================================================
-===== YOUR MISSION =====
+SECTION 3: MANDATORY STRUCTURE (NON-NEGOTIABLE)
 ====================================================
 
-Rewrite this resume to be PERFECT like human written resume for ${atsAnalysis.portalName}.
+Your output MUST follow this EXACT structure:
 
-This resume must:
-✅ Score 100% match with the job description
-✅ Be optimized specifically for ${atsAnalysis.portalName}'s algorithm
-✅ Get this candidate shortlisted from hundreds of applicants
-✅ Be completely interview-ready and honest
+---RESUME START---
 
-Use the portal analysis above to understand what ${atsAnalysis.portalName} prioritizes and adapt accordingly.
+Lokesh Para
+Full Stack Developer
 
+lokeshpara11@gmail.com | 682-503-1723 | linkedin.com/in/lokeshpara99 | github.com/lokeshpara | lokeshpara.github.io/Portfolio
 
-====================================================
-===== GLOBAL RULES (CRITICAL – DO NOT VIOLATE) =====
-====================================================
+PROFESSIONAL EXPERIENCE
 
-1. Return the FULL resume (Summary, Skills, ALL Experience, Education). 
-2. NEVER remove a job, bullet, or company.
-3. EVERY bullet across Summary and Experience MUST:
-   • start with “• ”
-   • be 1–2 full sentences (NO fragments)
-   • contain bolded JD keywords automatically
-4. JD keywords MUST be bolded in:
-   • Summary
-   • Experience
-5. JD keywords MUST be bolded ONLY inside SKILLS for technical terms.
-6. NO hyphens (“-”) for bullets — ONLY “• ”
-7. NO missing sections, no truncation.
+Java Full Stack Developer | LPL Financial, San Diego, California
+June 2025 - Present
+• [6-7 bullets depending on resume type]
 
-====================================================
-===== BULLET REORDERING RULE (CRITICAL) =====
-====================================================
+Java Full Stack Developer | Athenahealth, Boston, MA
+August 2024 - May 2025
+• [5-6 bullets depending on resume type]
 
-If an optimization point contains:
+Java Full Stack Developer | YES Bank, Mumbai, India
+November 2021 - July 2023
+• [5-6 bullets depending on resume type]
 
-MoveTo: <number>
+Java Developer | Comcast Corporation, Chennai, India
+May 2020 - October 2021
+• [4-5 bullets depending on resume type]
 
-→ You MUST move that bullet to EXACTLY that bullet number  
-→ Applies to BOTH Summary and Experience sections.  
-→ Preserve formatting.
+TECHNICAL SKILLS
 
-====================================================
-===== SUMMARY REWRITE RULES =====
-====================================================
+[Categories with comma-separated skills]
 
-• Rewrite the Summary in bullet “• ” format only.
-• Each bullet = 1–2 sentences.
-• Insert new bullets exactly where optimization points say.
-• Apply MoveTo positioning precisely.
-• Mention total years of experience ONLY ONCE across the entire Summary.
-• Automatically bold ALL JD keywords inside the Summary.
+CERTIFICATIONS
 
-====================================================
-===== SKILLS REWRITE RULES (STRICT FORMAT) =====
-====================================================
+• Oracle Cloud Infrastructure 2025 Certified AI Foundations Associate
+• AWS Certified Solutions Architect – Associate
 
-The SKILLS section MUST be rewritten EXACTLY like this:
+EDUCATION
 
-SKILLS
+Master of Science in Computer and Information Sciences
+Southern Arkansas University | Magnolia, Arkansas, USA
 
- Category Name | item1, item2, item3, item4
- Category Name | item1, item2, item3
- Category Name | item1, item2, item3, item4, item5
+---RESUME END---
 
-STRICT RULES:
-1. ONE row per category.
-2. ONE line per row — NO wrapping.
-3. NO markdown tables.
-4. NO separators like “----”.
-5. NO extra headers except the word SKILLS.
-6. JD terms MUST be bolded ONLY in skills list (not category names).
-7. Skill categorization MUST be technically correct even if ATS would accept incorrect grouping.
-8. Never sacrifice technical correctness for keyword stuffing.
-
-If Skills are not in correct format, RECONSTRUCT THEM PROPERLY.
+**STRICT RULES:**
+❌ Never change: Company names, dates, job titles, contact info
+❌ Never add: Summary section, Projects section
+❌ Never change: Section order
+❌ Never change: Certifications or Education text
+✅ Title must be "Full Stack Developer" (never change)
 
 ====================================================
-===== EXPERIENCE REWRITE RULES =====
+SECTION 4: APPLYING OPTIMIZATION POINTS
 ====================================================
 
-- Keep ALL companies and ALL bullets.
-- Each bullet MUST:
-   – start with "• "
-   – be 1–2 full sentences
-   – integrate JD terms naturally
-   – automatically bold JD keywords
-- Insert enhancements exactly where optimization points specify.
-- Apply MoveTo ordering exactly.
-- Bold ONLY specific JD terms (not entire sentences).
+**Apply EXACTLY as specified in optimization points:**
 
-CRITICAL - NEW SKILL INTEGRATION:
-- When optimization points add a NEW skill that wasn't in original resume:
-  – The corresponding Experience bullet MUST sound realistic and natural
-  – Metrics MUST be believable (30-50% improvements, not 200%)
-  – The skill MUST fit the company/project context logically
-  – If adding to existing bullet, blend it seamlessly
-  – If creating new bullet, place it where it makes most sense
-- Example: Adding "Docker" to LPL Financial makes sense (FinTech uses containers)
-- Example: Adding "Docker" to YES Bank also makes sense (Banking systems)
-- Choose the MOST realistic placement based on company type and project
+IF point type is "ADD_SKILL":
+→ Add skill to Skills section under specified category
+→ Add skill to Experience section at specified company/bullet
+→ Make integration sound natural and realistic
+
+IF point type is "REORDER_BULLETS":
+→ Rearrange bullets in exact order specified
+→ Keep all bullet content, just change position
+
+IF point type is "MODIFY_BULLET":
+→ Update the specified bullet with new content
+→ Keep core message, add specified skills/context
+
+IF point type is "MERGE_BULLETS":
+→ Combine two bullets into one coherent bullet
+→ Reduces total bullet count by 1
+
+IF point type is "ENHANCE_METRIC":
+→ Make existing metric more specific or impressive
+→ Keep it realistic (round numbers only)
+
+**DO NOT:**
+❌ Make changes not mentioned in optimization points
+❌ Add content optimization points didn't request
+❌ Remove bullets unless points say to merge
+❌ Change structure points didn't mention
 
 ====================================================
-===== FINAL OUTPUT =====
+SECTION 5: HUMANIZATION RULES (CRITICAL)
 ====================================================
 
-Return ONLY the full rewritten resume in perfect formatting.
-No commentary. No explanations. No surrounding text.
+**1. NATURAL LANGUAGE VARIATION**
+
+Action Verb Rotation:
+- Use: Architected, Built, Developed, Engineered, Created, Designed, Led, Established, Deployed
+- "Implemented" → MAX 2 times total
+- "Architected" → MAX 2 times total  
+- Never start consecutive bullets with same verb
+
+❌ BAD (robotic):
+• Implemented microservices using Spring Boot
+• Implemented RESTful APIs with OAuth2
+• Implemented event-driven architecture
+• Implemented monitoring with Prometheus
+
+✅ GOOD (human, with JD skills bolded):
+• Architected microservices ecosystem using **Spring Boot** processing 2M+ daily transactions
+• Built RESTful APIs with **OAuth2** authentication integrating Bloomberg market data
+• Designed event-driven architecture using **Kafka** with sub-200ms latency
+• Established monitoring platform with **Prometheus** reducing incident resolution by 55%
+
+**2. REALISTIC METRICS (40-50% OF BULLETS)**
+
+Metrics Guidelines:
+- Only 40-50% of bullets should have metrics
+- Use round numbers: 40%, 2M+, 99.9% (not 43.7%, 2.3M)
+- Mix of bullets WITH and WITHOUT metrics
+
+Examples:
+
+✅ With metric: "Built microservices using **Spring Boot** processing 2M+ daily transactions with 99.9% uptime"
+✅ Without metric: "Engineered RESTful APIs with **OAuth2** authentication integrating market data feeds"
+✅ With metric: "Optimized database queries using **PostgreSQL** reducing load time from 4.2s to 1.5s"
+✅ Without metric: "Designed event-driven architecture using **Kafka** and **Redis** distributed caching"
+
+**3. CONVERSATIONAL TECH LANGUAGE**
+
+✅ Use real tech terms: Spring Boot, Kafka, React, PostgreSQL, Kubernetes
+❌ Avoid buzzwords: "cutting-edge", "revolutionary", "synergized", "leveraged"
+❌ Avoid corporate speak: "spearheaded", "championed"
+
+Write like an engineer explaining to another engineer.
+
+**4. NATURAL SENTENCE STRUCTURE**
+
+Vary bullet length and complexity:
+- Some short (1 line): "Built GraphQL APIs for mobile banking application"
+- Some long (2 lines): "Architected event-driven microservices ecosystem using Spring Boot and Apache Kafka with 10-node cluster processing 2M+ portfolio events daily implementing custom serializers and exactly-once delivery semantics"
+- Mix technical depth: some high-level, some detailed
+
+====================================================
+SECTION 6: SKILLS SECTION FORMAT
+====================================================
+
+Format EXACTLY like this (plain text):
+
+TECHNICAL SKILLS
+
+Category Name: skill1, skill2, skill3, skill4, skill5
+Category Name: skill1, skill2, skill3
+Category Name: skill1, skill2, skill3, skill4
+
+**Rules:**
+- Section header: "TECHNICAL SKILLS" (all caps, no colon)
+- Each category: "Category Name: " (with colon and space)
+- Skills: comma-separated with spaces
+- NO bold text in skills section
+- NO bullet points in skills section
+- NO tables or special formatting
+
+**Category Management:**
+- MINIMIZE categories: fit skills into existing categories whenever possible
+- ONLY create new category if skill truly doesn't fit anywhere
+- Category names: Descriptive for ATS + humans (e.g., "Machine Learning & AI:" not "ML/AI:")
+- Use "&" instead of "and": "Cloud & DevOps:", "Testing & Quality Assurance:"
+
+**Category Placement (when new category needed):**
+- If JD heavily emphasizes the new skill → Place HIGH (position 2-3)
+- If JD mentions as nice-to-have → Place LOW (near end)
+- Default: Place after logically related categories
+
+**Fitting Skills into Existing Categories (examples):**
+- OAuth2, JWT, SAML → Add to "Backend Frameworks" (don't create "Security")
+- Redis, Memcached → Add to "Databases" (don't create "Caching")
+- Prometheus, Grafana → Add to "Monitoring" or "Cloud & DevOps" (don't create "Observability")
+- GraphQL → Add to "Backend Frameworks" (don't create "API Technologies")
+- Tailwind, Sass → Add to "Frontend Frameworks" (don't create "CSS Frameworks")
+
+**When optimization points specify new category:**
+- Place category at position specified (e.g., "after Testing category")
+- Use exact category name from optimization points
+- Add skills comma-separated like existing categories
+
+====================================================
+SECTION 7: EXPERIENCE BULLET BEST PRACTICES
+====================================================
+
+**Bullet Structure Formula:**
+[Action Verb] + [What you built] + [Technologies used] + [Impact/Scale - optional]
+
+**Technology Mentions:**
+✅ Specific versions when relevant: React 18, Spring Boot 3.x, Java 17
+✅ Specific tools naturally: Redis, Kafka, PostgreSQL, Kubernetes
+❌ Don't list every technology in every bullet
+❌ Don't repeat same tech stack constantly
+
+**When to Include Metrics:**
+✅ Performance improvements: "reducing load time from 4.2s to 1.5s"
+✅ Scale: "handling 2M+ daily transactions", "serving 29K advisors"
+✅ Business impact: "saving $800K annually"
+✅ Efficiency: "reducing deployment time by 87%"
+✅ Quality: "achieving 99.9% uptime", "85% test coverage"
+
+**When NOT to Include Metrics:**
+✅ Describing architecture: "Built RESTful APIs with OAuth2"
+✅ Listing responsibilities: "Integrated Bloomberg market data feeds"
+✅ Technical implementation: "Implemented Redis distributed caching"
+
+====================================================
+SECTION 8: FORMATTING REQUIREMENTS
+====================================================
+
+**Bullets:**
+✅ Use "• " (bullet symbol + space) for ALL bullets
+❌ Don't use "-", "*", or numbers
+
+**Text Formatting:**
+✅ Bold: Section headers (PROFESSIONAL EXPERIENCE, TECHNICAL SKILLS)
+✅ Bold: Company names and job titles
+✅ Bold: JD-mentioned skills in Experience bullets ONLY
+❌ Don't bold: Skills in Skills section (plain text only)
+❌ Don't bold: Common words like "using", "with", "implementing"
+❌ Don't use italics or underlines
+
+**Bold Formatting Examples for Experience Bullets:**
+✅ "Built event-driven microservices using **Spring Boot** and **Apache Kafka**"
+✅ "Migrated application to **React 18** with **TypeScript**"
+✅ "Implemented **Redis** distributed caching for sub-200ms response times"
+❌ "Built event-driven microservices using **Spring Boot and Apache Kafka**" (don't bold entire phrase)
+❌ "**Implemented** Redis distributed caching" (don't bold action verbs)
+
+**Spacing:**
+✅ One blank line between sections
+✅ One blank line between companies
+✅ No blank lines between bullets at same company
+
+**Output Format:**
+✅ Plain text output
+❌ No markdown formatting
+❌ No HTML tags
+❌ No special characters for formatting
+
+====================================================
+SECTION 9: QUALITY CHECKLIST
+====================================================
+
+Before returning the resume, verify:
+
+**Structure:**
+□ Sections in order: Experience → Skills → Certifications → Education
+□ NO Summary or Projects sections
+□ Header has "Lokesh Para" and "Full Stack Developer"
+□ All 4 companies present with exact names/dates
+
+**Bullets:**
+□ LPL Financial: 6-7 bullets (depending on ${resumeType})
+□ Athenahealth: 5-6 bullets
+□ YES Bank: 5-6 bullets
+□ Comcast: 4-5 bullets
+
+**Humanization:**
+□ No consecutive bullets start with same verb
+□ "Implemented" used MAX 2 times total
+□ "Architected" used MAX 2 times total
+□ 40-50% of bullets have metrics (not all)
+□ Metrics use round numbers (no decimals)
+□ Natural language variation
+□ NO buzzwords ("cutting-edge", "revolutionary")
+
+**Optimization:**
+□ All optimization points applied
+□ Skills added to both Skills AND Experience sections
+□ Bullets reordered as specified
+□ No changes beyond what points requested
+
+**Formatting:**
+□ All bullets use "• " symbol
+□ JD-mentioned skills are bolded in Experience bullets
+□ Skills section has NO bold (plain text only)
+□ No bold on common words ("using", "with", "implementing")
+□ Only section headers and company names bolded (besides JD skills)
+□ Plain text output
+□ Proper spacing
+
+**Interview Safety:**
+□ Every bullet is defendable in interview
+□ No exaggerated claims
+□ No unknown technologies mentioned
+□ Resume looks human-written
+
+====================================================
+SECTION 10: OUTPUT INSTRUCTIONS
+====================================================
+
+Return ONLY the complete rewritten resume.
+
+NO preamble like "Here is the resume"
+NO explanations or commentary
+NO markdown formatting
+NO extra text before or after
+
+Start directly with "Lokesh Para"
+End with education section
+
+Resume should be ready to copy-paste into Google Doc.
+
+Begin output now:
 `;
+
 
 
     const rewriteKey = aiProvider === 'gemini' ? geminiKey3 : (chatgptKey3 || chatgptApiKey);
@@ -1116,6 +1469,10 @@ No commentary. No explanations. No surrounding text.
       aiProvider: aiProvider,
       portalName: atsAnalysis.portalName,
       portalAnalysis: atsAnalysis.fullAnalysis,
+      selectedResume: resumeSelection.selectedResume,           // NEW
+      resumeType: resumeType,                                   // NEW
+      selectionConfidence: resumeSelection.confidence,          // NEW
+      selectionReasoning: resumeSelection.reasoning,            // NEW
       keysUsed: aiProvider === 'gemini' ? '3 Gemini keys' : '1 ChatGPT key',
       contentSource: contentSource,
       fileName: fileName,
@@ -1140,7 +1497,7 @@ No commentary. No explanations. No surrounding text.
   }
 });
 
-// Helper: Extract text from Google Doc
+// Helper: Extract text from Google Doc (NO CHANGES NEEDED)
 function extractTextFromDoc(doc) {
   let text = '';
   const content = doc.body.content;
@@ -1170,387 +1527,337 @@ function extractTextFromDoc(doc) {
   return text;
 }
 
-// 🔥 UPDATED convertToStyledHTML - Handles ALL 4 skill formats
-// Replace your entire convertToStyledHTML function with this:
+// ============================================================================
+// HTML CONVERSION - CERTIFICATIONS AS PLAIN TEXT (NO BULLETS)
+// ============================================================================
+
+// ============================================================================
+// UPDATED HTML CONVERSION WITH BOLD SUPPORT FOR JD SKILLS
+// ============================================================================
+
+// REPLACE the convertToStyledHTML function in your server.js with this version:
 
 function convertToStyledHTML(text) {
   const lines = text.split('\n');
   let html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>
-  body{font-family:Cambria,serif;font-size:11pt;line-height:1;margin:1cm 1.25cm}
-  .name{font-size:18pt;font-weight:bold;text-align:center;margin-bottom:2pt}
-  .title{font-size:12pt;font-weight:bold;text-align:center;margin-bottom:2pt}
-  .contact{font-size:10pt;text-align:center;margin-bottom:12pt}
-  .contact a{color:#000000;text-decoration:none}
-  .contact a:hover{text-decoration:underline}
-  .section-header{font-size:14pt;font-weight:bold;margin-top:12pt;margin-bottom:6pt}
-  .skills-table{
-  width:100%;
-  border-collapse:collapse;
-  margin-top:0pt;
-  margin-bottom:0pt;
-  border:1pt solid #000;
-}
+  * {
+    margin: 0;
+    padding: 0;
+  }
+  
+  body {
+    font-family: Calibri, sans-serif;
+    font-size: 11pt;
+    line-height: 1.08;
+    margin: 0.5in 0.5in;
+    color: #000000;
+  }
+  
+  /* Header - Name */
+  .name {
+    font-size: 18pt;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 2pt;
+  }
+  
+  /* Header - Title */
+  .title {
+    font-size: 11pt;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 2pt;
+  }
+  
+  /* Header - Contact */
+  .contact {
+    font-size: 10pt;
+    text-align: center;
+    margin-bottom: 8pt;
+    line-height: 1.2;
+  }
+  
+  .contact a {
+    color: #000000;
+    text-decoration: none;
+  }
+  
+  /* Section Headers - Tight spacing */
+  .section-header {
+    font-size: 13pt;
+    font-weight: bold;
+    color: #000000;
+    margin-top: 8pt;
+    margin-bottom: 4pt;
+    text-transform: uppercase;
+  }
 
-.skills-table td{
-  padding:6pt 10pt;
-  vertical-align:top;
-  border:1pt solid #000;
-}
-
-.skills-category{
-  font-weight:bold;
-  width:28%;
-  font-size:10.5pt;
-  background:#f7f7f7;
-}
-
-.skills-list{
-  width:72%;
-  font-size:10.5pt;
-}
-
-   .company-header{
-  font-size:11.5pt;
-  font-weight:bold;
-  margin-top:8pt;
-  margin-bottom:4pt;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-}
-
-  .job-title-location{flex:1}
-  .job-date{text-align:right;white-space:nowrap;margin-left:20pt}
-  p{margin:4pt 0;text-align:justify}
-  ul{margin:2pt 0;padding-left:0.25in}
-  li{margin:4pt 0;text-align:justify}
+  
+  
+  /* Company Header - Bold */
+  .company-header {
+    font-size: 11pt;
+    font-weight: bold;
+    margin-top: 6pt;
+    margin-bottom: 2pt;
+  }
+  
+  /* Job Date - Italic */
+  .job-date {
+    font-size: 11pt;
+    margin-bottom: 4pt;
+  }
+  
+  /* Bullet List - For experience only */
+  ul {
+    margin: 0 0 4pt 0.25in;
+    padding: 0;
+    list-style-position: outside;
+    list-style-type: disc;
+  }
+  
+  ul li {
+    margin: 2pt 0;
+    padding-left: 0.05in;
+    text-align: justify;
+    line-height: 1.08;
+  }
+  
+  /* Skills Section - Tight spacing */
+  .skills-para {
+    margin: 2pt 0;
+    text-align: justify;
+    line-height: 1.08;
+  }
+  
+  .skills-para strong {
+    font-weight: bold;
+  }
+  
+  /* Education - Tight spacing */
+  .edu-degree {
+    font-weight: bold;
+    margin-top: 2pt;
+    margin-bottom: 2pt;
+  }
+  
+  .edu-school {
+    margin-top: 0pt;
+    margin-bottom: 2pt;
+  }
+  
+  /* Certification - Plain paragraph (NO BULLETS) */
+  .cert-item {
+    margin: 2pt 0;
+    text-align: left;
+    line-height: 1.08;
+  }
+  
+  /* Regular paragraphs */
+  p {
+    margin: 2pt 0;
+    text-align: justify;
+    line-height: 1.08;
+  }
   </style></head><body>`;
 
   let inSkills = false;
-  let skillsTableOpen = false;
-  let currentCategory = '';
-  let currentSkills = '';
+  let inCertifications = false;
+  let inEducation = false;
+  let currentBulletList = [];
 
   // Helper: Convert **text** to <strong>text</strong>
-  function convertBold(text) {
-    return text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  function processBoldText(text) {
+    // Replace **text** with <strong>text</strong>
+    return text.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
   }
 
-  // Helper: Convert contact line with clickable links
-  function convertContactLinks(text) {
-    // Replace LinkedIn URL
-    text = text.replace(
-      /linkedin\.com\/in\/[\w-]+/gi,
-      '<a href="https://www.linkedin.com/in/lokeshpara99">LinkedIn</a>'
-    );
+  // Helper: Flush accumulated bullets
+  function flushBullets() {
+    if (currentBulletList.length > 0) {
+      html += '<ul>\n';
+      for (const bullet of currentBulletList) {
+        // Process bold text in bullets
+        const processedBullet = processBoldText(bullet);
+        html += `<li>${processedBullet}</li>\n`;
+      }
+      html += '</ul>\n';
+      currentBulletList = [];
+    }
+  }
 
-    // Replace GitHub URL
+  // Helper: Convert contact links
+  function convertContactLinks(text) {
     text = text.replace(
-      /github\.com\/[\w-]+/gi,
+      /linkedin\.com\/in\/lokeshpara99/gi,
+      '<a href="https://linkedin.com/in/lokeshpara99">LinkedIn</a>'
+    );
+    
+    text = text.replace(
+      /github\.com\/lokeshpara/gi,
       '<a href="https://github.com/lokeshpara">GitHub</a>'
     );
-
-    // Replace Portfolio URL
+    
     text = text.replace(
-      /[\w-]+\.github\.io\/[\w-]+\/?|portfolio\.[\w-]+\.com/gi,
-      '<a href="https://lokeshpara.github.io/Portfolio/">Portfolio</a>'
+      /lokeshpara\.github\.io\/Portfolio/gi,
+      '<a href="https://lokeshpara.github.io/Portfolio">Portfolio</a>'
     );
-
+    
     return text;
-  }
-
-  // Helper: Add skill row to table
-  function addSkillRow(category, skills) {
-    if (category && skills) {
-      const cleanCategory = category.trim().replace(/\*\*/g, '').replace(/\*/g, '').replace(/\|/g, '');
-      const boldSkills = convertBold(skills.trim());
-      html += `  <tr>\n`;
-      html += `    <td class="skills-category">${cleanCategory}</td>\n`;
-      html += `    <td class="skills-list">${boldSkills}</td>\n`;
-      html += `  </tr>\n`;
-    }
-  }
-
-  // Helper: Check if line is a category name
-  function isLikelyCategory(line) {
-    // Clean the line
-    const cleaned = line.replace(/\|/g, '').trim();
-
-    // Too long to be category
-    if (cleaned.length > 100) return false;
-
-    // Has many commas (likely skills)
-    if ((cleaned.match(/,/g) || []).length > 2) return false;
-
-    // Starts with lowercase (likely skills)
-    if (cleaned[0] && cleaned[0] !== cleaned[0].toUpperCase()) return false;
-
-    // Common category patterns
-    const categoryPatterns = [
-      /^Programming Languages?/i,
-      /^Java.*Ecosystem/i,
-      /^Backend/i,
-      /^Front.*End/i,
-      /^Microservices/i,
-      /^Database/i,
-      /^AI\/ML/i,
-      /^ORM/i,
-      /^Messaging/i,
-      /^Cloud/i,
-      /^DevOps/i,
-      /^Testing/i,
-      /^Security/i,
-      /^Monitoring/i,
-      /^Methodologies/i,
-      /^Data.*Lake/i,
-      /^Query.*Engine/i
-    ];
-
-    for (const pattern of categoryPatterns) {
-      if (pattern.test(cleaned)) return true;
-    }
-
-    // Capitalized and short (likely category)
-    if (cleaned.length < 50 && cleaned[0] === cleaned[0].toUpperCase()) {
-      return true;
-    }
-
-    return false;
   }
 
   for (let i = 0; i < lines.length; i++) {
     let line = lines[i].trim();
     if (!line) continue;
 
-    // Skip table header lines (markdown style)
-    if (line.startsWith('|---') || line.startsWith('| ---')) continue;
-    if (line.match(/^\|\s*Category\s+Name\s*\|/i)) continue;
-
-    // Header: Name
-    if (i < 3 && line.includes('Lokesh')) {
+    // NAME
+    if (i === 0 || (i < 3 && line.toUpperCase().includes('LOKESH'))) {
+      flushBullets();
       html += `<div class="name">${line}</div>\n`;
       continue;
     }
 
-    // Header: Title
-    if (i <= 3 && (line.includes('Developer') || line.includes('Engineer')) && line.length < 60) {
+    // TITLE
+    if (i <= 3 && (line.includes('Full Stack') || line.includes('Developer')) && !line.includes('|')) {
+      flushBullets();
       html += `<div class="title">${line}</div>\n`;
       continue;
     }
 
-    // Header: Contact
+    // CONTACT
     if ((line.includes('@') || line.includes('|')) && i < 6) {
+      flushBullets();
       const contactWithLinks = convertContactLinks(line);
       html += `<div class="contact">${contactWithLinks}</div>\n`;
       continue;
     }
 
-    // Section Headers
-    if (line === line.toUpperCase() && line.length > 3 && !line.startsWith('*') && !line.startsWith('|')) {
-      // Save pending skill row
-      if (inSkills && currentCategory && currentSkills) {
-        addSkillRow(currentCategory, currentSkills);
-        currentCategory = '';
-        currentSkills = '';
-      }
-
-      // Close skills table
-      if (skillsTableOpen) {
-        html += `</table>\n`;
-        skillsTableOpen = false;
-        inSkills = false;
-      }
-
-      // Check if SKILLS section
-      if (line.includes('SKILL')) {
-        inSkills = true;
+    // SECTION HEADERS
+    if (line === line.toUpperCase() && line.length > 3 && !line.startsWith('•')) {
+      if (line.includes('PROFESSIONAL EXPERIENCE') ||
+          line.includes('TECHNICAL SKILLS') ||
+          line.includes('EDUCATION') ||
+          line.includes('CERTIFICATIONS')) {
+        
+        flushBullets();
         html += `<div class="section-header">${line}</div>\n`;
-        html += `<table class="skills-table">\n`;
-        skillsTableOpen = true;
-      } else {
-        inSkills = false;
-        html += `<div class="section-header">${line}</div>\n`;
+        
+        inSkills = line.includes('SKILL');
+        inCertifications = line.includes('CERTIFICATION');
+        inEducation = line.includes('EDUCATION');
+        continue;
       }
+    }
+
+    // COMPANY HEADER
+    if (line.includes('|') && 
+        !line.startsWith('•') && 
+        !line.includes('@') && 
+        !inSkills &&
+        !inEducation &&
+        !inCertifications &&
+        (line.includes('Developer') || line.includes('Engineer') || 
+         line.includes('LPL') || line.includes('Athenahealth') || 
+         line.includes('YES Bank') || line.includes('Comcast'))) {
+      flushBullets();
+      html += `<div class="company-header">${line}</div>\n`;
       continue;
     }
 
-    // SKILLS SECTION PROCESSING
-    if (inSkills && skillsTableOpen) {
+    // JOB DATE
+    if ((line.includes('Present') || 
+         line.match(/^(January|February|March|April|May|June|July|August|September|October|November|December)/i) ||
+         line.match(/^\w+\s+\d{4}\s*[-–]\s*/)) && 
+        !line.startsWith('•') &&
+        !inSkills &&
+        !inEducation &&
+        !inCertifications) {
+      flushBullets();
+      html += `<div class="job-date">${line}</div>\n`;
+      continue;
+    }
 
-      // FORMAT 1: Markdown table format with | on both sides
-      // | Programming Languages | Java, Python, SQL |
-      if (line.startsWith('|') && line.endsWith('|')) {
-        // Save previous row
-        if (currentCategory && currentSkills) {
-          addSkillRow(currentCategory, currentSkills);
-          currentCategory = '';
-          currentSkills = '';
-        }
-
-        // Parse markdown table row
-        const parts = line.split('|').filter(p => p.trim());
-        if (parts.length >= 2) {
-          currentCategory = parts[0].trim();
-          currentSkills = parts.slice(1).join('|').trim();
-
-          // Only add if it looks like actual content (not header)
-          if (!currentCategory.match(/Category.*Name/i) && currentSkills.length > 0) {
-            addSkillRow(currentCategory, currentSkills);
-            currentCategory = '';
-            currentSkills = '';
-          }
-        }
-        continue;
-      }
-
-      // FORMAT 2: Aligned format with single pipe
-      // Programming Languages        | Java, Python, SQL
-      if (line.includes('|') && !line.startsWith('|')) {
-        // Save previous row
-        if (currentCategory && currentSkills) {
-          addSkillRow(currentCategory, currentSkills);
-          currentCategory = '';
-          currentSkills = '';
-        }
-
-        // Parse pipe-separated
-        const pipeIndex = line.indexOf('|');
-        currentCategory = line.substring(0, pipeIndex).trim();
-        currentSkills = line.substring(pipeIndex + 1).trim();
-
-        addSkillRow(currentCategory, currentSkills);
-        currentCategory = '';
-        currentSkills = '';
-        continue;
-      }
-
-      // FORMAT 3: Colon separator
-      // Programming Languages: Java, Python, SQL
-      if (line.includes(':') && line.indexOf(':') < 60) {
-        // Save previous row
-        if (currentCategory && currentSkills) {
-          addSkillRow(currentCategory, currentSkills);
-          currentCategory = '';
-          currentSkills = '';
-        }
-
+    // SKILLS SECTION - NO BOLD (plain text only)
+    if (inSkills && !inCertifications && !inEducation) {
+      flushBullets();
+      if (line.includes(':')) {
         const colonIdx = line.indexOf(':');
-        currentCategory = line.substring(0, colonIdx).trim();
-        currentSkills = line.substring(colonIdx + 1).trim();
-
-        addSkillRow(currentCategory, currentSkills);
-        currentCategory = '';
-        currentSkills = '';
+        const category = line.substring(0, colonIdx).trim();
+        const skills = line.substring(colonIdx + 1).trim();
+        
+        // Don't process bold in skills section
+        html += `<p class="skills-para"><strong>${category}:</strong> ${skills}</p>\n`;
         continue;
       }
-
-      // FORMAT 4: Multi-line (category on one line, skills on next)
-      // Programming Languages
-      // Java, Python, SQL
-
-      // Check if this line is a category name
-      if (isLikelyCategory(line)) {
-        // Save previous category if any
-        if (currentCategory && currentSkills) {
-          addSkillRow(currentCategory, currentSkills);
-        }
-
-        // Store this as current category
-        currentCategory = line.replace(/\|/g, '').trim();
-        currentSkills = '';
-        continue;
-      }
-
-      // If we have a current category and this line has skills (commas or long text)
-      if (currentCategory && (line.includes(',') || line.length > 50)) {
-        // This line contains skills for current category
-        if (currentSkills) {
-          currentSkills += ', ' + line;
-        } else {
-          currentSkills = line;
-        }
-        continue;
-      }
-
-      // Unknown format - skip
-      continue;
     }
 
-    // Company headers (contains |)
-    if (line.includes('|') && !line.startsWith('•') && !line.includes('@') && !inSkills) {
-      // Split company header into title/location and date
-      const parts = line.split(/\s{2,}|\t/); // Split by multiple spaces or tab
-
-      if (parts.length >= 2) {
-        // Has separate date part
-        const titleLocation = parts[0].replace(/\*\*/g, '');
-        const date = parts.slice(1).join(' ').replace(/\*\*/g, '');
-        html += `<div class="company-header">\n`;
-        html += `  <span class="job-title-location">${titleLocation}</span>\n`;
-        html += `  <span class="job-date">${date}</span>\n`;
-        html += `</div>\n`;
-      } else {
-        // No clear date separation - check for date patterns at end
-        const datePattern = /(.+?)\s+((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{4}\s*[-–]\s*(?:Present|(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{4}))$/i;
-        const match = line.match(datePattern);
-
-        if (match) {
-          const titleLocation = match[1].replace(/\*\*/g, '');
-          const date = match[2].replace(/\*\*/g, '');
-          html += `<div class="company-header">\n`;
-          html += `  <span class="job-title-location">${titleLocation}</span>\n`;
-          html += `  <span class="job-date">${date}</span>\n`;
-          html += `</div>\n`;
-        } else {
-          // Fallback: no date detected
-          html += `<div class="company-header">${line.replace(/\*\*/g, '')}</div>\n`;
-        }
+    // CERTIFICATIONS SECTION - NO BULLETS, PLAIN TEXT
+    if (inCertifications && !inEducation) {
+      flushBullets();
+      
+      // Remove bullet if present and display as plain paragraph
+      let certText = line.replace(/^[•*-]\s*/, '');
+      
+      // Skip if it's just a bullet with no text
+      if (certText.trim()) {
+        html += `<p class="cert-item">${certText}</p>\n`;
       }
       continue;
     }
 
-    // Bullet points
-    if (line.startsWith('•') || line.startsWith('*')) {
-      let bulletContent = line.replace(/^[•*]\s*/, '');
-      bulletContent = convertBold(bulletContent);
-      html += `<ul><li>${bulletContent}</li></ul>\n`;
-      continue;
+    // EDUCATION SECTION
+    if (inEducation && !inCertifications) {
+      flushBullets();
+      if (line.includes('Master of Science') || line.includes('GPA:')) {
+        html += `<p class="edu-degree">${line}</p>\n`;
+        continue;
+      }
+      if (line.includes('University') || line.includes('Southern Arkansas')) {
+        html += `<p class="edu-school">${line}</p>\n`;
+        continue;
+      }
     }
 
-    // Regular paragraphs
-    let paraContent = convertBold(line);
-    html += `<p>${paraContent}</p>\n`;
+    // BULLETS (Experience section only - NOT certifications)
+    if (line.startsWith('•') || line.startsWith('-') || line.startsWith('*')) {
+      // Only add to bullet list if NOT in certifications
+      if (!inCertifications) {
+        const bulletContent = line.replace(/^[•*-]\s*/, '');
+        currentBulletList.push(bulletContent);
+        continue;
+      }
+    }
+
+    // Any other line
+    flushBullets();
+    const processedLine = processBoldText(line);
+    html += `<p>${processedLine}</p>\n`;
   }
 
-  // Save any pending skill row
-  if (inSkills && currentCategory && currentSkills) {
-    addSkillRow(currentCategory, currentSkills);
-  }
-
-  // Close skills table
-  if (skillsTableOpen) {
-    html += `</table>\n`;
-  }
+  flushBullets();
 
   return html + `</body></html>`;
 }
 
-// Helper: Set page margins and line spacing
+// ============================================================================
+// PAGE FORMATTING
+// ============================================================================
+
 async function setDocumentFormatting(documentId) {
   try {
-    console.log('📐 Setting page margins and line spacing...');
+    console.log('📐 Setting exact page formatting...');
 
     const requests = [
       {
         updateDocumentStyle: {
           documentStyle: {
-            marginTop: { magnitude: 28.35, unit: 'PT' },
-            marginBottom: { magnitude: 28.35, unit: 'PT' },
-            marginLeft: { magnitude: 35.43, unit: 'PT' },
-            marginRight: { magnitude: 35.43, unit: 'PT' },
+            marginTop: { magnitude: 36, unit: 'PT' },
+            marginBottom: { magnitude: 36, unit: 'PT' },
+            marginLeft: { magnitude: 36, unit: 'PT' },
+            marginRight: { magnitude: 36, unit: 'PT' },
             pageSize: {
-              width: { magnitude: 612, unit: 'PT' },
-              height: { magnitude: 792, unit: 'PT' }
+              width: { magnitude: 595, unit: 'PT' },
+              height: { magnitude: 842, unit: 'PT' }
             }
           },
           fields: 'marginTop,marginBottom,marginLeft,marginRight,pageSize'
@@ -1563,7 +1870,7 @@ async function setDocumentFormatting(documentId) {
             endIndex: 2
           },
           paragraphStyle: {
-            lineSpacing: 100,
+            lineSpacing: 108,
             spaceAbove: { magnitude: 0, unit: 'PT' },
             spaceBelow: { magnitude: 0, unit: 'PT' }
           },
@@ -1577,11 +1884,14 @@ async function setDocumentFormatting(documentId) {
       requestBody: { requests }
     });
 
-    console.log('✅ Page formatting applied: 1cm top/bottom, 1.25cm left/right, single spacing');
+    console.log('✅ Page formatting applied');
   } catch (error) {
     console.error('⚠️ Failed to set formatting:', error.message);
   }
 }
+
+
+
 
 // Start server
 app.listen(PORT, () => {

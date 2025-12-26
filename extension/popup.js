@@ -40,6 +40,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // Other buttons
   const settingsBtn = document.getElementById('settingsBtn');
+  const dashboardBtn = document.getElementById('dashboardBtn');
   const retryBtn = document.getElementById('retryBtn');
   const optimizeAnother = document.getElementById('optimizeAnother');
   const backToModeSelection = document.getElementById('backToModeSelection');
@@ -129,6 +130,15 @@ document.addEventListener('DOMContentLoaded', function () {
       showState('actionSelection');
     });
   }
+
+  if (dashboardBtn) {
+    dashboardBtn.addEventListener('click', () => {
+      chrome.tabs.create({
+        url: 'http://localhost:3000/dashboard'
+      });
+    });
+  }
+
 
   // Settings button
   if (settingsBtn) {
@@ -293,6 +303,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // Update loading step
   function updateLoadingStep(message, progress) {
+    console.log(`🔄 Progress: ${progress}% - ${message}`);
+    
     if (loadingStep) {
       loadingStep.textContent = message;
     }
@@ -301,6 +313,12 @@ document.addEventListener('DOMContentLoaded', function () {
     const progressFill = document.getElementById('progressFill');
     if (progressFill) {
       progressFill.style.width = progress + '%';
+    }
+
+    // Update progress percentage text
+    const progressText = document.getElementById('progressText');
+    if (progressText) {
+      progressText.textContent = Math.round(progress) + '%';
     }
 
     // Update step indicators
@@ -436,8 +454,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Continue with optimization...
     try {
-      // Step 1: Get settings
-      updateLoadingStep('Loading settings...', 10);
+      // Step 1: Get settings (0-10%)
+      updateLoadingStep('⚙️ Loading configuration...', 5);
 
       const settings = await chrome.storage.local.get([
         'aiProvider', 'geminiKey1', 'geminiKey2', 'geminiKey3',
@@ -447,6 +465,8 @@ document.addEventListener('DOMContentLoaded', function () {
       if (!settings.aiProvider) {
         throw new Error('AI provider not configured');
       }
+
+      updateLoadingStep('✅ Configuration loaded', 10);
 
       // Build request body
       const requestBody = {
@@ -471,8 +491,8 @@ document.addEventListener('DOMContentLoaded', function () {
         console.log('🌐 Sending URL mode request with URL:', requestBody.currentPageUrl);
       }
 
-      // Step 2: Send request
-      updateLoadingStep('Extracting job description...', 25);
+      // Step 2: Extract JD (10-25%)
+      updateLoadingStep('📄 Extracting job description...', 15);
 
       const response = await fetch(`${BACKEND_URL}/api/optimize-resume`, {
         method: 'POST',
@@ -482,21 +502,44 @@ document.addEventListener('DOMContentLoaded', function () {
         body: JSON.stringify(requestBody)
       });
 
-      updateLoadingStep('Analyzing requirements...', 50);
+      updateLoadingStep('✅ Job description extracted', 25);
+
+      // Step 3: Simulate analysis phase (25-50%)
+      updateLoadingStep('🔍 Analyzing job requirements...', 30);
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
+      updateLoadingStep('🎯 Selecting best resume type...', 40);
+      await new Promise(resolve => setTimeout(resolve, 600));
+      
+      updateLoadingStep('✅ Analysis complete', 50);
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Optimization failed');
+        throw new Error(data.error || data.details || 'Optimization failed');
       }
 
-      // Step 3: Show success
-      updateLoadingStep('Creating optimized resume...', 75);
+      // Step 4: Simulate optimization phase (50-75%)
+      updateLoadingStep('⚡ Generating optimization points...', 55);
+      await new Promise(resolve => setTimeout(resolve, 700));
+      
+      updateLoadingStep('✨ Adding missing JD skills...', 65);
+      await new Promise(resolve => setTimeout(resolve, 600));
+      
+      updateLoadingStep('✅ Optimization complete', 75);
 
-      // Wait a moment
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Step 5: Simulate generation phase (75-100%)
+      updateLoadingStep('📝 Creating optimized resume...', 80);
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
+      updateLoadingStep('☁️ Uploading to Google Drive...', 90);
+      await new Promise(resolve => setTimeout(resolve, 600));
+      
+      updateLoadingStep('✅ Resume generated!', 100);
 
-      updateLoadingStep('Complete!', 100);
+      // Brief pause before showing success
+      await new Promise(resolve => setTimeout(resolve, 500));
+
 
       // Show success state
       showSuccess(data);
@@ -509,6 +552,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // Show success state
   function showSuccess(data) {
+    console.log('✅ Success data:', data);
     showState('success');
 
     // Update optimization count
@@ -516,15 +560,22 @@ document.addEventListener('DOMContentLoaded', function () {
       optimizationCount.textContent = `${data.optimizationPoints} optimization points applied`;
     }
 
-    // Update company and position
-    if (data.company) {
-      const companyEl = document.getElementById('companyName');
-      if (companyEl) companyEl.textContent = data.company;
+    // Update company name
+    const companyEl = document.getElementById('companyName');
+    if (companyEl) {
+      companyEl.textContent = data.companyName || data.company || 'N/A';
     }
 
-    if (data.position) {
-      const positionEl = document.getElementById('positionName');
-      if (positionEl) positionEl.textContent = data.position;
+    // Update position
+    const positionEl = document.getElementById('positionName');
+    if (positionEl) {
+      positionEl.textContent = data.position || 'N/A';
+    }
+
+    // Update resume type (NEW)
+    const resumeTypeEl = document.getElementById('resumeType');
+    if (resumeTypeEl) {
+      resumeTypeEl.textContent = data.resumeType || data.selectedResume || 'Full Stack';
     }
 
     // Update file name
@@ -554,10 +605,26 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // Show error state
   function showError(message) {
+    console.error('❌ Error:', message);
     showState('error');
 
     if (errorMessage) {
-      errorMessage.textContent = message || 'An unknown error occurred';
+      // Make error messages more helpful
+      let displayMessage = message || 'An unknown error occurred';
+      
+      if (message.includes('fetch') || message.includes('Failed to fetch')) {
+        displayMessage = '🔌 Cannot connect to server. Please make sure the backend is running on http://localhost:3000';
+      } else if (message.includes('timeout') || message.includes('timed out')) {
+        displayMessage = '⏱️ Request timed out. The server might be processing a large job description. Please try again.';
+      } else if (message.includes('API') || message.includes('key')) {
+        displayMessage = '🔑 API key error. Please check your AI provider settings.';
+      } else if (message.includes('too large')) {
+        displayMessage = '📄 Job description is too large. Please try using Manual Input mode instead.';
+      } else if (message.includes('not configured')) {
+        displayMessage = '⚙️ AI provider not configured. Please set up your API keys in Settings.';
+      }
+      
+      errorMessage.textContent = displayMessage;
     }
   }
 

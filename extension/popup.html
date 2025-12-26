@@ -1,13 +1,13 @@
 <!DOCTYPE html>
-<html style="width: 420px; height: 600px;">
+<html style="width: 450px; height: 650px;">
 
 <head>
   <meta charset="UTF-8">
   <link rel="stylesheet" href="styles.css">
 </head>
 
-<body style="width: 420px; height: 600px; margin: 0; padding: 0;">
-  <div class="glass-container" style="width: 420px; height: 600px;">
+<body style="width: 450px; height: 650px; margin: 0; padding: 0;">
+  <div class="glass-container" style="width: 450px; height: 650px;">
     <!-- Header -->
     <div class="header">
       <div class="header-content">
@@ -15,6 +15,10 @@
           <div class="logo-icon">⚡</div>
           <h1 class="app-name">Resume Optimizer Pro</h1>
         </div>
+        <button id="dashboardBtn" class="icon-btn" title="Open Dashboard">
+          📊
+        </button>
+
         <button id="settingsBtn" class="icon-btn settings-icon" title="Settings">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path
@@ -23,6 +27,7 @@
             <circle cx="12" cy="12" r="3"></circle>
           </svg>
         </button>
+
       </div>
       <div class="ai-badge" id="aiProviderBadge">
         <span class="badge-dot"></span>
@@ -66,7 +71,7 @@
       <div id="modeSelectionState" class="state">
         <div class="mode-grid">
           <button id="selectPasteMode" class="mode-card glass-card">
-            <div class="mode-icon">📝</div>
+            <div class="mode-icon">📋</div>
             <h3>Paste Job Description</h3>
             <p>Manually paste JD text</p>
             <div class="card-shine"></div>
@@ -146,23 +151,29 @@
       <div id="loadingState" class="state" style="display: none;">
         <div class="glass-card loading-card">
           <div class="loading-animation">
-            <div class="pulse-ring"></div>
-            <div class="pulse-ring delay-1"></div>
-            <div class="pulse-ring delay-2"></div>
-            <div class="loader-icon">⚡</div>
+            <div class="orbit-container">
+              <div class="orbit orbit-1"></div>
+              <div class="orbit orbit-2"></div>
+              <div class="orbit orbit-3"></div>
+              <div class="loader-icon">⚡</div>
+            </div>
           </div>
 
           <h2 class="loading-title" id="loadingTitle">Processing...</h2>
           <p class="loading-step" id="loadingStep">Analyzing job description...</p>
 
-          <div class="progress-bar">
-            <div class="progress-fill" id="progressFill"></div>
+          <div class="progress-container">
+            <div class="progress-bar">
+              <div class="progress-fill" id="progressFill"></div>
+              <div class="progress-glow"></div>
+            </div>
+            <span class="progress-text" id="progressText">0%</span>
           </div>
 
           <div class="loading-steps">
             <div class="step-item active" id="step1">
               <div class="step-dot"></div>
-              <span>Extract</span>
+              <span>Extract JD</span>
             </div>
             <div class="step-item" id="step2">
               <div class="step-dot"></div>
@@ -170,11 +181,11 @@
             </div>
             <div class="step-item" id="step3">
               <div class="step-dot"></div>
-              <span>Process</span>
+              <span>Optimize</span>
             </div>
             <div class="step-item" id="step4">
               <div class="step-dot"></div>
-              <span>Complete</span>
+              <span>Generate</span>
             </div>
           </div>
         </div>
@@ -192,17 +203,21 @@
             </div>
           </div>
 
-          <h2 class="success-title">Resume Optimized!</h2>
+          <h2 class="success-title">✨ Resume Optimized!</h2>
           <p id="optimizationCount" class="success-subtitle"></p>
 
           <div class="job-info" id="jobInfoCard">
             <div class="job-info-item">
-              <span class="job-info-label">Company:</span>
+              <span class="job-info-label">🏢 Company:</span>
               <span id="companyName" class="job-info-value">N/A</span>
             </div>
             <div class="job-info-item">
-              <span class="job-info-label">Position:</span>
+              <span class="job-info-label">💼 Position:</span>
               <span id="positionName" class="job-info-value">N/A</span>
+            </div>
+            <div class="job-info-item">
+              <span class="job-info-label">📄 Resume:</span>
+              <span id="resumeType" class="job-info-value">Full Stack</span>
             </div>
           </div>
 
@@ -212,13 +227,10 @@
 
           <div class="action-links">
             <a id="viewLink" class="action-btn primary" target="_blank">
-              <span>📄 View in Google Docs</span>
+              <span>📄 Open in Google Docs</span>
             </a>
             <a id="pdfLink" class="action-btn secondary" target="_blank">
               <span>⬇️ Download PDF</span>
-            </a>
-            <a id="trackingSheetLink" class="action-btn secondary" target="_blank" style="display: none;">
-              <span>📊 View Tracking Sheet</span>
             </a>
           </div>
 

@@ -5,7 +5,8 @@
   "description": "AI-powered resume optimization and analysis with 92-100% ATS match",
   "permissions": [
     "activeTab",
-    "storage"
+    "storage",
+    "tabs"
   ],
   "host_permissions": [
     "http://localhost:3000/*",
