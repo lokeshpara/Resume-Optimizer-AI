@@ -49,7 +49,7 @@ const docs = google.docs({ version: 'v1', auth: oauth2Client });
 const drive = google.drive({ version: 'v3', auth: oauth2Client });
 const sheets = google.sheets({ version: 'v4', auth: oauth2Client });
 
-const ORIGINAL_RESUME_DOC_ID = process.env.ORIGINAL_RESUME_DOC_ID;
+// const ORIGINAL_RESUME_DOC_ID = process.env.ORIGINAL_RESUME_DOC_ID;
 const DRIVE_FOLDER_ID = process.env.DRIVE_FOLDER_ID;
 const TRACKING_SHEET_ID = process.env.TRACKING_SHEET_ID;
 
@@ -799,12 +799,13 @@ PORTAL: ${atsAnalysis.portalName}
 YOUR MISSION
 ====================================================
 
-Generate 8-12 strategic optimization points that:
+Generate 8-20 strategic optimization points that:
 ✅ Add missing JD skills NATURALLY to both Experience and Skills sections
 ✅ Reorder bullets to highlight most relevant experience first
 ✅ Keep every change 100% interview-defensible
 ✅ Make resume look human-written, not AI-generated
 ✅ Target 85-92% ATS match (NOT 100% - that looks fake)
+✅ Make it need to be atleast 85% ATS match
 
 ====================================================
 SKILL ADDITION STRATEGY (CRITICAL)
@@ -1018,7 +1019,7 @@ Before returning, verify:
 OUTPUT RULES
 ====================================================
 
-Return 8-12 optimization points ONLY.
+Return 8-20 optimization points ONLY.
 NO preamble, explanations, or commentary.
 Start directly with "POINT 1:"
 
@@ -1104,7 +1105,7 @@ Your output MUST follow this EXACT structure:
 Lokesh Para
 Full Stack Developer
 
-lokeshpara11@gmail.com | 682-503-1723 | linkedin.com/in/lokeshpara99 | github.com/lokeshpara | lokeshpara.github.io/Portfolio
+paralokesh5@gmail.com | 682-503-1723 | linkedin.com/in/lokeshpara99 | github.com/lokeshpara | lokeshpara.github.io/Portfolio
 
 PROFESSIONAL EXPERIENCE
 
@@ -1548,7 +1549,7 @@ function convertToStyledHTML(text) {
   body {
     font-family: Calibri, sans-serif;
     font-size: 11pt;
-    line-height: 1.08;
+    line-height: 1.00;
     margin: 0.5in 0.5in;
     color: #000000;
   }
@@ -1571,9 +1572,9 @@ function convertToStyledHTML(text) {
   
   /* Header - Contact */
   .contact {
-    font-size: 10pt;
+    font-size: 11pt;
     text-align: center;
-    margin-bottom: 8pt;
+    margin-bottom: 2pt;
     line-height: 1.2;
   }
   
@@ -1587,7 +1588,7 @@ function convertToStyledHTML(text) {
     font-size: 13pt;
     font-weight: bold;
     color: #000000;
-    margin-top: 8pt;
+    margin-top: 2pt;
     margin-bottom: 4pt;
     text-transform: uppercase;
   }

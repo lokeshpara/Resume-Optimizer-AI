@@ -20,7 +20,7 @@ async function testDocAccess() {
     const drive = google.drive({ version: 'v3', auth: oauth2Client });
     
     console.log('📋 Testing Configuration:');
-    console.log('   Document ID:', process.env.ORIGINAL_RESUME_DOC_ID);
+    console.log('   Document ID:', process.env.FULLSTACK_RESUME_DOC_ID);
     console.log('   Folder ID:', process.env.DRIVE_FOLDER_ID);
     console.log('   Client ID:', process.env.GOOGLE_CLIENT_ID.substring(0, 20) + '...');
     console.log('   Refresh Token:', process.env.GOOGLE_REFRESH_TOKEN.substring(0, 20) + '...\n');
@@ -29,7 +29,7 @@ async function testDocAccess() {
     console.log('📡 Test 1: Fetching resume document...');
     
     const doc = await docs.documents.get({
-      documentId: process.env.ORIGINAL_RESUME_DOC_ID
+      documentId: process.env.FULLSTACK_RESUME_DOC_ID
     });
     
     console.log('✅ SUCCESS! Resume document accessed!');
@@ -123,7 +123,7 @@ async function testDocAccess() {
       console.log('💡 Issue: Permission denied');
       console.log('   The OAuth account doesn\'t have access\n');
       console.log('✅ Solution:');
-      console.log('   1. Open your resume: https://docs.google.com/document/d/' + process.env.ORIGINAL_RESUME_DOC_ID);
+      console.log('   1. Open your resume: https://docs.google.com/document/d/' + process.env.FULLSTACK_RESUME_DOC_ID);
       console.log('   2. Click Share (top right)');
       console.log('   3. Add the email of your OAuth account');
       console.log('   4. Give it Editor access\n');

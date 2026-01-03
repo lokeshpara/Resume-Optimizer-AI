@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Application Dashboard - Enhanced</title>
+    <title>Application Dashboard</title>
     <link rel="stylesheet" href="/dashboard.css" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0"></script>
@@ -25,10 +25,10 @@
                 </div>
                 <div class="header-actions">
                     <button class="btn-secondary" onclick="exportData()">
-                        📥 Export CSV
+                        Export CSV
                     </button>
                     <button class="btn-primary" onclick="window.location.href='/add-application'">
-                        ➕ New Application
+                        New Application
                     </button>
                 </div>
             </div>
@@ -37,7 +37,7 @@
         <!-- Search & Filters -->
         <section class="filters-section">
             <div class="search-bar">
-                <input type="text" id="searchInput" placeholder="🔍 Search by company or position..."
+                <input type="text" id="searchInput" placeholder="Search by company or position..."
                     oninput="handleSearch()" />
             </div>
             <div class="filters">
@@ -63,51 +63,33 @@
         <!-- KPIs -->
         <section class="stats">
             <div class="stat-card">
-                <span class="stat-icon">📊</span>
-                <div class="stat-content">
-                    <span class="stat-label">Total Applications</span>
-                    <h2 id="totalApps">—</h2>
-                </div>
+                <span class="stat-label">Total Applications</span>
+                <h2 id="totalApps">—</h2>
             </div>
 
             <div class="stat-card">
-                <span class="stat-icon">🏢</span>
-                <div class="stat-content">
-                    <span class="stat-label">Companies Applied</span>
-                    <h2 id="companies">—</h2>
-                </div>
+                <span class="stat-label">Companies Applied</span>
+                <h2 id="companies">—</h2>
             </div>
 
             <div class="stat-card">
-                <span class="stat-icon">🎯</span>
-                <div class="stat-content">
-                    <span class="stat-label">Interview Rate</span>
-                    <h2 id="interviewRate">—</h2>
-                </div>
+                <span class="stat-label">Interview Rate</span>
+                <h2 id="interviewRate">—</h2>
             </div>
 
             <div class="stat-card">
-                <span class="stat-icon">⏱️</span>
-                <div class="stat-content">
-                    <span class="stat-label">Avg Response Time</span>
-                    <h2 id="avgResponse">—</h2>
-                </div>
+                <span class="stat-label">Avg Response Time</span>
+                <h2 id="avgResponse">—</h2>
             </div>
 
             <div class="stat-card">
-                <span class="stat-icon">✅</span>
-                <div class="stat-content">
-                    <span class="stat-label">Offers Received</span>
-                    <h2 id="offers">—</h2>
-                </div>
+                <span class="stat-label">Offers Received</span>
+                <h2 id="offers">—</h2>
             </div>
 
             <div class="stat-card">
-                <span class="stat-icon">📅</span>
-                <div class="stat-content">
-                    <span class="stat-label">This Week</span>
-                    <h2 id="thisWeek">—</h2>
-                </div>
+                <span class="stat-label">This Week</span>
+                <h2 id="thisWeek">—</h2>
             </div>
         </section>
 

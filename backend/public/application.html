@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Application Details - Enhanced</title>
+    <title>Application Details</title>
     <link rel="stylesheet" href="/application.css" />
 </head>
 
@@ -13,7 +13,7 @@
     <div class="background"></div>
 
     <div class="container">
-        <a href="/dashboard" class="back">← Back to Dashboard</a>
+        <a href="/dashboard" class="back">Back to Dashboard</a>
 
         <div class="card">
 
@@ -22,7 +22,7 @@
                 <label>Company</label>
                 <div class="value-row">
                     <h1 id="companyText"></h1>
-                    <button class="edit-btn" onclick="openEditor('company_name')">✎</button>
+                    <button class="edit-btn" onclick="openEditor('company_name')">Edit</button>
                 </div>
             </div>
 
@@ -30,7 +30,7 @@
                 <label>Position Applied</label>
                 <div class="value-row">
                     <h2 id="positionText"></h2>
-                    <button class="edit-btn" onclick="openEditor('position_applied')">✎</button>
+                    <button class="edit-btn" onclick="openEditor('position_applied')">Edit</button>
                 </div>
             </div>
 
@@ -39,7 +39,7 @@
                 <div class="meta-item">
                     <label>Status</label>
                     <span id="statusText" class="status"></span>
-                    <button class="edit-btn small" onclick="openEditor('status')">✎</button>
+                    <button class="edit-btn small" onclick="openEditor('status')">Edit</button>
                 </div>
 
                 <div class="meta-item">
@@ -58,7 +58,7 @@
                 <label>Resume Link</label>
                 <div class="value-row">
                     <a id="resumeLink" target="_blank"></a>
-                    <button class="edit-btn" onclick="openEditor('resume_link')">✎</button>
+                    <button class="edit-btn" onclick="openEditor('resume_link')">Edit</button>
                 </div>
             </div>
 
@@ -66,7 +66,7 @@
                 <label>Job Posting Link</label>
                 <div class="value-row">
                     <a id="jdLink" target="_blank"></a>
-                    <button class="edit-btn" onclick="openEditor('jd_link')">✎</button>
+                    <button class="edit-btn" onclick="openEditor('jd_link')">Edit</button>
                 </div>
             </div>
 
@@ -76,7 +76,7 @@
                 <p class="hint">Full JD used for resume optimization</p>
                 <div class="jd-box">
                     <pre id="jdText"></pre>
-                    <button class="edit-btn floating" onclick="openEditor('jd_text')">✎</button>
+                    <button class="edit-btn floating" onclick="openEditor('jd_text')">Edit</button>
                 </div>
             </div>
 
@@ -85,8 +85,8 @@
         <!-- Notes Section -->
         <div class="card">
             <div class="section-header">
-                <h3>📝 Notes</h3>
-                <button class="btn-primary small" onclick="openNoteEditor()">+ Add Note</button>
+                <h3>Notes</h3>
+                <button class="btn-primary small" onclick="openNoteEditor()">Add Note</button>
             </div>
             <div id="notesList" class="notes-list"></div>
         </div>
@@ -94,14 +94,14 @@
         <!-- Contacts Section -->
         <div class="card">
             <div class="section-header">
-                <h3>👥 Contacts</h3>
-                <button class="btn-primary small" onclick="openContactEditor()">+ Add Contact</button>
+                <h3>Contacts</h3>
+                <button class="btn-primary small" onclick="openContactEditor()">Add Contact</button>
             </div>
             <div id="contactsList" class="contacts-list"></div>
         </div>
 
         <!-- Delete Button -->
-        <button id="deleteBtn" class="delete-btn">🗑️ Delete Application</button>
+        <button id="deleteBtn" class="delete-btn">Delete Application</button>
 
     </div>
 

@@ -6,11 +6,11 @@
 }
 
 /* ======================
-   Base Layout
+   Base Layout - White Theme
 ====================== */
 body {
-    background: #0f172a;
-    color: white;
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    color: #1e293b;
     min-height: 100vh;
 }
 
@@ -18,9 +18,8 @@ body {
     position: fixed;
     inset: 0;
     background:
-        radial-gradient(circle at 20% 20%, rgba(59, 130, 246, 0.25), transparent 50%),
-        radial-gradient(circle at 80% 80%, rgba(147, 51, 234, 0.25), transparent 50%);
-    filter: blur(80px);
+        radial-gradient(circle at 20% 20%, rgba(99, 102, 241, 0.08), transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(168, 85, 247, 0.08), transparent 50%);
     z-index: -1;
 }
 
@@ -31,38 +30,61 @@ body {
 }
 
 .back {
-    color: #93c5fd;
+    color: #6366f1;
     text-decoration: none;
     font-size: 14px;
-    font-weight: 500;
+    font-weight: 600;
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    margin-bottom: 20px;
+    gap: 8px;
+    margin-bottom: 24px;
     transition: all 0.2s ease;
+    padding: 8px 12px;
+    border-radius: 8px;
+}
+
+.back::before {
+    content: '←';
+    font-size: 18px;
 }
 
 .back:hover {
-    color: #60a5fa;
+    background: rgba(99, 102, 241, 0.1);
     transform: translateX(-4px);
 }
 
 /* ======================
-   Card
+   Card - Glassmorphism
 ====================== */
 .card {
-    margin-top: 20px;
-    backdrop-filter: blur(24px);
-    background: rgba(255, 255, 255, 0.10);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    border-radius: 20px;
-    padding: 30px;
-    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.45);
+    margin-top: 24px;
+    backdrop-filter: blur(20px);
+    background: rgba(255, 255, 255, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    border-radius: 24px;
+    padding: 36px;
+    box-shadow: 
+        0 4px 24px rgba(0, 0, 0, 0.04),
+        inset 0 1px 0 rgba(255, 255, 255, 0.9);
     transition: all 0.3s ease;
+    animation: fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .card:hover {
-    background: rgba(255, 255, 255, 0.12);
+    box-shadow: 
+        0 8px 32px rgba(0, 0, 0, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 1);
 }
 
 /* ======================
@@ -72,35 +94,37 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px;
+    margin-bottom: 24px;
 }
 
 .section-header h3 {
-    font-size: 20px;
-    font-weight: 600;
+    font-size: 22px;
+    font-weight: 700;
+    color: #1e293b;
 }
 
 /* ======================
    Fields & Labels
 ====================== */
 .field {
-    margin-bottom: 24px;
+    margin-bottom: 28px;
 }
 
 label {
     font-size: 12px;
     letter-spacing: 0.05em;
     text-transform: uppercase;
-    color: #cbd5f5;
-    font-weight: 600;
+    color: #64748b;
+    font-weight: 700;
     display: block;
-    margin-bottom: 8px;
+    margin-bottom: 10px;
 }
 
 .hint {
     font-size: 12px;
     color: #94a3b8;
-    margin-top: 4px;
+    margin-top: 6px;
+    font-weight: 500;
 }
 
 /* ======================
@@ -109,51 +133,56 @@ label {
 .value-row {
     display: flex;
     align-items: center;
-    gap: 12px;
-    margin-top: 6px;
+    gap: 14px;
+    margin-top: 8px;
 }
 
 .value-row h1 {
-    font-size: 32px;
+    font-size: 36px;
     font-weight: 700;
-    background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%);
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+    letter-spacing: -0.02em;
 }
 
 .value-row h2 {
-    font-size: 24px;
+    font-size: 26px;
     font-weight: 600;
-    color: #e5e7eb;
+    color: #1e293b;
 }
 
 .value-row a {
-    color: #60a5fa;
+    color: #6366f1;
     text-decoration: none;
     font-size: 15px;
-    transition: color 0.2s ease;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    padding: 4px 8px;
+    border-radius: 6px;
 }
 
 .value-row a:hover {
-    color: #93c5fd;
-    text-decoration: underline;
+    background: rgba(99, 102, 241, 0.1);
+    color: #4f46e5;
 }
 
 /* ======================
-   Edit Button (Hover Only)
+   Edit Button - Modern Glass
 ====================== */
 .edit-btn {
-    background: rgba(255, 255, 255, 0.12);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(99, 102, 241, 0.1);
+    border: 1px solid rgba(99, 102, 241, 0.2);
     border-radius: 8px;
-    padding: 6px 10px;
+    padding: 6px 12px;
     cursor: pointer;
     opacity: 0;
     pointer-events: none;
-    transition: all 0.2s ease;
-    color: white;
-    font-size: 14px;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    color: #6366f1;
+    font-size: 13px;
+    font-weight: 600;
 }
 
 .field:hover .edit-btn,
@@ -165,19 +194,20 @@ label {
 }
 
 .edit-btn:hover {
-    background: rgba(255, 255, 255, 0.25);
+    background: rgba(99, 102, 241, 0.2);
+    border-color: rgba(99, 102, 241, 0.3);
     transform: scale(1.05);
 }
 
 .edit-btn.small {
-    padding: 4px 8px;
+    padding: 4px 10px;
     font-size: 12px;
 }
 
 .edit-btn.floating {
     position: absolute;
-    top: 12px;
-    right: 12px;
+    top: 16px;
+    right: 16px;
 }
 
 /* ======================
@@ -185,8 +215,8 @@ label {
 ====================== */
 .meta {
     display: flex;
-    gap: 32px;
-    margin: 24px 0;
+    gap: 36px;
+    margin: 28px 0;
     align-items: center;
     flex-wrap: wrap;
 }
@@ -194,7 +224,7 @@ label {
 .meta-item {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
     font-size: 14px;
 }
 
@@ -203,37 +233,42 @@ label {
 }
 
 .meta-item span {
-    color: #e5e7eb;
-    font-weight: 500;
+    color: #1e293b;
+    font-weight: 600;
 }
 
-/* Status Badge */
+/* Status Badge - Modern */
 .status {
-    padding: 6px 14px;
-    border-radius: 20px;
+    padding: 8px 16px;
+    border-radius: 12px;
     font-size: 13px;
-    font-weight: 600;
+    font-weight: 700;
     display: inline-block;
+    letter-spacing: 0.02em;
 }
 
 .status.applied {
-    background: rgba(59, 130, 246, 0.2);
-    color: #93c5fd;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(99, 102, 241, 0.15));
+    color: #3b82f6;
+    border: 1px solid rgba(59, 130, 246, 0.2);
 }
 
 .status.interview {
-    background: rgba(168, 85, 247, 0.2);
-    color: #c4b5fd;
+    background: linear-gradient(135deg, rgba(168, 85, 247, 0.15), rgba(139, 92, 246, 0.15));
+    color: #a855f7;
+    border: 1px solid rgba(168, 85, 247, 0.2);
 }
 
 .status.offer {
-    background: rgba(34, 197, 94, 0.2);
-    color: #86efac;
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(16, 185, 129, 0.15));
+    color: #10b981;
+    border: 1px solid rgba(34, 197, 94, 0.2);
 }
 
 .status.rejected {
-    background: rgba(239, 68, 68, 0.2);
-    color: #fca5a5;
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(220, 38, 38, 0.15));
+    color: #dc2626;
+    border: 1px solid rgba(239, 68, 68, 0.2);
 }
 
 /* ======================
@@ -241,19 +276,21 @@ label {
 ====================== */
 .jd-box {
     position: relative;
-    margin-top: 10px;
+    margin-top: 12px;
 }
 
 .jd-box pre {
-    background: rgba(255, 255, 255, 0.05);
-    padding: 18px;
-    border-radius: 12px;
+    background: rgba(248, 250, 252, 0.8);
+    padding: 20px;
+    border-radius: 14px;
+    border: 1px solid rgba(226, 232, 240, 0.8);
     white-space: pre-wrap;
     line-height: 1.7;
     font-size: 14px;
-    color: #cbd5f5;
+    color: #334155;
     max-height: 400px;
     overflow-y: auto;
+    font-family: 'SF Mono', 'Monaco', 'Courier New', monospace;
 }
 
 /* ======================
@@ -262,27 +299,29 @@ label {
 .notes-list {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 14px;
 }
 
 .note-item {
-    background: rgba(255, 255, 255, 0.08);
-    padding: 16px;
-    border-radius: 12px;
-    border-left: 3px solid #60a5fa;
+    background: rgba(248, 250, 252, 0.8);
+    padding: 18px;
+    border-radius: 14px;
+    border-left: 3px solid #6366f1;
     transition: all 0.2s ease;
     position: relative;
+    border: 1px solid rgba(226, 232, 240, 0.6);
 }
 
 .note-item:hover {
-    background: rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
 }
 
 .note-text {
-    color: #e5e7eb;
-    line-height: 1.6;
+    color: #334155;
+    line-height: 1.7;
     font-size: 14px;
-    margin-bottom: 10px;
+    margin-bottom: 12px;
     white-space: pre-wrap;
 }
 
@@ -291,185 +330,211 @@ label {
     justify-content: space-between;
     align-items: center;
     font-size: 12px;
-    color: #94a3b8;
+    color: #64748b;
+    font-weight: 500;
 }
 
 .note-delete {
-    background: rgba(239, 68, 68, 0.2);
-    color: #fca5a5;
-    border: none;
-    padding: 4px 10px;
-    border-radius: 6px;
+    background: rgba(239, 68, 68, 0.1);
+    color: #dc2626;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    padding: 5px 12px;
+    border-radius: 8px;
     cursor: pointer;
-    font-size: 11px;
+    font-size: 12px;
+    font-weight: 600;
     transition: all 0.2s ease;
 }
 
 .note-delete:hover {
-    background: rgba(239, 68, 68, 0.35);
+    background: rgba(239, 68, 68, 0.2);
+    border-color: rgba(239, 68, 68, 0.3);
 }
 
 .empty-state {
     text-align: center;
-    padding: 40px 20px;
-    color: #94a3b8;
-    font-size: 14px;
+    padding: 48px 20px;
+    color: #64748b;
+    font-size: 15px;
+    font-weight: 500;
 }
 
 /* ======================
-   Contacts List
+   Contacts List - Cards
 ====================== */
 .contacts-list {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 16px;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 18px;
 }
 
 .contact-card {
-    background: rgba(255, 255, 255, 0.08);
-    padding: 18px;
-    border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    transition: all 0.2s ease;
+    background: rgba(248, 250, 252, 0.8);
+    padding: 20px;
+    border-radius: 16px;
+    border: 1px solid rgba(226, 232, 240, 0.8);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
 }
 
 .contact-card:hover {
-    background: rgba(255, 255, 255, 0.12);
-    transform: translateY(-2px);
+    background: rgba(255, 255, 255, 0.95);
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
 }
 
 .contact-header {
     display: flex;
     justify-content: space-between;
     align-items: start;
-    margin-bottom: 12px;
+    margin-bottom: 14px;
 }
 
 .contact-name {
-    font-size: 16px;
-    font-weight: 600;
-    color: #e5e7eb;
+    font-size: 17px;
+    font-weight: 700;
+    color: #1e293b;
 }
 
 .contact-role {
     display: inline-block;
-    padding: 3px 10px;
-    background: rgba(168, 85, 247, 0.2);
-    color: #c4b5fd;
-    border-radius: 12px;
+    padding: 4px 12px;
+    background: linear-gradient(135deg, rgba(168, 85, 247, 0.15), rgba(139, 92, 246, 0.15));
+    color: #a855f7;
+    border: 1px solid rgba(168, 85, 247, 0.2);
+    border-radius: 10px;
     font-size: 11px;
-    font-weight: 600;
-    margin-top: 6px;
+    font-weight: 700;
+    margin-top: 8px;
+    letter-spacing: 0.02em;
 }
 
 .contact-info {
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    margin-top: 12px;
+    gap: 10px;
+    margin-top: 14px;
 }
 
 .contact-info a {
-    color: #60a5fa;
+    color: #6366f1;
     text-decoration: none;
     font-size: 13px;
+    font-weight: 500;
     display: flex;
     align-items: center;
-    gap: 6px;
-    transition: color 0.2s ease;
+    gap: 8px;
+    transition: all 0.2s ease;
+    padding: 4px;
+    border-radius: 6px;
+}
+
+.contact-info a::before {
+    content: '→';
+    font-size: 14px;
 }
 
 .contact-info a:hover {
-    color: #93c5fd;
+    background: rgba(99, 102, 241, 0.1);
+    color: #4f46e5;
 }
 
 .contact-notes {
-    margin-top: 10px;
-    padding: 10px;
-    background: rgba(255, 255, 255, 0.03);
-    border-radius: 8px;
+    margin-top: 12px;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 10px;
+    border: 1px solid rgba(226, 232, 240, 0.6);
     font-size: 13px;
-    color: #cbd5f5;
-    line-height: 1.5;
+    color: #475569;
+    line-height: 1.6;
 }
 
 .contact-actions {
     display: flex;
-    gap: 8px;
-    margin-top: 12px;
+    gap: 10px;
+    margin-top: 14px;
 }
 
 .contact-btn {
     flex: 1;
-    padding: 6px 12px;
+    padding: 8px 14px;
     border: none;
-    border-radius: 8px;
-    font-size: 12px;
+    border-radius: 10px;
+    font-size: 13px;
     cursor: pointer;
     transition: all 0.2s ease;
-    font-weight: 500;
+    font-weight: 600;
 }
 
 .contact-btn.edit {
-    background: rgba(59, 130, 246, 0.2);
-    color: #93c5fd;
+    background: rgba(99, 102, 241, 0.1);
+    color: #6366f1;
+    border: 1px solid rgba(99, 102, 241, 0.2);
 }
 
 .contact-btn.edit:hover {
-    background: rgba(59, 130, 246, 0.3);
+    background: rgba(99, 102, 241, 0.2);
+    border-color: rgba(99, 102, 241, 0.3);
 }
 
 .contact-btn.delete {
-    background: rgba(239, 68, 68, 0.2);
-    color: #fca5a5;
+    background: rgba(239, 68, 68, 0.1);
+    color: #dc2626;
+    border: 1px solid rgba(239, 68, 68, 0.2);
 }
 
 .contact-btn.delete:hover {
-    background: rgba(239, 68, 68, 0.35);
+    background: rgba(239, 68, 68, 0.2);
+    border-color: rgba(239, 68, 68, 0.3);
 }
 
 /* ======================
    Buttons
 ====================== */
 .btn-primary {
-    padding: 10px 20px;
-    background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+    padding: 11px 22px;
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
     color: white;
     border: none;
-    border-radius: 10px;
+    border-radius: 12px;
     font-weight: 600;
     font-size: 14px;
     cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 16px rgba(99, 102, 241, 0.25);
 }
 
 .btn-primary:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+    box-shadow: 0 6px 24px rgba(99, 102, 241, 0.35);
+}
+
+.btn-primary:active {
+    transform: translateY(0);
 }
 
 .btn-primary.small {
-    padding: 8px 16px;
+    padding: 9px 18px;
     font-size: 13px;
 }
 
 .delete-btn {
-    margin-top: 30px;
-    padding: 12px 20px;
-    border-radius: 12px;
-    background: rgba(239, 68, 68, 0.2);
-    color: #fca5a5;
-    border: 1px solid rgba(239, 68, 68, 0.3);
+    margin-top: 36px;
+    padding: 14px 24px;
+    border-radius: 14px;
+    background: rgba(239, 68, 68, 0.1);
+    color: #dc2626;
+    border: 1px solid rgba(239, 68, 68, 0.2);
     cursor: pointer;
     transition: all 0.2s ease;
     font-size: 14px;
-    font-weight: 600;
+    font-weight: 700;
 }
 
 .delete-btn:hover {
-    background: rgba(239, 68, 68, 0.35);
+    background: rgba(239, 68, 68, 0.2);
+    border-color: rgba(239, 68, 68, 0.3);
     transform: translateY(-2px);
 }
 
@@ -479,13 +544,13 @@ label {
 .overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.7);
-    backdrop-filter: blur(4px);
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(8px);
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 100;
-    animation: fadeIn 0.2s ease;
+    animation: fadeIn 0.3s ease;
 }
 
 .hidden {
@@ -496,76 +561,79 @@ label {
     from {
         opacity: 0;
     }
-
     to {
         opacity: 1;
     }
 }
 
 /* ======================
-   Editor Card (Popup)
+   Editor Card - Modern Glass
 ====================== */
 .editor-card {
     width: 90%;
-    max-width: 540px;
+    max-width: 560px;
     max-height: 85vh;
     overflow-y: auto;
-    backdrop-filter: blur(24px);
-    background: rgba(255, 255, 255, 0.12);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 20px;
-    padding: 28px;
-    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
-    animation: slideUp 0.3s ease;
+    backdrop-filter: blur(40px);
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(255, 255, 255, 1);
+    border-radius: 24px;
+    padding: 32px;
+    box-shadow: 
+        0 32px 80px rgba(0, 0, 0, 0.25),
+        inset 0 1px 0 rgba(255, 255, 255, 1);
+    animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @keyframes slideUp {
     from {
         opacity: 0;
-        transform: translateY(20px);
+        transform: translateY(30px) scale(0.95);
     }
-
     to {
         opacity: 1;
-        transform: translateY(0);
+        transform: translateY(0) scale(1);
     }
 }
 
 .editor-card h3 {
-    font-size: 20px;
-    margin-bottom: 8px;
+    font-size: 22px;
+    margin-bottom: 10px;
+    font-weight: 700;
+    color: #1e293b;
 }
 
-/* Form Inputs */
+/* Form Inputs - Modern */
 .editor-card textarea,
 .editor-card select,
 .editor-card input {
     width: 100%;
-    margin-top: 10px;
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 10px;
-    padding: 12px;
-    color: white;
+    margin-top: 12px;
+    background: rgba(248, 250, 252, 0.8);
+    border: 1px solid rgba(226, 232, 240, 0.8);
+    border-radius: 12px;
+    padding: 14px;
+    color: #1e293b;
     font-size: 14px;
+    font-weight: 500;
     transition: all 0.2s ease;
 }
 
 .editor-card textarea {
-    min-height: 120px;
-    max-height: 320px;
+    min-height: 130px;
+    max-height: 350px;
     resize: vertical;
     font-family: inherit;
-    line-height: 1.6;
+    line-height: 1.7;
 }
 
 .editor-card input:focus,
 .editor-card textarea:focus,
 .editor-card select:focus {
     outline: none;
-    border-color: #60a5fa;
-    background: rgba(255, 255, 255, 0.15);
-    box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.1);
+    border-color: #6366f1;
+    background: rgba(255, 255, 255, 1);
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
 }
 
 .editor-card input::placeholder,
@@ -574,17 +642,17 @@ label {
 }
 
 .editor-card select option {
-    background-color: #1e293b;
-    color: #e5e7eb;
+    background-color: white;
+    color: #1e293b;
 }
 
 .form-group {
-    margin-bottom: 18px;
+    margin-bottom: 20px;
 }
 
 .form-group label {
     display: block;
-    margin-bottom: 6px;
+    margin-bottom: 8px;
 }
 
 /* ======================
@@ -594,12 +662,12 @@ label {
     display: flex;
     justify-content: flex-end;
     gap: 12px;
-    margin-top: 24px;
+    margin-top: 28px;
 }
 
 .editor-actions button {
-    padding: 10px 20px;
-    border-radius: 10px;
+    padding: 11px 22px;
+    border-radius: 12px;
     border: none;
     cursor: pointer;
     font-size: 14px;
@@ -608,56 +676,60 @@ label {
 }
 
 .editor-actions button:not(.primary) {
-    background: rgba(255, 255, 255, 0.1);
-    color: white;
+    background: rgba(226, 232, 240, 0.6);
+    color: #475569;
+    border: 1px solid rgba(226, 232, 240, 0.8);
 }
 
 .editor-actions button:not(.primary):hover {
-    background: rgba(255, 255, 255, 0.15);
+    background: rgba(226, 232, 240, 0.8);
 }
 
 .editor-actions .primary {
-    background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
     color: white;
-    box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3);
+    box-shadow: 0 4px 16px rgba(16, 185, 129, 0.25);
 }
 
 .editor-actions .primary:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(34, 197, 94, 0.4);
+    box-shadow: 0 6px 24px rgba(16, 185, 129, 0.35);
 }
 
 /* ======================
-   Delete Confirmation Popup
+   Delete Confirmation
 ====================== */
 .delete-card {
     width: 90%;
-    max-width: 460px;
-    backdrop-filter: blur(24px);
-    background: rgba(255, 255, 255, 0.12);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 20px;
-    padding: 28px;
-    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
-    animation: slideUp 0.3s ease;
+    max-width: 480px;
+    backdrop-filter: blur(40px);
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(255, 255, 255, 1);
+    border-radius: 24px;
+    padding: 32px;
+    box-shadow: 
+        0 32px 80px rgba(0, 0, 0, 0.25),
+        inset 0 1px 0 rgba(255, 255, 255, 1);
+    animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .delete-card h3 {
-    font-size: 20px;
-    margin-bottom: 12px;
-    color: #fca5a5;
+    font-size: 22px;
+    margin-bottom: 14px;
+    color: #dc2626;
+    font-weight: 700;
 }
 
 .delete-actions {
     display: flex;
     justify-content: flex-end;
     gap: 12px;
-    margin-top: 24px;
+    margin-top: 28px;
 }
 
 .delete-actions button {
-    padding: 10px 20px;
-    border-radius: 10px;
+    padding: 11px 22px;
+    border-radius: 12px;
     border: none;
     cursor: pointer;
     font-size: 14px;
@@ -666,44 +738,46 @@ label {
 }
 
 .delete-actions button:not(.danger) {
-    background: rgba(255, 255, 255, 0.1);
-    color: white;
+    background: rgba(226, 232, 240, 0.6);
+    color: #475569;
+    border: 1px solid rgba(226, 232, 240, 0.8);
 }
 
 .delete-actions button:not(.danger):hover {
-    background: rgba(255, 255, 255, 0.15);
+    background: rgba(226, 232, 240, 0.8);
 }
 
 .delete-actions .danger {
-    background: rgba(239, 68, 68, 0.8);
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
     color: white;
+    box-shadow: 0 4px 16px rgba(220, 38, 38, 0.25);
 }
 
 .delete-actions .danger:hover {
-    background: rgba(239, 68, 68, 1);
     transform: translateY(-2px);
+    box-shadow: 0 6px 24px rgba(220, 38, 38, 0.35);
 }
 
 /* ======================
-   Scrollbar
+   Scrollbar - Minimal
 ====================== */
 ::-webkit-scrollbar {
-    width: 10px;
-    height: 10px;
+    width: 8px;
+    height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(226, 232, 240, 0.3);
     border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(99, 102, 241, 0.3);
     border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.3);
+    background: rgba(99, 102, 241, 0.5);
 }
 
 /* ======================
@@ -715,17 +789,17 @@ label {
     }
 
     .value-row h1 {
-        font-size: 24px;
+        font-size: 28px;
     }
 
     .value-row h2 {
-        font-size: 18px;
+        font-size: 20px;
     }
 
     .meta {
         flex-direction: column;
         align-items: flex-start;
-        gap: 16px;
+        gap: 18px;
     }
 
     .contacts-list {
@@ -734,6 +808,6 @@ label {
 
     .editor-card {
         width: 95%;
-        padding: 20px;
+        padding: 24px;
     }
 }
