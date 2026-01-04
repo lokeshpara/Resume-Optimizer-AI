@@ -792,6 +792,8 @@ ${originalResume}
 
 JOB DESCRIPTION:
 ${jobDescription}
+Extract all relevant information from the job description like required skills, preferred skills, responsibilities, tools / technologies, soft skills, domain keywords, industry terms.
+compare with the current resume
 
 PORTAL: ${atsAnalysis.portalName}
 
@@ -806,7 +808,7 @@ Generate 8-20 strategic optimization points that:
 ✅ Make resume look human-written, not AI-generated
 ✅ Target 85-92% ATS match (NOT 100% - that looks fake)
 ✅ Make it need to be atleast 85% ATS match
-
+Note: don't add soft skills, domain keywords, industry terms in the skil section.
 ====================================================
 SKILL ADDITION STRATEGY (CRITICAL)
 ====================================================
