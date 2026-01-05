@@ -427,3 +427,156 @@ function escapeHtml(text) {
 // =====================================================
 
 init();
+// =====================================================
+// RECRUITER AUTOMATION FUNCTIONALITY
+// =====================================================
+function openRecruiterSettings() {
+    // Just show the confirmation modal
+    document.getElementById('recruiterSettingsOverlay').classList.remove('hidden');
+}
+
+function closeRecruiterSettings() {
+    document.getElementById('recruiterSettingsOverlay').classList.add('hidden');
+}
+
+
+
+
+function showTestResult(message, type) {
+    const testResult = document.getElementById('testResult');
+    testResult.textContent = message;
+    testResult.className = type === 'success' ? 'test-success' : 'test-error';
+    setTimeout(() => testResult.textContent = '', 5000);
+}
+
+async function startRecruiterAutomation() {
+    // No need to get API keys from UI - they're in .env
+    
+    // Close settings and show progress
+    closeRecruiterSettings();
+    showProgress();
+
+    try {
+        // Update progress steps
+        updateProgressStep(1, 'active', 'Extracting job details...');
+        
+        const response = await fetch(`/api/applications/${appId}/find-recruiters`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({})  // Empty body - server gets keys from .env
+        });
+
+        updateProgressStep(1, 'done', 'Job details extracted ✓');
+        updateProgressStep(2, 'active', 'Searching Google...');
+        
+        await new Promise(r => setTimeout(r, 1000));
+        updateProgressStep(2, 'done', 'Google search complete ✓');
+        updateProgressStep(3, 'active', 'AI selecting top 3...');
+        
+        await new Promise(r => setTimeout(r, 1000));
+        updateProgressStep(3, 'done', 'Top 3 recruiters selected ✓');
+        updateProgressStep(4, 'active', 'Finding emails...');
+        
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error || 'Failed to find recruiters');
+        }
+
+        updateProgressStep(4, 'done', 'Emails found ✓');
+        updateProgressStep(5, 'active', 'Generating emails...');
+        
+        await new Promise(r => setTimeout(r, 1000));
+        updateProgressStep(5, 'done', 'Emails generated ✓');
+        updateProgressStep(6, 'active', 'Creating drafts...');
+        
+        await new Promise(r => setTimeout(r, 1000));
+        updateProgressStep(6, 'done', 'Drafts created ✓');
+
+        // Hide progress after 2 seconds
+        setTimeout(() => {
+            hideProgress();
+            displayRecruiterResults(data);
+            loadContacts(); // Refresh contacts list
+        }, 2000);
+
+    } catch (error) {
+        console.error('Error:', error);
+        hideProgress();
+        alert(`Failed: ${error.message}`);
+    }
+}
+
+function showProgress() {
+    document.getElementById('recruiterProgressOverlay').classList.remove('hidden');
+    // Reset all steps
+    for (let i = 1; i <= 6; i++) {
+        updateProgressStep(i, 'pending', '');
+    }
+    document.getElementById('progressBarFill').style.width = '0%';
+}
+
+function hideProgress() {
+    document.getElementById('recruiterProgressOverlay').classList.add('hidden');
+}
+
+function updateProgressStep(stepNum, status, text) {
+    const step = document.getElementById(`step${stepNum}`);
+    const icon = step.querySelector('.step-icon');
+    const textEl = step.querySelector('.step-text');
+    
+    step.className = `progress-step ${status}`;
+    
+    if (status === 'active') {
+        icon.textContent = '⏳';
+    } else if (status === 'done') {
+        icon.textContent = '✅';
+    } else {
+        icon.textContent = '⏳';
+    }
+    
+    if (text) {
+        textEl.textContent = text;
+    }
+    
+    // Update progress bar
+    const progress = (stepNum / 6) * 100;
+    document.getElementById('progressBarFill').style.width = `${progress}%`;
+}
+
+function displayRecruiterResults(data) {
+    // Show results section
+    document.getElementById('recruiterResults').classList.remove('hidden');
+    
+    // Update stats
+    document.getElementById('statSearched').textContent = data.stats.searched;
+    document.getElementById('statSelected').textContent = data.stats.aiSelected;
+    document.getElementById('statEmails').textContent = data.stats.emailsFound;
+    document.getElementById('statDrafts').textContent = data.stats.draftsCreated;
+    
+    // Display recruiters
+    const recruitersList = document.getElementById('recruitersList');
+    
+    if (data.recruiters.length === 0) {
+        recruitersList.innerHTML = '<div class="empty-state">No recruiters found with valid emails.</div>';
+        return;
+    }
+    
+    recruitersList.innerHTML = data.recruiters.map(recruiter => `
+        <div class="recruiter-mini-card">
+            <div class="recruiter-mini-header">
+                <span class="recruiter-rank">#${recruiter.rank}</span>
+                <span class="recruiter-mini-name">${escapeHtml(recruiter.name)}</span>
+            </div>
+            <div class="recruiter-mini-email">📧 ${escapeHtml(recruiter.email)}</div>
+            <div class="recruiter-mini-meta">
+                <span>🎯 ${recruiter.confidence}% match</span>
+                <a href="${recruiter.linkedinUrl}" target="_blank">LinkedIn</a>
+                <a href="https://mail.google.com/mail/u/0/#drafts" target="_blank">View Draft</a>
+            </div>
+        </div>
+    `).join('');
+    
+    // Show success message
+    alert(`✅ Success! Found ${data.recruiters.length} recruiter(s) and created ${data.stats.draftsCreated} email draft(s).\n\nCheck your Gmail drafts to review and send.`);
+}

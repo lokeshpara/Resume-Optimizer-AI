@@ -11,6 +11,9 @@ const axios = require('axios');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const { google } = require('googleapis');
 
+const {
+  findRecruitersAndSendEmails
+} = require('./recruiter-automation-v2');
 
 const app = express();
 app.use(express.static('public'));
@@ -48,6 +51,21 @@ oauth2Client.setCredentials({
 const docs = google.docs({ version: 'v1', auth: oauth2Client });
 const drive = google.drive({ version: 'v3', auth: oauth2Client });
 const sheets = google.sheets({ version: 'v4', auth: oauth2Client });
+// =====================================================
+// SEPARATE GMAIL OAUTH CLIENT FOR RECRUITER EMAILS
+// =====================================================
+const gmailOAuth2Client = new google.auth.OAuth2(
+  process.env.GMAIL_CLIENT_ID,
+  process.env.GMAIL_CLIENT_SECRET,
+  'http://localhost:3000/oauth2callback-gmail'
+);
+
+gmailOAuth2Client.setCredentials({
+  refresh_token: process.env.GMAIL_REFRESH_TOKEN
+});
+
+// Gmail uses SEPARATE auth client
+const gmail = google.gmail({ version: 'v1', auth: gmailOAuth2Client });
 
 // const ORIGINAL_RESUME_DOC_ID = process.env.ORIGINAL_RESUME_DOC_ID;
 const DRIVE_FOLDER_ID = process.env.DRIVE_FOLDER_ID;
@@ -1896,15 +1914,257 @@ async function setDocumentFormatting(documentId) {
 
 
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`\n🚀 Resume Optimizer Backend Running!`);
-  console.log(`📍 http://localhost:${PORT}`);
-  console.log(`✅ Health: http://localhost:${PORT}/health`);
-  console.log(`🤖 Supports: Gemini AI & ChatGPT`);
-  console.log(`🎯 ATS Target: 100% Match Rate\n`);
+
+
+
+// =====================================================
+// RECRUITER AUTOMATION ENDPOINTS
+// =====================================================
+
+// POST /api/applications/:id/find-recruiters
+app.post('/api/applications/:id/find-recruiters', async (req, res) => {
+  try {
+    const { id } = req.params;
+     
+    // Get API keys from .env (not from request body)
+    const hunterApiKey = process.env.HUNTER_API_KEY;
+    const aiProvider = process.env.AI_PROVIDER || 'chatgpt';
+    const apiKey = aiProvider === 'gemini' 
+      ? process.env.GEMINI_API_KEY 
+      : process.env.CHATGPT_API_KEY;
+
+    if (!hunterApiKey) {
+      return res.status(400).json({ error: 'Hunter.io API key is required' });
+    }
+    if (!aiProvider || !apiKey) {
+      return res.status(400).json({ error: 'AI provider and API key are required' });
+    }
+
+    console.log(`\n🔍 Finding recruiters for application #${id}...`);
+
+    const appResult = await pool.query(
+      `SELECT id, company_name, position_applied, jd_text, resume_link
+       FROM applications WHERE id = $1`,
+      [id]
+    );
+
+    if (appResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Application not found' });
+    }
+
+    const application = appResult.rows[0];
+
+    if (!application.jd_text) {
+      return res.status(400).json({ 
+        error: 'Job description is required. Please add JD text to the application first.' 
+      });
+    }
+
+    if (!application.resume_link) {
+      return res.status(400).json({ 
+        error: 'Resume link is required. Please optimize resume first.' 
+      });
+    }
+
+    console.log('📄 Fetching resume content from Google Docs...');
+    const resumeDocId = application.resume_link.split('/d/')[1].split('/')[0];
+    const resumeDoc = await docs.documents.get({ documentId: resumeDocId });
+    const resumeContent = resumeDoc.data.body.content
+      .map(element => {
+        if (element.paragraph && element.paragraph.elements) {
+          return element.paragraph.elements
+            .map(e => e.textRun ? e.textRun.content : '')
+            .join('');
+        }
+        return '';
+      })
+      .join('');
+
+    console.log('✅ Resume content fetched');
+
+    const results = await findRecruitersAndSendEmails({
+      jobDescription: application.jd_text,
+      resumeContent: resumeContent,
+      resumeDocUrl: application.resume_link,
+      aiProvider: aiProvider,
+      apiKey: apiKey,
+      hunterApiKey: hunterApiKey,
+      gmail: gmail,
+      pool: pool,
+      applicationId: id,
+      generateAIContent: generateAIContent
+    });
+
+    res.json({
+      success: true,
+      message: `Found ${results.recruiters.length} recruiters`,
+      stats: results.stats,
+      recruiters: results.recruiters,
+      errors: results.errors
+    });
+
+  } catch (error) {
+    console.error('❌ Recruiter automation error:', error);
+    res.status(500).json({ 
+      error: 'Failed to find recruiters',
+      details: error.message 
+    });
+  }
 });
 
+// =====================================================
+// GMAIL OAUTH ENDPOINTS (SEPARATE ACCOUNT)
+// =====================================================
+
+// GET /auth/gmail - Initiate Gmail OAuth (separate account)
+app.get('/auth/gmail', (req, res) => {
+  const authUrl = gmailOAuth2Client.generateAuthUrl({
+    access_type: 'offline',
+    scope: [
+      'https://www.googleapis.com/auth/gmail.compose',
+      'https://www.googleapis.com/auth/gmail.modify'
+    ],
+    prompt: 'consent'
+  });
+  res.redirect(authUrl);
+});
+
+// GET /oauth2callback-gmail - Handle Gmail OAuth callback
+app.get('/oauth2callback-gmail', async (req, res) => {
+  const { code } = req.query;
+  
+  try {
+    const { tokens } = await gmailOAuth2Client.getToken(code);
+    gmailOAuth2Client.setCredentials(tokens);
+    
+    console.log('✅ Gmail OAuth successful!');
+    console.log('Add this to your .env file:');
+    console.log(`GMAIL_REFRESH_TOKEN=${tokens.refresh_token}`);
+    
+    res.send(`
+      <html>
+        <body style="font-family: Arial; padding: 40px; text-align: center;">
+          <h1 style="color: #4caf50;">✅ Recruiter Gmail Authorization Successful!</h1>
+          <p><strong>This is for your RECRUITER EMAIL ACCOUNT</strong></p>
+          <p>Add this to your .env file:</p>
+          <pre style="background: #f5f5f5; padding: 20px; border-radius: 8px; text-align: left; display: inline-block; max-width: 600px; word-wrap: break-word;">GMAIL_REFRESH_TOKEN=${tokens.refresh_token}</pre>
+          <p style="margin-top: 20px; color: #666;">
+            Account authorized: This will be used ONLY for sending recruiter email drafts
+          </p>
+          <p style="margin-top: 20px;">You can close this window now.</p>
+        </body>
+      </html>
+    `);
+  } catch (error) {
+    console.error('❌ Gmail OAuth error:', error);
+    res.status(500).send(`
+      <html>
+        <body style="font-family: Arial; padding: 40px; text-align: center;">
+          <h1 style="color: #f44336;">❌ Authorization Failed</h1>
+          <p>Error: ${error.message}</p>
+          <p>Please try again or check the console logs.</p>
+        </body>
+      </html>
+    `);
+  }
+});
+
+// GET /api/gmail-drafts - Get all Gmail drafts
+app.get('/api/gmail-drafts', async (req, res) => {
+  try {
+    const response = await gmail.users.drafts.list({
+      userId: 'me',
+      maxResults: 10
+    });
+    
+    res.json({
+      success: true,
+      drafts: response.data.drafts || []
+    });
+  } catch (error) {
+    console.error('❌ Failed to fetch drafts:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch drafts',
+      details: error.message 
+    });
+  }
+});
+
+// POST /api/test/hunter - Test Hunter.io API
+app.post('/api/test/hunter', async (req, res) => {
+  try {
+    const { hunterApiKey } = req.body;
+    
+    if (!hunterApiKey) {
+      return res.status(400).json({ error: 'Hunter.io API key is required' });
+    }
+
+    console.log('🧪 Testing Hunter.io API...');
+    const testUrl = `https://api.hunter.io/v2/domain-search?domain=stripe.com&limit=1&api_key=${hunterApiKey}`;
+    const response = await axios.get(testUrl);
+    
+    console.log('✅ Hunter.io response received');
+    console.log('Response structure:', JSON.stringify(response.data.meta, null, 2));
+    
+    // Handle different response structures
+    let requestsInfo = {
+      used: 0,
+      available: 0
+    };
+
+    if (response.data && response.data.meta) {
+      const meta = response.data.meta;
+      
+      // Check for requests object
+      if (meta.requests) {
+        requestsInfo.used = meta.requests.used || 0;
+        requestsInfo.available = meta.requests.available || meta.requests.limit || 0;
+      }
+      // Fallback: check for direct properties
+      else if (meta.calls) {
+        requestsInfo.used = meta.calls.used || 0;
+        requestsInfo.available = meta.calls.available || meta.calls.limit || 0;
+      }
+    }
+    
+    res.json({
+      success: true,
+      message: 'Hunter.io API is working!',
+      accountInfo: {
+        requests: requestsInfo
+      }
+    });
+  } catch (error) {
+    console.error('❌ Hunter.io test failed:', error.response?.data || error.message);
+    
+    res.status(500).json({
+      success: false,
+      error: 'Hunter.io API test failed',
+      details: error.response?.data?.errors?.[0]?.details || error.response?.data || error.message
+    });
+  }
+});
+
+// POST /api/test/gmail - Test Gmail API (separate account)
+app.post('/api/test/gmail', async (req, res) => {
+  try {
+    const profile = await gmail.users.getProfile({ userId: 'me' });
+    
+    res.json({
+      success: true,
+      message: 'Gmail API is working!',
+      email: profile.data.emailAddress,
+      note: 'This is your RECRUITER email account'
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: 'Gmail API test failed',
+      details: error.message,
+      hint: 'Make sure GMAIL_REFRESH_TOKEN is set in .env'
+    });
+  }
+});
 
 
 // =====================================================
@@ -2413,7 +2673,14 @@ app.get('/application/:id', (req, res) => {
 // =====================================================
 // START SERVER
 // =====================================================
-
+// Start server
+app.listen(PORT, () => {
+  console.log(`\n🚀 Resume Optimizer Backend Running!`);
+  console.log(`📍 http://localhost:${PORT}`);
+  console.log(`✅ Health: http://localhost:${PORT}/health`);
+  console.log(`🤖 Supports: Gemini AI & ChatGPT`);
+  console.log(`🎯 ATS Target: 100% Match Rate\n`);
+});
 
 app.listen(PORT, () => {
   console.log(`\n🚀 Job Tracker Server Running!`);
@@ -2434,126 +2701,4 @@ process.on('SIGTERM', async () => {
   await pool.end();
   process.exit(0);
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

@@ -100,6 +100,32 @@
             <div id="contactsList" class="contacts-list"></div>
         </div>
 
+        <!-- Recruiter Automation Section -->
+        <div class="card recruiter-card">
+            <div class="section-header">
+                <h3>🎯 Auto Get Recruiters</h3>
+                <button class="btn-primary" id="autoGetRecruitersBtn" onclick="openRecruiterSettings()">
+                    Auto Get Recruiters
+                </button>
+            </div>
+            
+            <p class="hint">
+                Automatically find top 3 recruiters, get their emails, and create personalized email drafts
+            </p>
+
+            <!-- Recruiter Results -->
+            <div id="recruiterResults" class="recruiter-results hidden">
+                <div class="stats-mini">
+                    <span>🔍 Searched: <strong id="statSearched">0</strong></span>
+                    <span>🤖 AI Selected: <strong id="statSelected">0</strong></span>
+                    <span>📧 Emails Found: <strong id="statEmails">0</strong></span>
+                    <span>✅ Drafts: <strong id="statDrafts">0</strong></span>
+                </div>
+                
+                <div id="recruitersList" class="recruiters-mini-list"></div>
+            </div>
+        </div>
+
         <!-- Delete Button -->
         <button id="deleteBtn" class="delete-btn">Delete Application</button>
 
@@ -201,6 +227,69 @@
             <div class="delete-actions">
                 <button id="cancelDelete">Cancel</button>
                 <button id="confirmDelete" class="danger">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recruiter Confirmation Popup -->
+<div id="recruiterSettingsOverlay" class="overlay hidden">
+    <div class="editor-card">
+        <h3>🎯 Auto Find Recruiters</h3>
+        <p class="hint">AI will find top 3 recruiters, get their emails, and create personalized Gmail drafts</p>
+
+        <div style="background: #f5f7fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <h4 style="margin-top: 0; color: #667eea;">📋 What will happen:</h4>
+            <ul style="margin: 10px 0; padding-left: 20px; line-height: 1.8;">
+                <li>🔍 Search Google for recruiters at this company</li>
+                <li>🤖 AI selects top 3 best matches</li>
+                <li>📧 Find their email addresses</li>
+                <li>✍️ Generate personalized emails</li>
+                <li>📨 Create Gmail drafts (ready to review & send)</li>
+            </ul>
+            <p style="margin-bottom: 0; color: #666; font-size: 13px;">
+                ⏱️ This takes about 2-3 minutes
+            </p>
+        </div>
+
+        <div class="editor-actions">
+            <button onclick="closeRecruiterSettings()">Cancel</button>
+            <button class="primary" onclick="startRecruiterAutomation()">Start Finding Recruiters</button>
+        </div>
+    </div>
+</div>
+
+    <!-- Recruiter Progress Popup -->
+    <div id="recruiterProgressOverlay" class="overlay hidden">
+        <div class="progress-card">
+            <h3>🔍 Finding Recruiters...</h3>
+            <div class="progress-steps">
+                <div class="progress-step" id="step1">
+                    <span class="step-icon">⏳</span>
+                    <span class="step-text">Extracting job details...</span>
+                </div>
+                <div class="progress-step" id="step2">
+                    <span class="step-icon">⏳</span>
+                    <span class="step-text">Searching Google for recruiters...</span>
+                </div>
+                <div class="progress-step" id="step3">
+                    <span class="step-icon">⏳</span>
+                    <span class="step-text">AI selecting top 3 matches...</span>
+                </div>
+                <div class="progress-step" id="step4">
+                    <span class="step-icon">⏳</span>
+                    <span class="step-text">Finding emails with Hunter.io...</span>
+                </div>
+                <div class="progress-step" id="step5">
+                    <span class="step-icon">⏳</span>
+                    <span class="step-text">Generating personalized emails...</span>
+                </div>
+                <div class="progress-step" id="step6">
+                    <span class="step-icon">⏳</span>
+                    <span class="step-text">Creating Gmail drafts...</span>
+                </div>
+            </div>
+            <div class="progress-bar-container">
+                <div class="progress-bar-fill" id="progressBarFill"></div>
             </div>
         </div>
     </div>
