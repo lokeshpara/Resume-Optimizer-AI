@@ -1,4 +1,4 @@
-# Resume Optimizer - Chrome Extension with AI & Google Workspace Integration
+# Resume Optimizer AI - Chrome Extension with AI & Google Workspace Integration
 
 [![GitHub](https://img.shields.io/github/license/lokeshpara/Resume-Optimizer-AI)](https://github.com/lokeshpara/Resume-Optimizer-AI/blob/main/LICENSE)
 [![Node.js](https://img.shields.io/badge/node-%3E%3D14.0.0-brightgreen)](https://nodejs.org/)
@@ -6,26 +6,42 @@
 [![Google Gemini](https://img.shields.io/badge/Google-Gemini_2.0-4285F4)](https://ai.google.dev/)
 [![Stars](https://img.shields.io/github/stars/lokeshpara/Resume-Optimizer-AI)](https://github.com/lokeshpara/Resume-Optimizer-AI/stargazers)
 
-**One-click resume optimization powered by Google Gemini or ChatGPT with automatic Google Drive & Sheets tracking**
+**AI-powered resume optimization with automatic Google Drive tracking, PostgreSQL database, recruiter automation, and comprehensive 4-score analysis system**
+
 ---
 
 ## 📋 Table of Contents
 
-1. [Features](#features)
-2. [Prerequisites](#prerequisites)
-3. [Setup Guide](#setup-guide)
-   - [Part 1: Google Cloud Console Setup](#part-1-google-cloud-console-setup)
-   - [Part 2: Get API Keys](#part-2-get-api-keys)
-   - [Part 3: Backend Setup](#part-3-backend-setup)
-   - [Part 4: Chrome Extension Setup](#part-4-chrome-extension-setup)
-4. [Testing](#testing)
-5. [Usage](#usage)
-6. [Troubleshooting](#troubleshooting)
-7. [Project Structure](#project-structure)
+1. [Overview](#overview)
+2. [Features](#features)
+3. [Architecture](#architecture)
+4. [Prerequisites](#prerequisites)
+5. [Setup Guide](#setup-guide)
+6. [Usage](#usage)
+7. [API Endpoints](#api-endpoints)
+8. [Database Schema](#database-schema)
+9. [Project Structure](#project-structure)
+10. [Troubleshooting](#troubleshooting)
+11. [Contributing](#contributing)
+
+---
+
+## 🎯 Overview
+
+Resume Optimizer AI is a comprehensive Chrome extension that uses AI (Google Gemini 2.0 or ChatGPT GPT-4) to optimize resumes for specific job descriptions. It automatically:
+
+- **Optimizes resumes** with 8-20 strategic improvements per job
+- **Tracks applications** in PostgreSQL database
+- **Uploads optimized resumes** to Google Drive
+- **Finds recruiters** using AI-powered LinkedIn search
+- **Generates personalized emails** and creates Gmail drafts
+- **Provides 4-score analysis** (Resume-JD Match, Experience-Role Fit, Post-Optimization Potential, Selection Probability)
 
 ---
 
 ## ✨ Features
+
+### Core Features
 
 - **Dual Mode Operation:**
   - 🌐 **URL Mode**: Automatically fetch job description from any job posting URL
@@ -33,35 +49,107 @@
 
 - **Multi-AI Provider Support:**
   - Google Gemini 2.0 Flash (3 API keys for load distribution)
-  - ChatGPT GPT-4 (single API key)
+  - ChatGPT GPT-4 (1-3 API keys for load distribution)
 
-- **Intelligent Optimization:**
-  - ATS score optimization (92-100 target)
+- **Intelligent Resume Optimization:**
+  - ATS score optimization (85-92% target)
   - Keyword matching from job description
   - Skills gap analysis
   - Achievement quantification suggestions
-  - 10-20+ specific optimization points per resume
+  - 8-20 specific optimization points per resume
+  - Human-written style (not keyword-stuffed)
+  - Automatic resume type selection (Frontend vs Full Stack)
 
 - **Automatic Tracking:**
+  - PostgreSQL database for application tracking
   - Uploads optimized resume to Google Drive
-  - Logs applications to Google Sheets (Company, Position, Date, Resume Link)
   - Auto-generates filenames: `Lokesh_Para_Position_Company`
+  - Tracks company, position, date, resume link, JD text
 
 - **Professional Output:**
   - Google Docs format with proper styling
-  - Skills table with 2-column layout
+  - Skills table with proper formatting
   - Download as PDF, DOCX, or edit in Google Docs
+
+### Advanced Features
+
+- **4-Score Analysis System:**
+  - Resume-JD Match Score
+  - Experience-Role Fit Score
+  - Post-Optimization Potential Score
+  - Selection Probability Score
+
+- **Recruiter Automation:**
+  - AI-powered LinkedIn recruiter search (via SerpAPI)
+  - Top 3 recruiter selection using AI
+  - Email finding via Hunter.io
+  - Personalized email generation
+  - Gmail draft creation
+
+- **Dashboard:**
+  - Application tracking dashboard
+  - KPIs and statistics
+  - Status distribution charts
+  - Recent activity feed
+  - Notes and contacts management
+
+---
+
+## 🏗️ Architecture
+
+### System Components
+
+```
+┌─────────────────┐
+│ Chrome Extension│
+│  (popup.js)     │
+└────────┬────────┘
+         │ HTTP Requests
+         ▼
+┌─────────────────────────────────────┐
+│   Backend Server (Port 3000)       │
+│   - Resume Optimization            │
+│   - Google Drive Integration        │
+│   - PostgreSQL Database             │
+│   - Recruiter Automation            │
+└────────┬────────────────────────────┘
+         │
+         ├──► Google APIs (Docs, Drive, Sheets, Gmail)
+         ├──► AI APIs (Gemini/ChatGPT)
+         ├──► PostgreSQL Database
+         ├──► Hunter.io API
+         └──► SerpAPI
+         │
+┌────────▼────────────────────────────┐
+│   Analysis Server (Port 3001)       │
+│   - 4-Score Analysis                │
+│   - Resume Analysis                 │
+└─────────────────────────────────────┘
+```
+
+### Technology Stack
+
+- **Frontend:** Chrome Extension (Manifest V3), HTML5, CSS3, JavaScript
+- **Backend:** Node.js, Express.js
+- **Database:** PostgreSQL
+- **APIs:** Google Docs API, Google Drive API, Google Sheets API, Gmail API
+- **AI:** Google Gemini 2.0 Flash / OpenAI GPT-4
+- **External Services:** Hunter.io, SerpAPI
 
 ---
 
 ## 🔧 Prerequisites
 
 - **Node.js** (v14 or higher) - [Download](https://nodejs.org/)
+- **PostgreSQL** (v12 or higher) - [Download](https://www.postgresql.org/download/)
 - **Google Account** (for Google Cloud APIs)
 - **Chrome Browser** (for extension)
 - **AI API Keys:**
   - Either 3 Google Gemini API keys OR
-  - 1 OpenAI ChatGPT API key
+  - 1-3 OpenAI ChatGPT API keys
+- **Optional APIs:**
+  - Hunter.io API key (for recruiter email finding)
+  - SerpAPI key (for LinkedIn recruiter search)
 
 ---
 
@@ -79,12 +167,13 @@
 
 #### Step 1.2: Enable Required APIs
 
-Enable these 4 APIs (click each link and press "ENABLE"):
+Enable these APIs (click each link and press "ENABLE"):
 
 1. [Google Docs API](https://console.cloud.google.com/apis/library/docs.googleapis.com)
 2. [Google Drive API](https://console.cloud.google.com/apis/library/drive.googleapis.com)
 3. [Google Sheets API](https://console.cloud.google.com/apis/library/sheets.googleapis.com)
-4. [Generative Language API](https://console.cloud.google.com/apis/library/generativelanguage.googleapis.com) *(if using Gemini)*
+4. [Gmail API](https://console.cloud.google.com/apis/library/gmail.googleapis.com)
+5. [Generative Language API](https://console.cloud.google.com/apis/library/generativelanguage.googleapis.com) *(if using Gemini)*
 
 **Wait 2-3 minutes** after enabling for APIs to activate.
 
@@ -107,9 +196,11 @@ Enable these 4 APIs (click each link and press "ENABLE"):
    - Name: `Resume Optimizer`
    - Click **"CREATE"**
 
-5. **Download JSON:**
-   - Click the download button (⬇️) next to your new OAuth client
-   - Save as `credentials.json` (or note down Client ID & Client Secret)
+5. **Download JSON** or note down Client ID & Client Secret
+
+#### Step 1.4: Create Separate Gmail OAuth (for Recruiter Emails)
+
+Repeat Step 1.3 to create a **second OAuth client** specifically for Gmail (use different name like "Resume Optimizer Gmail"). This allows using a separate Google account for sending recruiter emails.
 
 ---
 
@@ -131,116 +222,148 @@ Enable these 4 APIs (click each link and press "ENABLE"):
 2. Click **"Create new secret key"**
 3. Name: `Resume Optimizer`
 4. Copy the key (starts with `sk-...`)
+5. **Optional:** Create 2 more keys for load distribution
 
-**Save this key** - it won't be shown again.
+**Save these keys** - they won't be shown again.
+
+#### Optional: Hunter.io API Key
+
+1. Go to [Hunter.io](https://hunter.io/)
+2. Sign up for free account
+3. Get API key from dashboard
+4. Free tier: 25 searches/month
+
+#### Optional: SerpAPI Key
+
+1. Go to [SerpAPI](https://serpapi.com/)
+2. Sign up for free account
+3. Get API key from dashboard
+4. Free tier: 100 searches/month
 
 ---
 
-### Part 3: Backend Setup
+### Part 3: Database Setup
 
-#### Step 3.1: Download Project
+#### Step 3.1: Install PostgreSQL
+
+Install PostgreSQL on your system if not already installed.
+
+#### Step 3.2: Create Database
+
 ```bash
-# Clone or download the project
-cd Desktop  # or wherever you want to store it
-mkdir RO
-cd RO
+# Connect to PostgreSQL
+psql -U postgres
+
+# Create database
+CREATE DATABASE resume_optimizer;
+
+# Connect to database
+\c resume_optimizer
 ```
 
-Create this folder structure:
-```
-RO/
-├── backend/
-└── extension/
-```
+#### Step 3.3: Create Tables
 
-#### Step 3.2: Install Dependencies
-```bash
-cd backend
-npm init -y
-npm install express cors axios dotenv googleapis @google/generative-ai
-```
-
-#### Step 3.3: Generate Refresh Token
-
-**Create `backend/get-token.js`:**
-```javascript
-const { google } = require('googleapis');
-const http = require('http');
-const url = require('url');
-const open = require('open');
-require('dotenv').config();
-
-const oauth2Client = new google.auth.OAuth2(
-  process.env.GOOGLE_CLIENT_ID,
-  process.env.GOOGLE_CLIENT_SECRET,
-  'http://localhost:3000/oauth2callback'
+```sql
+-- Applications table
+CREATE TABLE applications (
+    id SERIAL PRIMARY KEY,
+    company_name VARCHAR(255) NOT NULL,
+    position_applied VARCHAR(255) NOT NULL,
+    date_applied DATE NOT NULL DEFAULT CURRENT_DATE,
+    status VARCHAR(50) DEFAULT 'Applied',
+    resume_link TEXT,
+    jd_link TEXT,
+    jd_text TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    search_vector tsvector
 );
 
-const scopes = [
-  'https://www.googleapis.com/auth/documents',
-  'https://www.googleapis.com/auth/drive.file',
-  'https://www.googleapis.com/auth/spreadsheets'
-];
+-- Create index for full-text search
+CREATE INDEX idx_search_vector ON applications USING GIN(search_vector);
 
-async function getToken() {
-  const authorizeUrl = oauth2Client.generateAuthUrl({
-    access_type: 'offline',
-    scope: scopes,
-    prompt: 'consent'
-  });
+-- Update search_vector trigger
+CREATE OR REPLACE FUNCTION update_search_vector() RETURNS TRIGGER AS $$
+BEGIN
+    NEW.search_vector := 
+        setweight(to_tsvector('english', COALESCE(NEW.company_name, '')), 'A') ||
+        setweight(to_tsvector('english', COALESCE(NEW.position_applied, '')), 'B') ||
+        setweight(to_tsvector('english', COALESCE(NEW.jd_text, '')), 'C');
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
 
-  console.log('\n🔐 Opening browser for authorization...\n');
-  console.log('If browser doesn\'t open, visit this URL:');
-  console.log(authorizeUrl);
-  console.log('\n');
+CREATE TRIGGER applications_search_vector_update
+    BEFORE INSERT OR UPDATE ON applications
+    FOR EACH ROW EXECUTE FUNCTION update_search_vector();
 
-  const server = http.createServer(async (req, res) => {
-    if (req.url.indexOf('/oauth2callback') > -1) {
-      const qs = new url.URL(req.url, 'http://localhost:3000').searchParams;
-      const code = qs.get('code');
-      
-      res.end('Authorization successful! You can close this window.');
-      server.close();
+-- Notes table
+CREATE TABLE notes (
+    id SERIAL PRIMARY KEY,
+    application_id INTEGER REFERENCES applications(id) ON DELETE CASCADE,
+    note_text TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 
-      const { tokens } = await oauth2Client.getToken(code);
-      
-      console.log('\n✅ SUCCESS! Copy this refresh token to your .env file:\n');
-      console.log('GOOGLE_REFRESH_TOKEN=' + tokens.refresh_token);
-      console.log('\n');
-    }
-  }).listen(3000, () => {
-    open(authorizeUrl, { wait: false });
-  });
-}
+-- Contacts table
+CREATE TABLE contacts (
+    id SERIAL PRIMARY KEY,
+    full_name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) UNIQUE,
+    linkedin_url TEXT,
+    role VARCHAR(255),
+    notes TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 
-getToken();
+-- Application-Contacts junction table
+CREATE TABLE application_contacts (
+    application_id INTEGER REFERENCES applications(id) ON DELETE CASCADE,
+    contact_id INTEGER REFERENCES contacts(id) ON DELETE CASCADE,
+    PRIMARY KEY (application_id, contact_id)
+);
 ```
 
-**Create `backend/.env` (temporary for token generation):**
+---
+
+### Part 4: Backend Setup
+
+#### Step 4.1: Install Dependencies
+
 ```bash
-GOOGLE_CLIENT_ID=YOUR_CLIENT_ID_HERE
-GOOGLE_CLIENT_SECRET=YOUR_CLIENT_SECRET_HERE
+cd backend
+npm install
 ```
 
-Replace with values from your OAuth credentials.
+#### Step 4.2: Generate Refresh Tokens
 
-**Run token generation:**
+**For Google Docs/Drive/Sheets:**
+
+1. Create `backend/.env` file:
+```bash
+GOOGLE_CLIENT_ID=your_client_id_here
+GOOGLE_CLIENT_SECRET=your_client_secret_here
+```
+
+2. Run token generator:
 ```bash
 node get-token.js
 ```
 
-**What happens:**
-1. Browser opens
-2. Sign in with Google
-3. Click **"Allow"**
-4. Browser shows: `Authorization successful! You can close this window.`
-5. Terminal shows: `GOOGLE_REFRESH_TOKEN=1//0abc123...`
+3. Follow the prompts to get refresh token
 
-**Copy the refresh token!**
+**For Gmail (Separate Account):**
 
----
+1. Update `.env` with Gmail OAuth credentials:
+```bash
+GMAIL_CLIENT_ID=your_gmail_client_id_here
+GMAIL_CLIENT_SECRET=your_gmail_client_secret_here
+```
 
-#### Step 3.4: Prepare Google Drive & Sheets
+2. Visit: `http://localhost:3000/auth/gmail`
+3. Authorize and copy the refresh token
+
+#### Step 4.3: Prepare Google Drive & Docs
 
 **Create Google Drive Folder:**
 
@@ -250,112 +373,90 @@ node get-token.js
 4. Open the folder
 5. Copy **Folder ID** from URL:
 ```
-   https://drive.google.com/drive/folders/1ABC123XYZ
-                                            ↑________↑
-                                            This is the ID
+https://drive.google.com/drive/folders/1ABC123XYZ
+                                    ↑________↑
+                                    This is the ID
 ```
 
-**Create Google Sheet for Tracking:**
-
-1. Go to [Google Sheets](https://sheets.google.com/)
-2. Click **"Blank"** to create new sheet
-3. **Name:** `Resume Applications Tracker`
-4. **Add headers in Row 1:**
-   - A1: `Company Name`
-   - B1: `Position Applied`
-   - C1: `Date`
-   - D1: `Resume Link`
-   - E1: `Contacts`
-5. Copy **Sheet ID** from URL:
-```
-   https://docs.google.com/spreadsheets/d/1BdLfas17vBjiDosTY4q0a8uLhYcFE92NuLnyadjb4cY/edit
-                                          ↑____________________________________________↑
-                                          This is the Sheet ID
-```
-
-**Upload Your Original Resume:**
+**Upload Your Original Resumes:**
 
 1. Go to [Google Docs](https://docs.google.com/)
-2. Upload your resume (File → Open → Upload)
-3. **Open with Google Docs** (if it's a Word file)
-4. Copy **Document ID** from URL:
+2. Upload your **Frontend Resume** (if applicable)
+3. Upload your **Full Stack Resume**
+4. **Open with Google Docs** (if they're Word files)
+5. Copy **Document IDs** from URLs:
 ```
-   https://docs.google.com/document/d/13oOMXjl7zBWIujaxtdZ9e6w73IqjqP0m/edit
-                                      ↑_____________________________↑
-                                      This is the Document ID
+https://docs.google.com/document/d/13oOMXjl7zBWIujaxtdZ9e6w73IqjqP0m/edit
+                                    ↑_____________________________↑
+                                    This is the Document ID
 ```
 
----
-
-#### Step 3.5: Configure Environment Variables
+#### Step 4.4: Configure Environment Variables
 
 **Update `backend/.env` with all credentials:**
+
 ```bash
-# Google OAuth Credentials
+# Google OAuth Credentials (for Docs/Drive/Sheets)
 GOOGLE_CLIENT_ID=123456789-abc.apps.googleusercontent.com
 GOOGLE_CLIENT_SECRET=GOCSPX-abc123xyz
 GOOGLE_REFRESH_TOKEN=1//014zRHbtissieCgYIARAAGAESNwF-L9IrCdJ5K_5...
 
+# Gmail OAuth Credentials (separate account for recruiter emails)
+GMAIL_CLIENT_ID=123456789-xyz.apps.googleusercontent.com
+GMAIL_CLIENT_SECRET=GOCSPX-xyz789abc
+GMAIL_REFRESH_TOKEN=1//014zRHbtissieCgYIARAAGAESNwF-L9IrCdJ5K_5...
+
 # Google Drive & Docs
-ORIGINAL_RESUME_DOC_ID=13oOMXjl7zBWIujaxtdZ9e6w73IqjqP0m
+FRONTEND_RESUME_DOC_ID=13oOMXjl7zBWIujaxtdZ9e6w73IqjqP0m
+FULLSTACK_RESUME_DOC_ID=14pPNYkm8zCXJkvjaxtdZ9e6w73IqjqP0n
 DRIVE_FOLDER_ID=1zpd8t-2FtpK3ZRhdpnn0cuDp-a5lgv9q
-TRACKING_SHEET_ID=1BdLfas17vBjiDosTY4q0a8uLhYcFE92NuLnyadjb4cY
+
+# PostgreSQL Database
+DATABASE_URL=postgresql://username:password@localhost:5432/resume_optimizer
+
+# Optional: Hunter.io API (for recruiter email finding)
+HUNTER_API_KEY=your_hunter_api_key_here
+
+# Optional: SerpAPI (for LinkedIn recruiter search)
+SERP_API_KEY=your_serpapi_key_here
+
+# Optional: AI Provider (defaults to gemini)
+AI_PROVIDER=gemini
 ```
 
 **⚠️ Important:** Replace ALL placeholder values with your actual IDs and keys!
 
----
+#### Step 4.5: Start Backend Servers
 
-#### Step 3.6: Create Backend Server
-
-**Create `backend/server.js`** - Use the complete server.js file from the project files.
-
----
-
-### Part 4: Chrome Extension Setup
-
-#### Step 4.1: Create Extension Files
-
-**Create these files in the `extension/` folder:**
-
-1. **`extension/manifest.json`:**
-```json
-{
-  "manifest_version": 3,
-  "name": "Resume Optimizer Pro",
-  "version": "1.0.0",
-  "description": "AI-powered resume optimization with Google Workspace integration",
-  "permissions": [
-    "activeTab",
-    "storage"
-  ],
-  "action": {
-    "default_popup": "popup.html"
-  },
-  "options_ui": {
-    "page": "options.html",
-    "open_in_tab": true
-  },
-  "icons": {
-    "16": "icon.png",
-    "48": "icon.png",
-    "128": "icon.png"
-  },
-  "host_permissions": [
-    "http://localhost:3000/*"
-  ]
-}
+**Terminal 1 - Main Server (Port 3000):**
+```bash
+cd backend
+node server.js
 ```
 
-2. **Create a simple icon (`extension/icon.png`):**
-   - Create a 128x128 PNG image (can use any icon generator)
-   - Or download a resume/document icon from [Flaticon](https://www.flaticon.com/)
+**Terminal 2 - Analysis Server (Port 3001):**
+```bash
+cd backend
+node server-analysis.js
+```
 
-3. **`extension/popup.html`**, **`popup.js`**, **`styles.css`**, **`options.html`**, **`options.js`** - Use files from project.
+You should see:
+```
+🚀 Resume Optimizer Backend Running!
+📍 http://localhost:3000
+✅ Health: http://localhost:3000/health
+🤖 Supports: Gemini AI & ChatGPT
+
+📊 Resume Analysis Server Running!
+📍 http://localhost:3001
+✅ Health: http://localhost:3001/health
+```
 
 ---
 
-#### Step 4.2: Load Extension in Chrome
+### Part 5: Chrome Extension Setup
+
+#### Step 5.1: Load Extension in Chrome
 
 1. Open Chrome
 2. Go to `chrome://extensions/`
@@ -364,114 +465,7 @@ TRACKING_SHEET_ID=1BdLfas17vBjiDosTY4q0a8uLhYcFE92NuLnyadjb4cY
 5. Select your `extension/` folder
 6. Extension should appear with your icon
 
----
-
-## 🧪 Testing
-
-### Test 1: Verify Backend Setup
-```bash
-cd backend
-node server.js
-```
-
-**Expected output:**
-```
-🚀 Resume Optimizer Backend Running!
-📍 http://localhost:3000
-✅ Health: http://localhost:3000/health
-🤖 Supports: Gemini AI & ChatGPT
-```
-
-**Test health endpoint:**
-
-Open browser: `http://localhost:3000/health`
-
-Should show:
-```json
-{
-  "status": "Server is running",
-  "timestamp": "2025-11-28T..."
-}
-```
-
----
-
-### Test 2: Test Google APIs Access
-
-**Create `backend/test-apis.js`:**
-```javascript
-const { google } = require('googleapis');
-require('dotenv').config();
-
-async function testAPIs() {
-  const oauth2Client = new google.auth.OAuth2(
-    process.env.GOOGLE_CLIENT_ID,
-    process.env.GOOGLE_CLIENT_SECRET,
-    'http://localhost:3000/oauth2callback'
-  );
-  
-  oauth2Client.setCredentials({
-    refresh_token: process.env.GOOGLE_REFRESH_TOKEN
-  });
-  
-  const docs = google.docs({ version: 'v1', auth: oauth2Client });
-  const drive = google.drive({ version: 'v3', auth: oauth2Client });
-  const sheets = google.sheets({ version: 'v4', auth: oauth2Client });
-  
-  console.log('🧪 Testing Google APIs...\n');
-  
-  // Test 1: Resume access
-  console.log('📄 Test 1: Accessing resume...');
-  const doc = await docs.documents.get({
-    documentId: process.env.ORIGINAL_RESUME_DOC_ID
-  });
-  console.log(`✅ Resume: ${doc.data.title}\n`);
-  
-  // Test 2: Drive folder access
-  console.log('📁 Test 2: Accessing Drive folder...');
-  const folder = await drive.files.get({
-    fileId: process.env.DRIVE_FOLDER_ID,
-    fields: 'name'
-  });
-  console.log(`✅ Folder: ${folder.data.name}\n`);
-  
-  // Test 3: Sheets access
-  console.log('📊 Test 3: Accessing tracking sheet...');
-  const sheet = await sheets.spreadsheets.get({
-    spreadsheetId: process.env.TRACKING_SHEET_ID
-  });
-  console.log(`✅ Sheet: ${sheet.data.properties.title}\n`);
-  
-  console.log('🎉 All tests passed!\n');
-}
-
-testAPIs().catch(console.error);
-```
-
-**Run:**
-```bash
-node test-apis.js
-```
-
-**Expected output:**
-```
-🧪 Testing Google APIs...
-
-📄 Test 1: Accessing resume...
-✅ Resume: Lokesh Para
-
-📁 Test 2: Accessing Drive folder...
-✅ Folder: Optimized Resumes
-
-📊 Test 3: Accessing tracking sheet...
-✅ Sheet: Resume Applications Tracker
-
-🎉 All tests passed!
-```
-
----
-
-### Test 3: Configure Extension
+#### Step 5.2: Configure Extension Settings
 
 1. Click extension icon in Chrome
 2. Click **"Settings"** (⚙️)
@@ -479,64 +473,38 @@ node test-apis.js
    - Choose "Google Gemini" or "ChatGPT"
 4. **Enter API Keys:**
    - If Gemini: Paste all 3 API keys
-   - If ChatGPT: Paste 1 API key
+   - If ChatGPT: Paste 1-3 API keys
 5. Click **"Save Settings"**
 6. Should see: ✅ Settings saved!
 
 ---
 
-### Test 4: Full Optimization Test
-
-**Using Manual Mode (Recommended for first test):**
-
-1. Click extension icon
-2. Click **"📝 Paste Job Description"**
-3. Paste this sample JD:
-```
-   Senior Java Developer
-   Google
-   Mountain View, CA
-
-   We are looking for a Senior Java Developer with 5+ years experience.
-   
-   Requirements:
-   - Java 11+
-   - Spring Boot
-   - Microservices
-   - AWS experience
-   - Strong problem-solving skills
-```
-4. Click **"Optimize Resume"**
-5. Wait 30-60 seconds
-6. Should see: ✅ Resume Optimized Successfully!
-
-**Check outputs:**
-- Google Drive folder: New document created
-- Google Sheet: New row added with Google, Senior Java Developer
-- Extension: Shows links to view/download
-
----
-
 ## 📖 Usage
 
-### Workflow
+### Basic Workflow
+
 ```
 1. Navigate to job posting OR prepare JD text
    ↓
 2. Click extension icon
    ↓
-3. Choose mode:
+3. Choose action:
+   - 📊 Analyze Resume (4-score analysis)
+   - 🚀 Optimize Resume (create optimized version)
+   ↓
+4. Choose mode:
    - 🌐 Fetch from URL (for accessible sites)
    - 📝 Manual Input (for LinkedIn, authenticated sites)
    ↓
-4. Click "Optimize Resume"
+5. Click "Optimize Resume" or "Analyze Resume"
    ↓
-5. Wait 30-60 seconds
+6. Wait 30-60 seconds
    ↓
-6. Get optimized resume:
-   - Auto-uploaded to Google Drive
-   - Auto-logged to Google Sheets
+7. Get results:
+   - Optimized resume auto-uploaded to Google Drive
+   - Application logged to PostgreSQL database
    - Download as PDF/DOCX
+   - (Optional) Recruiter emails created in Gmail
 ```
 
 ### Mode Selection
@@ -552,118 +520,164 @@ node test-apis.js
 - Any 403/blocked URLs
 - Want to customize the JD text
 
----
+### Recruiter Automation
 
-## 🐛 Troubleshooting
-
-### Issue: "Server offline"
-
-**Solution:**
-```bash
-cd backend
-node server.js
-```
-Keep terminal open while using extension.
-
----
-
-### Issue: "Failed to fetch job page" (403 error)
-
-**Solution:**
-- Switch to **Manual JD Input** mode
-- Copy job description from the page
-- Paste into extension
+1. Open dashboard: `http://localhost:3000/dashboard`
+2. Find an application
+3. Click "Find Recruiters"
+4. System will:
+   - Search LinkedIn for company recruiters
+   - AI selects top 3 best matches
+   - Find emails via Hunter.io
+   - Generate personalized emails
+   - Create Gmail drafts
 
 ---
 
-### Issue: "This operation is not supported for this document"
+## 🔌 API Endpoints
 
-**Solution:**
-1. Your resume must be a **Google Doc**, not Word/PDF
-2. If it's Word: Right-click in Drive → Open with → Google Docs
-3. Get the new Document ID after conversion
-4. Update `ORIGINAL_RESUME_DOC_ID` in `.env`
+### Main Server (Port 3000)
+
+#### Resume Optimization
+- `POST /api/optimize-resume` - Optimize resume for job description
+  - Body: `{ jobUrl, manualJobDescription, aiProvider, geminiKey1-3, chatgptApiKey }`
+  - Returns: Optimized resume link, company, position, optimization points
+
+#### Applications
+- `GET /api/applications` - Get all applications (with filters)
+  - Query params: `status`, `days`, `search`
+- `GET /api/applications/:id` - Get single application
+- `PUT /api/applications/:id` - Update application
+- `DELETE /api/applications/:id` - Delete application
+
+#### Dashboard
+- `GET /api/dashboard/summary` - Get KPIs
+- `GET /api/dashboard/daily` - Daily application count (30 days)
+- `GET /api/dashboard/status-dist` - Status distribution
+- `GET /api/dashboard/recent` - Recent activity
+
+#### Notes
+- `GET /api/applications/:id/notes` - Get notes for application
+- `POST /api/applications/:id/notes` - Add note
+- `DELETE /api/notes/:noteId` - Delete note
+
+#### Contacts
+- `GET /api/applications/:id/contacts` - Get contacts for application
+- `POST /api/applications/:id/contacts` - Create contact and link
+- `GET /api/contacts/:id` - Get single contact
+- `PUT /api/contacts/:id` - Update contact
+- `DELETE /api/applications/:appId/contacts/:contactId` - Unlink and delete
+
+#### Recruiter Automation
+- `POST /api/applications/:id/find-recruiters` - Find recruiters and create email drafts
+- `GET /api/gmail-drafts` - Get Gmail drafts
+- `POST /api/test/hunter` - Test Hunter.io API
+- `POST /api/test/gmail` - Test Gmail API
+
+#### Export
+- `GET /api/export/csv` - Export applications as CSV
+
+#### Health
+- `GET /health` - Server health check
+
+### Analysis Server (Port 3001)
+
+#### Resume Analysis
+- `POST /api/analyze-resume` - 4-score analysis
+  - Body: `{ jobUrl, manualJobDescription, aiProvider, geminiKey1-3, chatgptApiKey }`
+  - Returns: 4 scores, detailed reports, summary
+
+#### Health
+- `GET /health` - Server health check
 
 ---
 
-### Issue: "Permission denied" or "404 Not Found"
+## 🗄️ Database Schema
 
-**Solution:**
-1. Share all Google resources with your OAuth account:
-   - Resume document
-   - Drive folder
-   - Tracking sheet
-2. Give **Editor** access
-3. Use the same Google account that created OAuth credentials
+### Tables
 
----
+**applications**
+- `id` (SERIAL PRIMARY KEY)
+- `company_name` (VARCHAR)
+- `position_applied` (VARCHAR)
+- `date_applied` (DATE)
+- `status` (VARCHAR) - Applied, Interview, Offer, Rejected
+- `resume_link` (TEXT)
+- `jd_link` (TEXT)
+- `jd_text` (TEXT)
+- `created_at` (TIMESTAMP)
+- `updated_at` (TIMESTAMP)
+- `search_vector` (TSVECTOR) - For full-text search
 
-### Issue: Company/Position showing as "N/A" in sheet
+**notes**
+- `id` (SERIAL PRIMARY KEY)
+- `application_id` (INTEGER) - FK to applications
+- `note_text` (TEXT)
+- `created_at` (TIMESTAMP)
 
-**Check console output:**
-```bash
-# Look for these lines:
-🔍 Extracting company and position...
-🏢 Company extracted: [should show company]
-💼 Position extracted: [should show position]
-```
+**contacts**
+- `id` (SERIAL PRIMARY KEY)
+- `full_name` (VARCHAR)
+- `email` (VARCHAR UNIQUE)
+- `linkedin_url` (TEXT)
+- `role` (VARCHAR)
+- `notes` (TEXT)
+- `created_at` (TIMESTAMP)
 
-**If still N/A:**
-- AI couldn't extract from JD
-- Make sure JD includes company name and job title clearly
-- Check first few lines of JD have this info
-
----
-
-### Issue: Gemini API "Invalid API Key"
-
-**Solutions:**
-1. Enable Generative Language API: https://console.cloud.google.com/apis/library/generativelanguage.googleapis.com
-2. Wait 2-3 minutes after enabling
-3. Verify API key format: starts with `AIzaSy`, ~39 characters
-4. Try creating new API keys
+**application_contacts**
+- `application_id` (INTEGER) - FK to applications
+- `contact_id` (INTEGER) - FK to contacts
+- PRIMARY KEY (application_id, contact_id)
 
 ---
 
 ## 📁 Project Structure
+
 ```
-RO/
+Resume-Optimizer-AI/
 ├── backend/
 │   ├── node_modules/
-│   ├── .env                  # Environment variables (KEEP SECRET!)
-│   ├── server.js             # Main backend server
-│   ├── get-token.js          # OAuth token generator
-│   ├── test-apis.js          # API testing script
-│   └── package.json          # Dependencies
+│   ├── public/
+│   │   ├── dashboard.html          # Dashboard UI
+│   │   ├── dashboard.js            # Dashboard logic
+│   │   ├── dashboard.css           # Dashboard styles
+│   │   ├── application.html        # Application details UI
+│   │   ├── application.js          # Application details logic
+│   │   └── application.css         # Application styles
+│   ├── .env                        # Environment variables (KEEP SECRET!)
+│   ├── server.js                   # Main backend server (Port 3000)
+│   ├── server-analysis.js          # Analysis server (Port 3001)
+│   ├── get-token.js               # OAuth token generator
+│   ├── recruiter-automation-v2.js # Recruiter finder & email automation
+│   ├── package.json               # Dependencies
+│   └── package-lock.json
 │
 └── extension/
-    ├── manifest.json         # Extension configuration
-    ├── popup.html            # Main popup UI
-    ├── popup.js              # Popup logic
-    ├── options.html          # Settings page UI
-    ├── options.js            # Settings page logic
-    ├── styles.css            # All styles
-    └── icon.png              # Extension icon
+    ├── icons/
+    │   ├── icon16.png
+    │   ├── icon48.png
+    │   └── icon128.png
+    ├── manifest.json               # Extension configuration
+    ├── popup.html                  # Main popup UI
+    ├── popup.js                    # Popup logic
+    ├── options.html                # Settings page UI
+    ├── options.js                  # Settings page logic
+    ├── results.html                # Analysis results page
+    ├── results.js                  # Results page logic
+    └── styles.css                  # Extension styles
 ```
-
----
-
-## 🔒 Security Notes
-
-- **Never commit `.env` file** to version control
-- Keep API keys private
-- OAuth refresh token grants full access to your Google account data
-- Extension only works with `localhost:3000` (not exposed to internet)
 
 ---
 
 ## 🚀 Quick Start Commands
-```bash
-# Start backend server
-cd backend
-node server.js
 
-# Keep terminal open, then use Chrome extension!
+```bash
+# Start backend servers
+cd backend
+node server.js              # Terminal 1 (Port 3000)
+node server-analysis.js      # Terminal 2 (Port 3001)
+
+# Keep terminals open, then use Chrome extension!
 ```
 
 ---
@@ -671,10 +685,12 @@ node server.js
 ## 💡 Tips
 
 1. **Test with simple job first** - Use manual mode with short JD for first test
-2. **Check Google Sheet** - Verify entries are being logged correctly
-3. **Keep backend running** - Don't close terminal while using extension
+2. **Check database** - Verify entries are being logged correctly
+3. **Keep servers running** - Don't close terminals while using extension
 4. **Use Indeed/Greenhouse** - These sites work well with URL mode
 5. **LinkedIn = Manual mode** - Always use manual input for LinkedIn
+6. **Monitor API usage** - Track your AI API key usage to avoid rate limits
+7. **Review Gmail drafts** - Always review AI-generated emails before sending
 
 ---
 
@@ -684,26 +700,42 @@ node server.js
 - **JD extraction:** 3-8 seconds
 - **Resume optimization:** 15-25 seconds
 - **Document creation:** 2-5 seconds
-- **Total time:** 30-60 seconds per optimization
+- **Total optimization time:** 30-60 seconds per optimization
+- **4-score analysis:** 20-40 seconds
+- **Recruiter automation:** 30-60 seconds per recruiter
 
 ---
 
 ## ✅ Success Checklist
 
 - [ ] Node.js installed
+- [ ] PostgreSQL installed and database created
 - [ ] Google Cloud project created
-- [ ] 4 APIs enabled (Docs, Drive, Sheets, Generative Language)
-- [ ] OAuth credentials created (Desktop app)
-- [ ] Refresh token generated
-- [ ] API keys obtained (Gemini x3 OR ChatGPT x1)
-- [ ] Resume uploaded to Google Docs
+- [ ] 5 APIs enabled (Docs, Drive, Sheets, Gmail, Generative Language)
+- [ ] OAuth credentials created (Desktop app) - 2 sets (main + Gmail)
+- [ ] Refresh tokens generated (main + Gmail)
+- [ ] API keys obtained (Gemini x3 OR ChatGPT x1-3)
+- [ ] Resumes uploaded to Google Docs (Frontend + Full Stack)
 - [ ] Drive folder created
-- [ ] Tracking sheet created with headers
-- [ ] `.env` file configured with all IDs
+- [ ] `.env` file configured with all IDs and keys
 - [ ] Backend dependencies installed
+- [ ] Both servers running (ports 3000 and 3001)
 - [ ] Extension loaded in Chrome
 - [ ] Extension settings configured
 - [ ] Test optimization completed successfully
+- [ ] Optional: Hunter.io and SerpAPI keys configured
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+---
+
+## 📝 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
 
 ---
 
@@ -718,5 +750,6 @@ Start optimizing resumes and tracking your applications automatically!
 ---
 
 **Created by:** Lokesh Para  
-**Last Updated:** November 28, 2025  
-**Version:** 1.0.0
+**Last Updated:** January 2025  
+**Version:** 2.0.0
+ 

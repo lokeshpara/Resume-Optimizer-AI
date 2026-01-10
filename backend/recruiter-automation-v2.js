@@ -90,7 +90,7 @@ Respond with ONLY the domain (e.g., company.com), nothing else.`;
 async function searchRecruitersOnGoogle(companyName, position, location) {
     console.log(`🔍 Searching Google for recruiters at ${companyName}...`);
     
-    const searchQuery = `${companyName} recruiter site:linkedin.com/in`;
+    const searchQuery = `${companyName} company recruiter site:linkedin.com/in`;
     
     try {
       // Get SerpAPI key from environment

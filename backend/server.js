@@ -436,7 +436,9 @@ async function logApplicationToDB({
   jobPostUrl,
   jobDescription
 }) {
-  const today = new Date().toISOString().slice(0, 10);
+  const now = new Date();
+  const localDate = new Date(now.toLocaleString('en-US', { timeZone: 'America/Chicago' }));
+  const today = localDate.toISOString().slice(0, 10);  // ← REPLACE LINE 439 WITH THESE 3 LINES
 
   // Option B: soft match (company + position + date)
   const existing = await pool.query(
