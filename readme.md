@@ -260,7 +260,7 @@ CREATE DATABASE resume_optimizer;
 # Connect to database
 \c resume_optimizer
 ---
-
+```
 ### Part 4: Backend Setup
 
 #### Step 4.1: Install Dependencies
