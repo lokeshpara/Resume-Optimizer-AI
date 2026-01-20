@@ -150,7 +150,63 @@
 
     </div>
 
+    <!-- Delete Confirmation Popup -->
+    <div id="deleteOverlay" class="delete-overlay hidden">
+        <div class="delete-confirmation">
+            <h3>Delete Application</h3>
+            <p>
+                This action will permanently delete "<strong id="deleteCompanyName"></strong>" application
+                and all associated notes and contacts. This cannot be undone.
+            </p>
+            <div class="delete-confirmation-actions">
+                <button onclick="cancelDelete()">Cancel</button>
+                <button class="danger" onclick="confirmDelete()">Delete</button>
+            </div>
+        </div>
+    </div>
+
     <script src="/dashboard.js"></script>
+    <script>
+        // Delete confirmation variables
+        let deleteAppId = null;
+
+        function showDeleteConfirmation(id, companyName) {
+            deleteAppId = id;
+            document.getElementById('deleteCompanyName').textContent = companyName;
+            document.getElementById('deleteOverlay').classList.remove('hidden');
+        }
+
+        function cancelDelete() {
+            deleteAppId = null;
+            document.getElementById('deleteOverlay').classList.add('hidden');
+        }
+
+        async function confirmDelete() {
+            if (!deleteAppId) return;
+
+            try {
+                await fetch(`/api/applications/${deleteAppId}`, { method: 'DELETE' });
+
+                // Remove from arrays
+                allApplications = allApplications.filter(app => app.id !== deleteAppId);
+                filteredApplications = filteredApplications.filter(app => app.id !== deleteAppId);
+
+                // Close popup
+                cancelDelete();
+
+                // Refresh UI
+                renderTable();
+                updateTableCount();
+                await loadSummary();
+                await loadDailyChart();
+                await loadStatusChart();
+                await loadRecentActivity();
+            } catch (error) {
+                alert('Failed to delete application');
+                console.error(error);
+            }
+        }
+    </script>
 </body>
 
 </html>

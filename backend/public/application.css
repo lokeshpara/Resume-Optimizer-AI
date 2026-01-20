@@ -2,25 +2,20 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    font-family: 'Courier New', Courier, monospace;
 }
 
 /* ======================
-   Base Layout - White Theme
+   Base Layout - Retro White
 ====================== */
 body {
-    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-    color: #1e293b;
+    background: #f5f5f0;
+    color: #2c2c2c;
     min-height: 100vh;
 }
 
 .background {
-    position: fixed;
-    inset: 0;
-    background:
-        radial-gradient(circle at 20% 20%, rgba(99, 102, 241, 0.08), transparent 50%),
-        radial-gradient(circle at 80% 80%, rgba(168, 85, 247, 0.08), transparent 50%);
-    z-index: -1;
+    display: none;
 }
 
 .container {
@@ -30,17 +25,20 @@ body {
 }
 
 .back {
-    color: #6366f1;
+    color: #2c2c2c;
     text-decoration: none;
     font-size: 14px;
-    font-weight: 600;
+    font-weight: 700;
     display: inline-flex;
     align-items: center;
     gap: 8px;
     margin-bottom: 24px;
-    transition: all 0.2s ease;
+    transition: all 0.1s ease;
     padding: 8px 12px;
-    border-radius: 8px;
+    border: 2px solid #2c2c2c;
+    background: #fff;
+    text-transform: uppercase;
+    letter-spacing: 1px;
 }
 
 .back::before {
@@ -49,42 +47,25 @@ body {
 }
 
 .back:hover {
-    background: rgba(99, 102, 241, 0.1);
-    transform: translateX(-4px);
+    background: #2c2c2c;
+    color: #fff;
 }
 
 /* ======================
-   Card - Glassmorphism
+   Card - Retro Box
 ====================== */
 .card {
     margin-top: 24px;
-    backdrop-filter: blur(20px);
-    background: rgba(255, 255, 255, 0.7);
-    border: 1px solid rgba(255, 255, 255, 0.8);
-    border-radius: 24px;
+    background: #fff;
+    border: 3px solid #2c2c2c;
+    border-radius: 0;
     padding: 36px;
-    box-shadow: 
-        0 4px 24px rgba(0, 0, 0, 0.04),
-        inset 0 1px 0 rgba(255, 255, 255, 0.9);
-    transition: all 0.3s ease;
-    animation: fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
-}
-
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+    box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.2);
+    transition: all 0.1s ease;
 }
 
 .card:hover {
-    box-shadow: 
-        0 8px 32px rgba(0, 0, 0, 0.08),
-        inset 0 1px 0 rgba(255, 255, 255, 1);
+    box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.2);
 }
 
 /* ======================
@@ -95,12 +76,16 @@ body {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 3px solid #2c2c2c;
 }
 
 .section-header h3 {
-    font-size: 22px;
+    font-size: 24px;
     font-weight: 700;
-    color: #1e293b;
+    color: #2c2c2c;
+    text-transform: uppercase;
+    letter-spacing: -1px;
 }
 
 /* ======================
@@ -111,10 +96,10 @@ body {
 }
 
 label {
-    font-size: 12px;
-    letter-spacing: 0.05em;
+    font-size: 11px;
+    letter-spacing: 1px;
     text-transform: uppercase;
-    color: #64748b;
+    color: #666;
     font-weight: 700;
     display: block;
     margin-bottom: 10px;
@@ -122,9 +107,9 @@ label {
 
 .hint {
     font-size: 12px;
-    color: #94a3b8;
+    color: #999;
     margin-top: 6px;
-    font-weight: 500;
+    font-weight: 400;
 }
 
 /* ======================
@@ -135,54 +120,59 @@ label {
     align-items: center;
     gap: 14px;
     margin-top: 8px;
+    flex-wrap: wrap;
 }
 
 .value-row h1 {
-    font-size: 36px;
+    font-size: 42px;
     font-weight: 700;
-    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    letter-spacing: -0.02em;
+    color: #2c2c2c;
+    letter-spacing: -2px;
+    text-transform: uppercase;
+    line-height: 1.1;
 }
 
 .value-row h2 {
-    font-size: 26px;
-    font-weight: 600;
-    color: #1e293b;
+    font-size: 28px;
+    font-weight: 700;
+    color: #2c2c2c;
+    letter-spacing: -1px;
+    line-height: 1.2;
 }
 
 .value-row a {
-    color: #6366f1;
-    text-decoration: none;
-    font-size: 15px;
-    font-weight: 500;
-    transition: all 0.2s ease;
-    padding: 4px 8px;
-    border-radius: 6px;
+    color: #2c2c2c;
+    text-decoration: underline;
+    font-size: 14px;
+    font-weight: 700;
+    transition: all 0.1s ease;
+    word-break: break-all;
 }
 
 .value-row a:hover {
-    background: rgba(99, 102, 241, 0.1);
-    color: #4f46e5;
+    background: #2c2c2c;
+    color: #fff;
+    text-decoration: none;
+    padding: 2px 6px;
 }
 
 /* ======================
-   Edit Button - Modern Glass
+   Edit Button - Retro
 ====================== */
 .edit-btn {
-    background: rgba(99, 102, 241, 0.1);
-    border: 1px solid rgba(99, 102, 241, 0.2);
-    border-radius: 8px;
+    background: #fff;
+    border: 2px solid #2c2c2c;
+    border-radius: 0;
     padding: 6px 12px;
     cursor: pointer;
     opacity: 0;
     pointer-events: none;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    color: #6366f1;
-    font-size: 13px;
-    font-weight: 600;
+    transition: all 0.1s ease;
+    color: #2c2c2c;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
 }
 
 .field:hover .edit-btn,
@@ -194,14 +184,13 @@ label {
 }
 
 .edit-btn:hover {
-    background: rgba(99, 102, 241, 0.2);
-    border-color: rgba(99, 102, 241, 0.3);
-    transform: scale(1.05);
+    background: #2c2c2c;
+    color: #fff;
 }
 
 .edit-btn.small {
     padding: 4px 10px;
-    font-size: 12px;
+    font-size: 10px;
 }
 
 .edit-btn.floating {
@@ -219,6 +208,9 @@ label {
     margin: 28px 0;
     align-items: center;
     flex-wrap: wrap;
+    padding: 20px;
+    background: #f9f9f9;
+    border: 2px solid #2c2c2c;
 }
 
 .meta-item {
@@ -233,42 +225,44 @@ label {
 }
 
 .meta-item span {
-    color: #1e293b;
-    font-weight: 600;
+    color: #2c2c2c;
+    font-weight: 700;
 }
 
-/* Status Badge - Modern */
+/* Status Badge - Retro */
 .status {
-    padding: 8px 16px;
-    border-radius: 12px;
-    font-size: 13px;
+    padding: 6px 14px;
+    border-radius: 0;
+    font-size: 11px;
     font-weight: 700;
     display: inline-block;
-    letter-spacing: 0.02em;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    border: 2px solid;
 }
 
 .status.applied {
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(99, 102, 241, 0.15));
-    color: #3b82f6;
-    border: 1px solid rgba(59, 130, 246, 0.2);
+    background: #e3f2fd;
+    color: #1976d2;
+    border-color: #1976d2;
 }
 
 .status.interview {
-    background: linear-gradient(135deg, rgba(168, 85, 247, 0.15), rgba(139, 92, 246, 0.15));
-    color: #a855f7;
-    border: 1px solid rgba(168, 85, 247, 0.2);
+    background: #f3e5f5;
+    color: #7b1fa2;
+    border-color: #7b1fa2;
 }
 
 .status.offer {
-    background: linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(16, 185, 129, 0.15));
-    color: #10b981;
-    border: 1px solid rgba(34, 197, 94, 0.2);
+    background: #e8f5e9;
+    color: #388e3c;
+    border-color: #388e3c;
 }
 
 .status.rejected {
-    background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(220, 38, 38, 0.15));
-    color: #dc2626;
-    border: 1px solid rgba(239, 68, 68, 0.2);
+    background: #ffebee;
+    color: #d32f2f;
+    border-color: #d32f2f;
 }
 
 /* ======================
@@ -280,17 +274,16 @@ label {
 }
 
 .jd-box pre {
-    background: rgba(248, 250, 252, 0.8);
+    background: #f9f9f9;
     padding: 20px;
-    border-radius: 14px;
-    border: 1px solid rgba(226, 232, 240, 0.8);
+    border: 2px solid #2c2c2c;
+    border-radius: 0;
     white-space: pre-wrap;
     line-height: 1.7;
-    font-size: 14px;
-    color: #334155;
+    font-size: 13px;
+    color: #2c2c2c;
     max-height: 400px;
     overflow-y: auto;
-    font-family: 'SF Mono', 'Monaco', 'Courier New', monospace;
 }
 
 /* ======================
@@ -303,22 +296,19 @@ label {
 }
 
 .note-item {
-    background: rgba(248, 250, 252, 0.8);
+    background: #f9f9f9;
     padding: 18px;
-    border-radius: 14px;
-    border-left: 3px solid #6366f1;
-    transition: all 0.2s ease;
-    position: relative;
-    border: 1px solid rgba(226, 232, 240, 0.6);
+    border: 2px solid #2c2c2c;
+    border-left: 6px solid #2c2c2c;
+    transition: all 0.1s ease;
 }
 
 .note-item:hover {
-    background: rgba(255, 255, 255, 0.9);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+    background: #fff;
 }
 
 .note-text {
-    color: #334155;
+    color: #2c2c2c;
     line-height: 1.7;
     font-size: 14px;
     margin-bottom: 12px;
@@ -329,34 +319,37 @@ label {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-size: 12px;
-    color: #64748b;
-    font-weight: 500;
+    font-size: 11px;
+    color: #666;
+    font-weight: 700;
 }
 
 .note-delete {
-    background: rgba(239, 68, 68, 0.1);
-    color: #dc2626;
-    border: 1px solid rgba(239, 68, 68, 0.2);
+    background: #fff;
+    color: #d32f2f;
+    border: 2px solid #d32f2f;
     padding: 5px 12px;
-    border-radius: 8px;
+    border-radius: 0;
     cursor: pointer;
-    font-size: 12px;
-    font-weight: 600;
-    transition: all 0.2s ease;
+    font-size: 11px;
+    font-weight: 700;
+    transition: all 0.1s ease;
+    text-transform: uppercase;
 }
 
 .note-delete:hover {
-    background: rgba(239, 68, 68, 0.2);
-    border-color: rgba(239, 68, 68, 0.3);
+    background: #d32f2f;
+    color: #fff;
 }
 
 .empty-state {
     text-align: center;
     padding: 48px 20px;
-    color: #64748b;
-    font-size: 15px;
-    font-weight: 500;
+    color: #666;
+    font-size: 14px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
 }
 
 /* ======================
@@ -369,18 +362,15 @@ label {
 }
 
 .contact-card {
-    background: rgba(248, 250, 252, 0.8);
+    background: #f9f9f9;
     padding: 20px;
-    border-radius: 16px;
-    border: 1px solid rgba(226, 232, 240, 0.8);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    position: relative;
+    border: 2px solid #2c2c2c;
+    transition: all 0.1s ease;
 }
 
 .contact-card:hover {
-    background: rgba(255, 255, 255, 0.95);
-    transform: translateY(-4px);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    background: #fff;
+    box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.2);
 }
 
 .contact-header {
@@ -391,22 +381,25 @@ label {
 }
 
 .contact-name {
-    font-size: 17px;
+    font-size: 18px;
     font-weight: 700;
-    color: #1e293b;
+    color: #2c2c2c;
+    text-transform: uppercase;
+    letter-spacing: -1px;
 }
 
 .contact-role {
     display: inline-block;
     padding: 4px 12px;
-    background: linear-gradient(135deg, rgba(168, 85, 247, 0.15), rgba(139, 92, 246, 0.15));
-    color: #a855f7;
-    border: 1px solid rgba(168, 85, 247, 0.2);
-    border-radius: 10px;
-    font-size: 11px;
+    background: #f3e5f5;
+    color: #7b1fa2;
+    border: 2px solid #7b1fa2;
+    border-radius: 0;
+    font-size: 10px;
     font-weight: 700;
     margin-top: 8px;
-    letter-spacing: 0.02em;
+    letter-spacing: 1px;
+    text-transform: uppercase;
 }
 
 .contact-info {
@@ -417,36 +410,30 @@ label {
 }
 
 .contact-info a {
-    color: #6366f1;
-    text-decoration: none;
+    color: #2c2c2c;
+    text-decoration: underline;
     font-size: 13px;
-    font-weight: 500;
+    font-weight: 700;
     display: flex;
     align-items: center;
     gap: 8px;
-    transition: all 0.2s ease;
-    padding: 4px;
-    border-radius: 6px;
-}
-
-.contact-info a::before {
-    content: '→';
-    font-size: 14px;
+    transition: all 0.1s ease;
 }
 
 .contact-info a:hover {
-    background: rgba(99, 102, 241, 0.1);
-    color: #4f46e5;
+    background: #2c2c2c;
+    color: #fff;
+    text-decoration: none;
+    padding: 2px 4px;
 }
 
 .contact-notes {
     margin-top: 12px;
     padding: 12px;
-    background: rgba(255, 255, 255, 0.6);
-    border-radius: 10px;
-    border: 1px solid rgba(226, 232, 240, 0.6);
+    background: #fff;
+    border: 2px solid #e0e0e0;
     font-size: 13px;
-    color: #475569;
+    color: #666;
     line-height: 1.6;
 }
 
@@ -459,34 +446,36 @@ label {
 .contact-btn {
     flex: 1;
     padding: 8px 14px;
-    border: none;
-    border-radius: 10px;
-    font-size: 13px;
+    border: 2px solid;
+    border-radius: 0;
+    font-size: 11px;
     cursor: pointer;
-    transition: all 0.2s ease;
-    font-weight: 600;
+    transition: all 0.1s ease;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
 }
 
 .contact-btn.edit {
-    background: rgba(99, 102, 241, 0.1);
-    color: #6366f1;
-    border: 1px solid rgba(99, 102, 241, 0.2);
+    background: #fff;
+    color: #2c2c2c;
+    border-color: #2c2c2c;
 }
 
 .contact-btn.edit:hover {
-    background: rgba(99, 102, 241, 0.2);
-    border-color: rgba(99, 102, 241, 0.3);
+    background: #2c2c2c;
+    color: #fff;
 }
 
 .contact-btn.delete {
-    background: rgba(239, 68, 68, 0.1);
-    color: #dc2626;
-    border: 1px solid rgba(239, 68, 68, 0.2);
+    background: #fff;
+    color: #d32f2f;
+    border-color: #d32f2f;
 }
 
 .contact-btn.delete:hover {
-    background: rgba(239, 68, 68, 0.2);
-    border-color: rgba(239, 68, 68, 0.3);
+    background: #d32f2f;
+    color: #fff;
 }
 
 /* ======================
@@ -494,48 +483,52 @@ label {
 ====================== */
 .btn-primary {
     padding: 11px 22px;
-    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-    color: white;
-    border: none;
-    border-radius: 12px;
-    font-weight: 600;
+    background: #2c2c2c;
+    color: #fff;
+    border: 3px solid #2c2c2c;
+    border-radius: 0;
+    font-weight: 700;
     font-size: 14px;
     cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 4px 16px rgba(99, 102, 241, 0.25);
+    transition: all 0.1s ease;
+    box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.2);
+    text-transform: uppercase;
+    letter-spacing: 1px;
 }
 
 .btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 24px rgba(99, 102, 241, 0.35);
+    transform: translate(2px, 2px);
+    box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.2);
 }
 
 .btn-primary:active {
-    transform: translateY(0);
+    transform: translate(4px, 4px);
+    box-shadow: none;
 }
 
 .btn-primary.small {
     padding: 9px 18px;
-    font-size: 13px;
+    font-size: 12px;
 }
 
 .delete-btn {
     margin-top: 36px;
     padding: 14px 24px;
-    border-radius: 14px;
-    background: rgba(239, 68, 68, 0.1);
-    color: #dc2626;
-    border: 1px solid rgba(239, 68, 68, 0.2);
+    border-radius: 0;
+    background: #fff;
+    color: #d32f2f;
+    border: 3px solid #d32f2f;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.1s ease;
     font-size: 14px;
     font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
 }
 
 .delete-btn:hover {
-    background: rgba(239, 68, 68, 0.2);
-    border-color: rgba(239, 68, 68, 0.3);
-    transform: translateY(-2px);
+    background: #d32f2f;
+    color: #fff;
 }
 
 /* ======================
@@ -544,86 +537,62 @@ label {
 .overlay {
     position: fixed;
     inset: 0;
-    background: rgba(15, 23, 42, 0.6);
-    backdrop-filter: blur(8px);
+    background: rgba(0, 0, 0, 0.7);
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 100;
-    animation: fadeIn 0.3s ease;
 }
 
 .hidden {
     display: none;
 }
 
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-    }
-    to {
-        opacity: 1;
-    }
-}
-
 /* ======================
-   Editor Card - Modern Glass
+   Editor Card - Retro
 ====================== */
 .editor-card {
     width: 90%;
     max-width: 560px;
     max-height: 85vh;
     overflow-y: auto;
-    backdrop-filter: blur(40px);
-    background: rgba(255, 255, 255, 0.95);
-    border: 1px solid rgba(255, 255, 255, 1);
-    border-radius: 24px;
+    background: #fff;
+    border: 4px solid #2c2c2c;
+    border-radius: 0;
     padding: 32px;
-    box-shadow: 
-        0 32px 80px rgba(0, 0, 0, 0.25),
-        inset 0 1px 0 rgba(255, 255, 255, 1);
-    animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-@keyframes slideUp {
-    from {
-        opacity: 0;
-        transform: translateY(30px) scale(0.95);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-    }
+    box-shadow: 8px 8px 0 rgba(0, 0, 0, 0.3);
 }
 
 .editor-card h3 {
-    font-size: 22px;
+    font-size: 24px;
     margin-bottom: 10px;
     font-weight: 700;
-    color: #1e293b;
+    color: #2c2c2c;
+    text-transform: uppercase;
+    letter-spacing: -1px;
 }
 
-/* Form Inputs - Modern */
+/* Form Inputs - Retro */
 .editor-card textarea,
 .editor-card select,
 .editor-card input {
     width: 100%;
     margin-top: 12px;
-    background: rgba(248, 250, 252, 0.8);
-    border: 1px solid rgba(226, 232, 240, 0.8);
-    border-radius: 12px;
+    background: #f9f9f9;
+    border: 2px solid #2c2c2c;
+    border-radius: 0;
     padding: 14px;
-    color: #1e293b;
+    color: #2c2c2c;
     font-size: 14px;
     font-weight: 500;
-    transition: all 0.2s ease;
+    transition: all 0.1s ease;
 }
 
 .editor-card textarea {
     min-height: 130px;
     max-height: 350px;
     resize: vertical;
-    font-family: inherit;
+    font-family: 'Courier New', monospace;
     line-height: 1.7;
 }
 
@@ -631,19 +600,13 @@ label {
 .editor-card textarea:focus,
 .editor-card select:focus {
     outline: none;
-    border-color: #6366f1;
-    background: rgba(255, 255, 255, 1);
-    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+    background: #fff;
+    box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.1);
 }
 
 .editor-card input::placeholder,
 .editor-card textarea::placeholder {
-    color: #94a3b8;
-}
-
-.editor-card select option {
-    background-color: white;
-    color: #1e293b;
+    color: #999;
 }
 
 .form-group {
@@ -667,33 +630,36 @@ label {
 
 .editor-actions button {
     padding: 11px 22px;
-    border-radius: 12px;
-    border: none;
+    border-radius: 0;
+    border: 3px solid;
     cursor: pointer;
     font-size: 14px;
-    font-weight: 600;
-    transition: all 0.2s ease;
+    font-weight: 700;
+    transition: all 0.1s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
 }
 
 .editor-actions button:not(.primary) {
-    background: rgba(226, 232, 240, 0.6);
-    color: #475569;
-    border: 1px solid rgba(226, 232, 240, 0.8);
+    background: #fff;
+    color: #2c2c2c;
+    border-color: #2c2c2c;
 }
 
 .editor-actions button:not(.primary):hover {
-    background: rgba(226, 232, 240, 0.8);
+    background: #2c2c2c;
+    color: #fff;
 }
 
 .editor-actions .primary {
-    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-    color: white;
-    box-shadow: 0 4px 16px rgba(16, 185, 129, 0.25);
+    background: #388e3c;
+    color: #fff;
+    border-color: #388e3c;
 }
 
 .editor-actions .primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 24px rgba(16, 185, 129, 0.35);
+    background: #2e7d32;
+    border-color: #2e7d32;
 }
 
 /* ======================
@@ -702,22 +668,19 @@ label {
 .delete-card {
     width: 90%;
     max-width: 480px;
-    backdrop-filter: blur(40px);
-    background: rgba(255, 255, 255, 0.95);
-    border: 1px solid rgba(255, 255, 255, 1);
-    border-radius: 24px;
+    background: #fff;
+    border: 4px solid #d32f2f;
+    border-radius: 0;
     padding: 32px;
-    box-shadow: 
-        0 32px 80px rgba(0, 0, 0, 0.25),
-        inset 0 1px 0 rgba(255, 255, 255, 1);
-    animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 8px 8px 0 rgba(0, 0, 0, 0.3);
 }
 
 .delete-card h3 {
-    font-size: 22px;
+    font-size: 24px;
     margin-bottom: 14px;
-    color: #dc2626;
+    color: #d32f2f;
     font-weight: 700;
+    text-transform: uppercase;
 }
 
 .delete-actions {
@@ -729,55 +692,233 @@ label {
 
 .delete-actions button {
     padding: 11px 22px;
-    border-radius: 12px;
-    border: none;
+    border-radius: 0;
+    border: 3px solid;
     cursor: pointer;
     font-size: 14px;
-    font-weight: 600;
-    transition: all 0.2s ease;
+    font-weight: 700;
+    transition: all 0.1s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
 }
 
 .delete-actions button:not(.danger) {
-    background: rgba(226, 232, 240, 0.6);
-    color: #475569;
-    border: 1px solid rgba(226, 232, 240, 0.8);
+    background: #fff;
+    color: #2c2c2c;
+    border-color: #2c2c2c;
 }
 
 .delete-actions button:not(.danger):hover {
-    background: rgba(226, 232, 240, 0.8);
+    background: #2c2c2c;
+    color: #fff;
 }
 
 .delete-actions .danger {
-    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
-    color: white;
-    box-shadow: 0 4px 16px rgba(220, 38, 38, 0.25);
+    background: #d32f2f;
+    color: #fff;
+    border-color: #d32f2f;
 }
 
 .delete-actions .danger:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 24px rgba(220, 38, 38, 0.35);
+    background: #b71c1c;
+    border-color: #b71c1c;
 }
 
 /* ======================
-   Scrollbar - Minimal
+   Recruiter Automation
+====================== */
+.recruiter-card {
+    border-left: 6px solid #2c2c2c;
+}
+
+.recruiter-results {
+    margin-top: 20px;
+}
+
+.stats-mini {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    padding: 16px;
+    background: #f9f9f9;
+    border: 2px solid #2c2c2c;
+    margin-bottom: 16px;
+}
+
+.stats-mini span {
+    font-size: 12px;
+    color: #666;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.stats-mini strong {
+    color: #2c2c2c;
+    font-size: 18px;
+}
+
+.recruiters-mini-list {
+    display: grid;
+    gap: 12px;
+}
+
+.recruiter-mini-card {
+    background: #f9f9f9;
+    border: 2px solid #2c2c2c;
+    padding: 16px;
+    transition: all 0.1s ease;
+}
+
+.recruiter-mini-card:hover {
+    background: #fff;
+    box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.2);
+}
+
+.recruiter-mini-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.recruiter-rank {
+    background: #2c2c2c;
+    color: #fff;
+    padding: 4px 10px;
+    border-radius: 0;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.recruiter-mini-name {
+    font-size: 16px;
+    font-weight: 700;
+    color: #2c2c2c;
+}
+
+.recruiter-mini-email {
+    font-size: 13px;
+    color: #666;
+    margin-bottom: 8px;
+}
+
+.recruiter-mini-meta {
+    display: flex;
+    gap: 16px;
+    font-size: 12px;
+    color: #666;
+    font-weight: 700;
+}
+
+.recruiter-mini-meta a {
+    color: #2c2c2c;
+    text-decoration: underline;
+    font-weight: 700;
+}
+
+.recruiter-mini-meta a:hover {
+    text-decoration: none;
+    background: #2c2c2c;
+    color: #fff;
+    padding: 0 4px;
+}
+
+/* Progress Card */
+.progress-card {
+    background: #fff;
+    padding: 32px;
+    border: 4px solid #2c2c2c;
+    border-radius: 0;
+    max-width: 500px;
+    width: 90%;
+    box-shadow: 8px 8px 0 rgba(0, 0, 0, 0.3);
+}
+
+.progress-card h3 {
+    text-align: center;
+    margin-bottom: 24px;
+    color: #2c2c2c;
+    font-size: 24px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.progress-steps {
+    margin-bottom: 24px;
+}
+
+.progress-step {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    margin-bottom: 8px;
+    border: 2px solid #e0e0e0;
+    transition: all 0.1s ease;
+}
+
+.progress-step.pending {
+    background: #f5f5f5;
+    opacity: 0.5;
+}
+
+.progress-step.active {
+    background: #fff9c4;
+    border-color: #fbc02d;
+    border-left: 6px solid #fbc02d;
+}
+
+.progress-step.done {
+    background: #e8f5e9;
+    border-color: #388e3c;
+    border-left: 6px solid #388e3c;
+}
+
+.step-icon {
+    font-size: 20px;
+}
+
+.step-text {
+    font-size: 13px;
+    color: #2c2c2c;
+    font-weight: 700;
+}
+
+.progress-bar-container {
+    width: 100%;
+    height: 12px;
+    background: #e0e0e0;
+    border: 2px solid #2c2c2c;
+    border-radius: 0;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    background: #2c2c2c;
+    width: 0%;
+    transition: width 0.3s ease;
+}
+
+/* ======================
+   Scrollbar - Retro
 ====================== */
 ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+    width: 12px;
+    height: 12px;
 }
 
 ::-webkit-scrollbar-track {
-    background: rgba(226, 232, 240, 0.3);
-    border-radius: 10px;
+    background: #e0e0e0;
 }
 
 ::-webkit-scrollbar-thumb {
-    background: rgba(99, 102, 241, 0.3);
-    border-radius: 10px;
+    background: #2c2c2c;
+    border: 2px solid #e0e0e0;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: rgba(99, 102, 241, 0.5);
+    background: #000;
 }
 
 /* ======================
@@ -789,11 +930,11 @@ label {
     }
 
     .value-row h1 {
-        font-size: 28px;
+        font-size: 32px;
     }
 
     .value-row h2 {
-        font-size: 20px;
+        font-size: 22px;
     }
 
     .meta {
@@ -810,261 +951,4 @@ label {
         width: 95%;
         padding: 24px;
     }
-}
-
-/* =====================================================
-   RECRUITER AUTOMATION STYLES
-   Add these to application.css
-   ===================================================== */
-
-/* Recruiter Card */
-.recruiter-card {
-    border-left: 4px solid #667eea;
-}
-
-.recruiter-results {
-    margin-top: 20px;
-}
-
-.recruiter-results.hidden {
-    display: none;
-}
-
-.stats-mini {
-    display: flex;
-    gap: 20px;
-    flex-wrap: wrap;
-    padding: 16px;
-    background: #f8f9fa;
-    border-radius: 8px;
-    margin-bottom: 16px;
-}
-
-.stats-mini span {
-    font-size: 14px;
-    color: #666;
-}
-
-.stats-mini strong {
-    color: #667eea;
-    font-size: 18px;
-}
-
-.recruiters-mini-list {
-    display: grid;
-    gap: 12px;
-}
-
-.recruiter-mini-card {
-    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-    border-radius: 10px;
-    padding: 16px;
-    transition: transform 0.3s ease;
-}
-
-.recruiter-mini-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-}
-
-.recruiter-mini-header {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 8px;
-}
-
-.recruiter-rank {
-    background: #667eea;
-    color: white;
-    padding: 4px 10px;
-    border-radius: 20px;
-    font-size: 12px;
-    font-weight: 700;
-}
-
-.recruiter-mini-name {
-    font-size: 16px;
-    font-weight: 600;
-    color: #1a1a1a;
-}
-
-.recruiter-mini-email {
-    font-size: 14px;
-    color: #666;
-    margin-bottom: 8px;
-}
-
-.recruiter-mini-meta {
-    display: flex;
-    gap: 16px;
-    font-size: 13px;
-    color: #888;
-}
-
-.recruiter-mini-meta a {
-    color: #667eea;
-    text-decoration: none;
-    font-weight: 500;
-}
-
-.recruiter-mini-meta a:hover {
-    text-decoration: underline;
-}
-
-/* Settings Popup */
-#recruiterSettingsOverlay .editor-card {
-    max-width: 500px;
-}
-
-.form-group {
-    margin-bottom: 20px;
-}
-
-.form-group label {
-    display: block;
-    font-weight: 600;
-    margin-bottom: 8px;
-    color: #333;
-    font-size: 14px;
-}
-
-.form-group input,
-.form-group select {
-    width: 100%;
-    padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    font-size: 14px;
-}
-
-.form-group small {
-    display: block;
-    margin-top: 6px;
-    color: #666;
-    font-size: 12px;
-}
-
-.form-group small a {
-    color: #667eea;
-    text-decoration: none;
-}
-
-.form-group small a:hover {
-    text-decoration: underline;
-}
-
-.test-section {
-    background: #f8f9fa;
-    padding: 16px;
-    border-radius: 8px;
-    margin-bottom: 20px;
-}
-
-.btn-test {
-    padding: 8px 16px;
-    background: #28a745;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    margin-right: 8px;
-}
-
-.btn-test:hover {
-    background: #218838;
-}
-
-.test-success {
-    color: #155724;
-    background: #d4edda;
-    padding: 8px 12px;
-    border-radius: 6px;
-    margin-top: 10px;
-    font-size: 13px;
-}
-
-.test-error {
-    color: #721c24;
-    background: #f8d7da;
-    padding: 8px 12px;
-    border-radius: 6px;
-    margin-top: 10px;
-    font-size: 13px;
-}
-
-/* Progress Popup */
-.progress-card {
-    background: white;
-    padding: 32px;
-    border-radius: 16px;
-    max-width: 500px;
-    width: 90%;
-}
-
-.progress-card h3 {
-    text-align: center;
-    margin-bottom: 24px;
-    color: #667eea;
-}
-
-.progress-steps {
-    margin-bottom: 24px;
-}
-
-.progress-step {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 12px;
-    margin-bottom: 8px;
-    border-radius: 8px;
-    transition: all 0.3s ease;
-}
-
-.progress-step.pending {
-    background: #f5f5f5;
-    opacity: 0.5;
-}
-
-.progress-step.active {
-    background: #fff3cd;
-    border-left: 4px solid #ffc107;
-}
-
-.progress-step.done {
-    background: #d4edda;
-    border-left: 4px solid #28a745;
-}
-
-.step-icon {
-    font-size: 20px;
-}
-
-.step-text {
-    font-size: 14px;
-    color: #333;
-}
-
-.progress-bar-container {
-    width: 100%;
-    height: 8px;
-    background: #e0e0e0;
-    border-radius: 4px;
-    overflow: hidden;
-}
-
-.progress-bar-fill {
-    height: 100%;
-    background: linear-gradient(90deg, #667eea, #764ba2);
-    width: 0%;
-    transition: width 0.5s ease;
-    animation: pulse 1.5s ease-in-out infinite;
-}
-
-@keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.7; }
 }
