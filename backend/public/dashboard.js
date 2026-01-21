@@ -68,7 +68,7 @@ async function loadDailyChart() {
 
         if (!rawData || rawData.length === 0) {
             document.getElementById('dailyChart').parentElement.innerHTML =
-                '<p style="text-align: center; color: #94a3b8; padding: 40px;">No data available yet</p>';
+                '<p style="text-align: center; color: #666; padding: 40px;">No data available yet</p>';
             return;
         }
 
@@ -88,15 +88,15 @@ async function loadDailyChart() {
                 labels,
                 datasets: [{
                     data: values,
-                    borderColor: '#60a5fa',
-                    backgroundColor: 'rgba(96, 165, 250, 0.1)',
+                    borderColor: '#2c2c2c',
+                    backgroundColor: 'rgba(44, 44, 44, 0.1)',
                     borderWidth: 3,
-                    tension: 0.4,
+                    tension: 0,
                     fill: true,
                     pointRadius: 6,
                     pointHoverRadius: 8,
-                    pointBackgroundColor: '#60a5fa',
-                    pointBorderColor: '#0f172a',
+                    pointBackgroundColor: '#2c2c2c',
+                    pointBorderColor: '#fff',
                     pointBorderWidth: 2
                 }]
             },
@@ -111,9 +111,9 @@ async function loadDailyChart() {
                     legend: { display: false },
                     tooltip: {
                         enabled: true,
-                        backgroundColor: 'rgba(15, 23, 42, 0.95)',
-                        titleColor: '#e5e7eb',
-                        bodyColor: '#e5e7eb',
+                        backgroundColor: '#2c2c2c',
+                        titleColor: '#fff',
+                        bodyColor: '#fff',
                         padding: 12,
                         displayColors: false,
                         callbacks: {
@@ -126,7 +126,7 @@ async function loadDailyChart() {
                     x: {
                         grid: { display: false },
                         ticks: {
-                            color: '#cbd5f5',
+                            color: '#666',
                             maxRotation: 0,
                             autoSkip: true,
                             maxTicksLimit: 10
@@ -134,9 +134,9 @@ async function loadDailyChart() {
                     },
                     y: {
                         beginAtZero: true,
-                        grid: { color: 'rgba(255, 255, 255, 0.08)' },
+                        grid: { color: '#e0e0e0' },
                         ticks: {
-                            color: '#cbd5f5',
+                            color: '#666',
                             precision: 0
                         }
                     }
@@ -159,7 +159,7 @@ async function loadStatusChart() {
 
         if (!data || data.length === 0) {
             document.getElementById('statusChart').parentElement.innerHTML =
-                '<p style="text-align: center; color: #94a3b8; padding: 40px;">No data available yet</p>';
+                '<p style="text-align: center; color: #666; padding: 40px;">No data available yet</p>';
             return;
         }
 
@@ -168,13 +168,13 @@ async function loadStatusChart() {
         const percentages = data.map(d => Number(d.percentage));
 
         const statusColors = {
-            'Applied': '#60a5fa',
-            'Interview': '#a78bfa',
-            'Offer': '#34d399',
-            'Rejected': '#f87171'
+            'Applied': '#1976d2',
+            'Interview': '#7b1fa2',
+            'Offer': '#388e3c',
+            'Rejected': '#d32f2f'
         };
 
-        const backgroundColors = labels.map(status => statusColors[status] || '#94a3b8');
+        const backgroundColors = labels.map(status => statusColors[status] || '#666');
 
         const canvas = document.getElementById('statusChart');
         const ctx = canvas.getContext('2d');
@@ -188,8 +188,8 @@ async function loadStatusChart() {
                 datasets: [{
                     data: values,
                     backgroundColor: backgroundColors,
-                    borderColor: '#0f172a',
-                    borderWidth: 2,
+                    borderColor: '#2c2c2c',
+                    borderWidth: 3,
                     hoverOffset: 10
                 }]
             },
@@ -200,17 +200,19 @@ async function loadStatusChart() {
                     legend: {
                         position: 'bottom',
                         labels: {
-                            color: '#cbd5f5',
+                            color: '#2c2c2c',
                             padding: 15,
                             font: {
-                                size: 13
+                                size: 13,
+                                family: "'Courier New', monospace",
+                                weight: 'bold'
                             }
                         }
                     },
                     tooltip: {
-                        backgroundColor: 'rgba(15, 23, 42, 0.95)',
-                        titleColor: '#e5e7eb',
-                        bodyColor: '#e5e7eb',
+                        backgroundColor: '#2c2c2c',
+                        titleColor: '#fff',
+                        bodyColor: '#fff',
                         padding: 12,
                         callbacks: {
                             label: (ctx) => {
@@ -241,7 +243,7 @@ async function loadRecentActivity() {
         const feed = document.getElementById('recentActivity');
 
         if (!activities || activities.length === 0) {
-            feed.innerHTML = '<p style="text-align: center; color: #94a3b8; padding: 20px;">No recent activity</p>';
+            feed.innerHTML = '<p style="text-align: center; color: #666; padding: 20px;">No recent activity</p>';
             return;
         }
 
@@ -302,7 +304,7 @@ function renderTable() {
         // Show different display based on whether it was actually updated
         const updatedDisplay = wasActuallyUpdated
             ? timeAgo(app.updated_at)
-            : '<span style="color: #64748b;">—</span>';
+            : '<span style="color: #999;">—</span>';
 
         return `
             <tr onclick="window.location.href='/application/${app.id}'">
@@ -312,8 +314,10 @@ function renderTable() {
                 <td><span class="status ${app.status.toLowerCase()}">${app.status}</span></td>
                 <td>${updatedDisplay}</td>
                 <td onclick="event.stopPropagation()">
-                    <button class="action-btn" onclick="quickEdit(${app.id})">✏️ Edit</button>
-                    <button class="action-btn delete" onclick="quickDelete(${app.id})">🗑️</button>
+                    <div class="action-buttons">
+                        <button class="action-btn" onclick="quickEdit(${app.id})">✏️ EDIT</button>
+                        <button class="action-btn delete" onclick="showDeleteConfirmation(${app.id}, '${escapeHtml(app.company_name)}')">🗑️ DELETE</button>
+                    </div>
                 </td>
             </tr>
         `;
@@ -423,30 +427,6 @@ function updateTableCount() {
 
 async function quickEdit(id) {
     window.location.href = `/application/${id}`;
-}
-
-async function quickDelete(id) {
-    if (!confirm('Are you sure you want to delete this application?')) {
-        return;
-    }
-
-    try {
-        await fetch(`/api/applications/${id}`, { method: 'DELETE' });
-
-        // Remove from arrays
-        allApplications = allApplications.filter(app => app.id !== id);
-        filteredApplications = filteredApplications.filter(app => app.id !== id);
-
-        // Refresh UI
-        renderTable();
-        updateTableCount();
-        await loadSummary();
-        await loadDailyChart();
-        await loadStatusChart();
-    } catch (error) {
-        alert('Failed to delete application');
-        console.error(error);
-    }
 }
 
 // =====================================================

@@ -10,7 +10,8 @@ const cors = require('cors');
 const axios = require('axios');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const { google } = require('googleapis');
-
+const path = require('path');
+const fs = require('fs');
 const {
   findRecruitersAndSendEmails
 } = require('./recruiter-automation-v2');
@@ -146,6 +147,50 @@ app.get('/health', (req, res) => {
     timestamp: new Date().toISOString()
   });
 });
+
+// Helper: Load README files from local folder
+function loadProjectReadmes() {
+  try {
+    console.log('📖 Loading project README files...');
+    
+    // Define paths to README files
+    const resumeOptimizerPath = path.join(__dirname, 'project-readmes', 'Resume-Optimizer-AI-README.md');
+    const cifar10Path = path.join(__dirname, 'project-readmes', 'CIFAR10-README.md');
+    
+    let resumeOptimizerContent = '';
+    let cifar10Content = '';
+    
+    // Load Resume Optimizer AI README
+    if (fs.existsSync(resumeOptimizerPath)) {
+      resumeOptimizerContent = fs.readFileSync(resumeOptimizerPath, 'utf8');
+      console.log(`✅ Loaded Resume Optimizer AI README (${resumeOptimizerContent.length} chars)`);
+    } else {
+      console.log('⚠️ Resume Optimizer AI README not found at:', resumeOptimizerPath);
+      resumeOptimizerContent = 'README file not found';
+    }
+    
+    // Load CIFAR-10 README
+    if (fs.existsSync(cifar10Path)) {
+      cifar10Content = fs.readFileSync(cifar10Path, 'utf8');
+      console.log(`✅ Loaded CIFAR-10 README (${cifar10Content.length} chars)`);
+    } else {
+      console.log('⚠️ CIFAR-10 README not found at:', cifar10Path);
+      cifar10Content = 'README file not found';
+    }
+    
+    return {
+      resumeOptimizerReadme: resumeOptimizerContent,
+      cifar10Readme: cifar10Content
+    };
+    
+  } catch (error) {
+    console.error('❌ Error loading README files:', error.message);
+    return {
+      resumeOptimizerReadme: 'Error loading README',
+      cifar10Readme: 'Error loading README'
+    };
+  }
+}
 
 // Helper: Extract company and position from job description
 async function extractJobDetails(jobDescription, aiProvider, apiKey) {
@@ -351,6 +396,8 @@ Think deeply and give your absolute best analysis. A candidate's career depends 
     };
   }
 }
+
+
 
 // Helper: AI-powered resume selection based on JD analysis
 async function selectBestResume(jobDescription, aiProvider, apiKey) {
@@ -792,6 +839,11 @@ ${jobResponse.data}`;
     // Replace the optimizationPrompt variable with this:
 
 // Replace the optimizationPrompt variable with this:
+const projectReadmes = loadProjectReadmes();
+
+// ====================================================
+// UPDATED OPTIMIZATION PROMPT (Replace lines 794-1054)
+// ====================================================
 
 const optimizationPrompt = `You are a senior resume strategist specializing in making resumes look HUMAN-WRITTEN while strategically matching job requirements.
 
@@ -814,23 +866,28 @@ ${originalResume}
 
 JOB DESCRIPTION:
 ${jobDescription}
-Extract all relevant information from the job description like required skills, preferred skills, responsibilities, tools / technologies, soft skills, domain keywords, industry terms.
-compare with the current resume
+Extract all relevant information from the job description like required skills, preferred skills, responsibilities, tools/technologies, soft skills, domain keywords, industry terms.
+Compare with the current resume including BOTH Experience and Projects sections.
 
 PORTAL: ${atsAnalysis.portalName}
+
+Project Readmes:
+${projectReadmes.resumeOptimizerReadme}
+${projectReadmes.cifar10Readme}
 
 ====================================================
 YOUR MISSION
 ====================================================
 
-Generate 8-20 strategic optimization points that:
-✅ Add missing JD skills NATURALLY to both Experience and Skills sections
+Generate 8-25 strategic optimization points that:
+✅ Add missing JD skills NATURALLY to Experience, Projects, and Skills sections
 ✅ Reorder bullets to highlight most relevant experience first
 ✅ Keep every change 100% interview-defensible
 ✅ Make resume look human-written, not AI-generated
 ✅ Target 85-92% ATS match (NOT 100% - that looks fake)
-✅ Make it need to be atleast 85% ATS match
-Note: don't add soft skills, domain keywords, industry terms in the skil section.
+✅ Make it need to be at least 85% ATS match
+Note: don't add soft skills, domain keywords, industry terms in the skills section.
+
 ====================================================
 SKILL ADDITION STRATEGY (CRITICAL)
 ====================================================
@@ -854,14 +911,16 @@ FOR EVERY MISSING SKILL IN JD:
    - DON'T use abbreviations: "ML/AI" → use "Machine Learning & AI"
    
    **Fitting Skills into Existing Categories (Minimize New Categories):**
-   - OAuth2, JWT, SAML → "Backend Frameworks" (not new "Security" category)
-   - Redis, Memcached → "Databases" (not new "Caching" category)
-   - Prometheus, Grafana → "Monitoring" or "DevOps" (not new "Observability" category)
-   - GraphQL → "Backend Frameworks" (not new "API" category)
-   - Tailwind, Sass → "Frontend Frameworks" (not new "CSS" category)
+   - OAuth2, JWT, SAML → "Backend" (not new "Security" category)
+   - Redis, Memcached → "Databases & Messaging" (not new "Caching" category)
+   - Prometheus, Grafana → "Testing, Monitoring & Security" (not new "Observability" category)
+   - GraphQL → "Backend" (not new "API" category)
+   - Tailwind, Sass → "Frontend" (not new "CSS" category)
 
-2. **Add to Experience Section** 
-   - Choose the company where it's MOST REALISTIC
+2. **Add to Experience OR Projects Section** 
+   - **PRIORITIZE PROJECTS** if the skill is better suited for project work (e.g., ML models, AI automation, full-stack side projects)
+   - Choose Experience if skill fits existing work responsibilities
+   - Choose the company/project where it's MOST REALISTIC
    - Add naturally to an existing bullet OR create new bullet
    - Make it sound like you actually used it
    - Use specific context (project name, metric, outcome)
@@ -872,19 +931,25 @@ SKILL ADDITION RULES:
 
 **Required Skills (JD says "required" or "must have"):**
 - MUST add to Skills section
-- MUST add to Experience (at most realistic company)
+- MUST add to Experience OR Projects (at most realistic location)
 - High priority - make it prominent
 
 **Nice-to-Have Skills (JD says "preferred" or "nice to have"):**
 - MUST add to Skills section
-- MUST add to Experience (at most realistic company)
+- MUST add to Experience OR Projects (at most realistic location)
 - Lower priority - can be subtle mention
 
-**Realistic Placement by Company:**
+**Realistic Placement by Section:**
+
+**Experience Section:**
 - LPL Financial (current): Cloud, modern frameworks, recent technologies
 - Athenahealth: Healthcare tech, FHIR, compliance, data security
 - YES Bank: Payments, banking, security, transaction processing
 - Comcast: Media, streaming, content delivery, scalability
+
+**Projects Section:**
+- Resume Optimizer AI: Full-stack development, AI/ML integration, Chrome extensions, Google APIs, Node.js, PostgreSQL, automation
+- CIFAR-10 ML Project: PyTorch, TensorFlow, deep learning, CNNs, data augmentation, model optimization
 
 EXAMPLES OF NATURAL SKILL ADDITION:
 
@@ -908,10 +973,66 @@ EXAMPLES OF NATURAL SKILL ADDITION:
 - Don't bold in Skills section (plain text only there)
 
 ====================================================
+PROJECTS SECTION OPTIMIZATION
+====================================================
+
+**Projects are a COMPETITIVE ADVANTAGE - use them strategically to maximize selection probability**
+
+The candidate has TWO powerful projects that demonstrate real skills:
+1. Resume Optimizer AI: Full-stack Chrome extension with AI integration, Node.js backend, PostgreSQL, Google APIs
+2. CIFAR-10 ML Project: Deep learning with PyTorch, CNNs, model optimization, training pipelines
+
+**Your Strategic Mission:**
+Analyze the JD requirements and intelligently leverage these projects to fill skill gaps, demonstrate capabilities, and maximize interview selection chances.
+
+**Strategic Thinking Framework:**
+
+1. **Identify JD Skill Gaps**: Which required/preferred skills are missing or weak in the work experience?
+
+2. **Evaluate Project Fit**: For each missing skill, ask:
+   - Could this skill realistically be demonstrated in Resume Optimizer AI? (Full-stack, AI APIs, databases, automation, Chrome dev)
+   - Could this skill realistically be demonstrated in CIFAR-10 project? (ML/AI, PyTorch, TensorFlow, data processing, model optimization)
+   - Would adding it to work experience be unrealistic or questionable?
+
+3. **Maximize Competitive Advantage**: 
+   - If a JD skill can be showcased through projects AND it strengthens the candidate's story → USE PROJECTS
+   - Projects prove you build real things outside of work (highly valued)
+   - Projects can demonstrate bleeding-edge skills not yet used at work
+
+4. **Maintain Authenticity**: 
+   - Only add skills that genuinely fit the project's scope
+   - Each project can have 3-5 bullets
+   - Bold JD-mentioned technologies in project bullets
+   - Include metrics and concrete outcomes
+
+**Strategic Examples:**
+
+If JD requires: "Experience with PyTorch, TensorFlow, deep learning"
+→ This is PERFECT for CIFAR-10 project - emphasize these in project bullets
+→ Adds massive credibility because you actually built this
+
+If JD requires: "Chrome extension development, REST APIs, PostgreSQL"
+→ This is PERFECT for Resume Optimizer AI - showcase these capabilities
+→ Demonstrates full-stack skills beyond typical job requirements
+
+If JD requires: "Microservices, Spring Boot, Kafka"
+→ Already strong in work experience, may not need project reinforcement
+→ But if JD heavily emphasizes these, can add to Resume Optimizer backend if realistic
+
+**Optimization Approach:**
+Think strategically about how to position this candidate as the BEST FIT for the role. Use projects to:
+- Fill skill gaps that work experience doesn't cover
+- Demonstrate initiative and continuous learning
+- Show hands-on experience with modern/emerging technologies
+- Prove ability to build complete solutions end-to-end
+
+The goal: Make the resume impossible to ignore by strategically showcasing ALL relevant skills across Experience AND Projects sections.
+
+====================================================
 BULLET REORDERING STRATEGY
 ====================================================
 
-**ALWAYS move most JD-relevant bullet to position #1 at each company**
+**ALWAYS move most JD-relevant bullet to position #1 at each company/project**
 
 Recruiters spend 6 seconds scanning - first 2 bullets matter most.
 
@@ -925,8 +1046,8 @@ HUMANIZATION RULES (NON-NEGOTIABLE)
 ====================================================
 
 1. **Vary Action Verbs**
-   - Use: Architected, Built, Developed, Engineered, Created, Designed, Led
-   - Don't use "Implemented" more than 2 times in entire resume
+   - Use: Architected, Built, Developed, Engineered, Created, Designed, Implemented
+   - Don't use "Implemented" more than 3 times in entire resume
    - Don't start consecutive bullets with same verb
 
 2. **Natural Metrics**
@@ -948,8 +1069,9 @@ HUMANIZATION RULES (NON-NEGOTIABLE)
 WHAT NOT TO CHANGE (ABSOLUTE RULES)
 ====================================================
 
-❌ Company names, dates, job titles
+❌ Company names, dates, job titles in Experience section
 ❌ Number of companies (keep all 4)
+❌ Project names or core technologies
 ❌ Certifications
 ❌ Education
 ❌ Contact information
@@ -962,15 +1084,16 @@ OPTIMIZATION POINT FORMAT
 POINT 1:
 Type: ADD_SKILL
 Skill: Apache Flink
-Where_Skills: Messaging & Streaming (existing category)
-Where_Experience: LPL Financial, Bullet 3
+Where_Skills: Databases & Messaging (existing category)
+Where_Experience_Or_Project: LPL Financial, Bullet 3
 Integration: "Extend existing Kafka bullet to mention **Flink** for stream processing with 500K events/sec throughput"
 Bold: YES (Flink is from JD)
 Priority: High
-Reasoning: JD lists Flink as required skill; fits existing "Messaging & Streaming" category; realistic since candidate has Kafka experience
+Reasoning: JD lists Flink as required skill; fits existing "Databases & Messaging" category; realistic since candidate has Kafka experience at LPL
 
 POINT 2:
 Type: REORDER_BULLETS
+Section: Experience
 Company: Athenahealth
 Current_Order: 1,2,3,4,5
 New_Order: 4,1,2,3,5
@@ -978,51 +1101,38 @@ Reasoning: JD emphasizes FHIR APIs - move FHIR bullet to position 1
 
 POINT 3:
 Type: ADD_SKILL
-Skill: TensorFlow
-Where_Skills: NEW CATEGORY "Machine Learning & AI" (insert after Testing category)
-Justification: JD mentions ML for fraud detection; doesn't fit existing categories; JD moderately emphasizes it
-Where_Experience: YES Bank, New Bullet
-Integration: "Add new bullet: 'Implemented ML-based fraud detection using **TensorFlow** identifying suspicious transactions with 92% accuracy, preventing $5M+ in potential losses'"
-Bold: YES (TensorFlow is from JD)
+Skill: TensorFlow, PyTorch
+Where_Skills: AI & Data (existing category)
+Where_Experience_Or_Project: Projects - CIFAR-10, Bullet 1
+Integration: "Update first bullet to emphasize both **PyTorch** (primary) and **TensorFlow** for model experimentation"
+Bold: YES (both are from JD)
 Priority: High
-Reasoning: JD requires ML experience; creating focused category shows specialization; realistic for banking fraud prevention
+Reasoning: JD requires deep learning frameworks; CIFAR-10 project is the PERFECT place to showcase this; more credible than adding to work experience
 
 POINT 4:
 Type: ADD_SKILL
-Skill: GraphQL
-Where_Skills: Backend Frameworks (existing category - DON'T create new "API" category)
-Where_Experience: LPL Financial, Modify Bullet 2
-Integration: "Update API bullet to mention both RESTful and **GraphQL** APIs"
-Bold: YES (GraphQL is from JD)
-Priority: Medium
-Reasoning: JD mentions GraphQL; fits naturally in Backend Frameworks; avoids unnecessary category expansion
+Skill: Chrome Extension Development
+Where_Skills: Frontend (existing category - add "Chrome Extensions")
+Where_Experience_Or_Project: Projects - Resume Optimizer AI, Bullet 1
+Integration: "Emphasize **Chrome Extension** development with Manifest V3 in first bullet"
+Bold: YES (Chrome extensions from JD)
+Priority: High
+Reasoning: JD mentions browser extension development; Resume Optimizer project demonstrates this perfectly
 
 POINT 5:
-Type: ADD_SKILL
-Skill: Terraform
-Where_Skills: Cloud & DevOps (existing category)
-Where_Experience: LPL Financial, Bullet 5
-Integration: "Update infrastructure bullet to include 'using **Terraform** for infrastructure as code deploying across 15+ AWS services'"
-Bold: YES (Terraform is from JD)
-Priority: Medium
-Reasoning: JD requires IaC experience; Terraform fits existing Cloud & DevOps category
-
-POINT 6:
-Type: ADD_SKILL
-Skill: PyTorch
-Where_Skills: Machine Learning & AI (use existing category created in Point 3)
-Where_Experience: YES Bank, Same bullet as TensorFlow
-Integration: "Extend ML bullet to mention '**TensorFlow** and **PyTorch** for model experimentation'"
-Bold: YES (PyTorch is from JD)
-Priority: Medium
-Reasoning: JD mentions PyTorch; fits into ML category already created; realistic to use both frameworks
+Type: REORDER_BULLETS
+Section: Projects
+Project: Resume Optimizer AI
+Current_Order: 1,2,3,4
+New_Order: 2,1,3,4
+Reasoning: JD heavily emphasizes PostgreSQL - move database bullet to position 1
 
 ====================================================
 POINT TYPES YOU CAN USE
 ====================================================
 
-1. **ADD_SKILL**: Add missing JD skill to both Skills and Experience
-2. **REORDER_BULLETS**: Change bullet order at a company
+1. **ADD_SKILL**: Add missing JD skill to Skills and (Experience OR Projects)
+2. **REORDER_BULLETS**: Change bullet order at a company or project
 3. **MODIFY_BULLET**: Update existing bullet to add skill/context
 4. **MERGE_BULLETS**: Combine two bullets (reduces count by 1)
 5. **ENHANCE_METRIC**: Make existing metric more specific/impressive
@@ -1032,8 +1142,9 @@ QUALITY CHECKLIST
 ====================================================
 
 Before returning, verify:
-□ Added ALL important JD skills to both Skills AND Experience
-□ Skills added to most realistic companies
+□ Added ALL important JD skills to Skills AND (Experience OR Projects)
+□ Skills added to most realistic sections (Experience vs Projects)
+□ Leveraged Projects section for AI/ML and full-stack skills
 □ Reordered bullets to put most relevant first
 □ Every change sounds natural and interview-safe
 □ No keyword stuffing or robotic patterns
@@ -1043,14 +1154,15 @@ Before returning, verify:
 OUTPUT RULES
 ====================================================
 
-Return 8-20 optimization points ONLY.
+Return 8-25 optimization points ONLY.
 NO preamble, explanations, or commentary.
 Start directly with "POINT 1:"
 
 Focus on HIGH-IMPACT changes:
-- Adding missing JD skills naturally
+- Adding missing JD skills naturally to best section (Experience OR Projects)
 - Reordering bullets for relevance
 - Subtle wording improvements
+- Strategic use of Projects section for competitive advantage
 
 Begin output:
 `;
@@ -1084,156 +1196,230 @@ Begin output:
 
 // Replace the rewritePrompt variable with this:
 
-const rewritePrompt = `You are a senior technical resume writer and hiring manager.
+// ====================================================
+// UPDATED REWRITE PROMPT (Replace lines 1085-1426)
+// ====================================================
 
-GOAL
-- Rewrite resume content strictly based on the Job Description
-- Keep resume HUMAN written and INTERVIEW SAFE
-- Preserve formatting via Google Docs template
-- Output STRICT JSON ONLY
-- Do NOT add explanations or commentary
+const rewritePrompt = `You are a senior technical resume writer. Your mission: Apply optimization points while keeping the resume HUMAN-WRITTEN and INTERVIEW-SAFE.
 
-==============================
-NON NEGOTIABLE RULES
-==============================
+====================================================
+SECTION 1: CRITICAL CONTEXT
+====================================================
 
-BULLET FORMAT (MANDATORY)
-- Every bullet MUST follow:
-  {Action Verb} + {Task or Project} + {Quantified Result or Improvement}
+**The Problem:**
+- Candidate applied to 360+ jobs with 90%+ ATS scores
+- Got ZERO interview responses
+- Issue: Resumes look AI-generated to human recruiters
 
-BULLET COUNT PER ROLE (STRICT)
-- Each ROLE MUST have between 8 and 10 bullets only
-- Minimum: 8 bullets
-- Maximum: 10 bullets
-- DO NOT exceed 10 bullets
-- DO NOT add filler or weak bullets just to reach 10
-- If only 8 or 9 strong bullets exist, stop at that count
-- If returning 8 or 9 bullets, return an array with only 8 or 9 items (do NOT include empty strings).
+**Your Solution:**
+- Apply optimization points precisely
+- Keep resume looking human-written
+- Target 85-92% ATS (NOT 100% - that looks fake)
+- Prioritize HUMAN TRUST over ATS scores
 
+====================================================
+SECTION 2: INPUTS
+====================================================
 
-METRICS RULES (STRICT)
-- Per ROLE:
-  - Minimum: 1 metric bullet
-  - Maximum: 2 metric bullets
-  - Absolute max: 3 metrics only if role scope genuinely requires it
-- Use round numbers only (30%, 2M+, 99.9%)
-- No metric stuffing
-- No fake precision
+RESUME TYPE: ${resumeType}
 
-SKILL EVIDENCE RULE (CRITICAL)
-- EVERY skill listed in TECHNICAL SKILLS MUST:
-  - Appear explicitly in EXPERIENCE bullets
-  - Be demonstrated as hands-on work
-  - Never be implied or vague
-- No skill is allowed to exist only in Skills section
+ORIGINAL RESUME:
+${originalResume}
 
-JD MANDATORY SKILLS (CRITICAL)
-- ALL mandatory / required JD skills MUST:
-  - Be added to Technical Skills
-  - Be clearly demonstrated in experience bullets
-  - Be used naturally, not keyword stuffed
+OPTIMIZATION POINTS TO APPLY:
+${optimizationPoints}
 
-SKILLS GOVERNANCE & PRUNING RULES (CRITICAL)
-- DO NOT remove skills aggressively.
-- ONLY remove a skill if it is:
-  - Completely irrelevant to the Job Description
-  - Clearly unused in any past role
-  - Unrelated to backend, frontend, cloud, data, DevOps, or AI work
+JOB DESCRIPTION:
+${jobDescription}
 
-- If a skill is:
-  - Strongly required by the JD → MUST be kept and demonstrated clearly
-  - Moderately relevant to the JD → KEEP and demonstrate lightly
-  - Lightly relevant or supportive → KEEP (do NOT delete)
-  - Not mentioned in JD but supports existing experience → KEEP
+PORTAL: ${atsAnalysis.portalName}
 
-- REMOVE a skill ONLY if ALL are true:
-  - Zero relevance to JD
-  - No hands-on evidence possible
-  - Would confuse recruiter about core profile
+====================================================
+SECTION 3: MANDATORY STRUCTURE (NON-NEGOTIABLE)
+====================================================
 
-PRIORITY ORDER:
-1. Mandatory JD skills (never remove)
-2. Skills demonstrated in experience bullets
-3. Skills supporting JD responsibilities
-4. Transferable or adjacent skills
-5. Remove only last-resort irrelevant skills
+Your output MUST follow this EXACT structure:
 
-IMPORTANT:
-- Resume must NOT look stripped or over-pruned
-- Resume should reflect a realistic, broad 5+ years engineering profile
-- Skill removal must improve clarity, not reduce perceived capability
+---RESUME START---
 
+Lokesh Para
+Full Stack Developer
 
-TECH STACK PER ROLE (MANDATORY)
-- Each ROLE MUST include a TECH STACK line
-- Format example:
-  Java, Spring Boot, Kafka, PostgreSQL, AWS ECS, Docker
+paralokesh5@gmail.com | 682-503-1723 | linkedin.com/in/lokeshpara99 | github.com/lokeshpara | lokeshpara.github.io/Portfolio
 
-VERB RULES (REALISM & HUMAN SIGNALS)
-- No two bullets in the same role should start with the same verb
-- "Implemented" should be used sparingly and not exceed 3 to 5 times across the entire resume
-- "Developed" should be used sparingly and not exceed 3 to 5 times across the entire resume
-- Prefer strong, natural verbs such as:
-  Built, Designed, Optimized, Automated, Integrated, Deployed
-- Use "Engineered" ONLY when the work involved:
-  - system-level design, OR
-  - scalability concerns, OR
-  - complex technical problem solving
-  Avoid using "Engineered" for simple or routine tasks
-- "Engineered" must not exceed 1 usage across the entire resume.
-- Use "Led" ONLY when real technical ownership or leadership existed
-  Do NOT imply people management
+PROFESSIONAL EXPERIENCE
 
+Java Full Stack Developer | LPL Financial, San Diego, California
+June 2025 - Present
+• [6-7 bullets depending on resume type]
 
-CAREER GROWTH & SENIORITY CONTROL (CRITICAL)
-- Resume MUST show realistic career progression from early-career to mid-level engineer
-- Early roles MUST focus on:
-  execution, implementation, bug fixes, feature development, learning systems
-- Mid roles MUST show:
-  module ownership, integrations, performance improvements, reliability work
-- Current role MAY show broader impact but MUST NOT appear:
-  principal-level, staff-level, or architect-level
+Java Full Stack Developer | Athenahealth, Boston, MA
+August 2024 - May 2025
+• [5-6 bullets depending on resume type]
 
-SENIORITY CAPS (NON-NEGOTIABLE)
-- DO NOT use phrases such as:
-  "enterprise-wide", "organization-wide", "company-wide strategy"
-- DO NOT portray ownership of entire platform architecture
-- DO NOT imply authority over multiple teams
-- Leadership MUST be technical ownership only, not people management
+Java Full Stack Developer | YES Bank, Mumbai, India
+November 2021 - July 2023
+• [5-6 bullets depending on resume type]
 
-VERB SENIORITY CONTROL
-- "Architected" max 1 time total across the entire resume (or zero if not truly applicable)
-- Prefer simpler verbs in early roles:
-  Built, Implemented, Supported, Fixed, Enhanced
-- More advanced verbs allowed ONLY in the most recent role
+Java Developer | Comcast Corporation, Chennai, India
+May 2020 - October 2021
+• [4-5 bullets depending on resume type]
 
-REALISM CHECK (MANDATORY)
-- Resume must feel appropriate for a strong 5+ years engineer
-- Resume must NOT read like 7–8+ years, Staff, or Principal level
-- Every bullet must be something the candidate could reasonably explain in interview
+TECHNICAL SKILLS
 
-AI / GENAI ENRICHMENT (CONDITIONAL AND SAFE)
-- AI / GenAI skills MAY be added ONLY IF:
-  - JD mentions AI, ML, LLMs, automation, analytics, or GenAI
-  - OR AI experience naturally strengthens the role
-- Allowed AI skills (use selectively):
-  OpenAI API, Azure OpenAI, AWS Bedrock, LangChain, LlamaIndex,
-  Embeddings, Vector Databases, RAG pipelines
-- AI skills MUST:
-  - Be demonstrated with hands-on bullets
-  - Support real systems (search, automation, data processing)
-  - Follow Action + Task + Impact
-- NEVER add AI skills without proof in bullets
+[Categories with comma-separated skills]
 
-LANGUAGE QUALITY
-- No buzzwords
-- No marketing language
-- No fluff
-- Write like a real engineer explaining real work
+CERTIFICATIONS
 
-==============================
-INPUTS
-==============================
+• Oracle Cloud Infrastructure 2025 Certified AI Foundations Associate
+• AWS Certified Solutions Architect – Associate
+
+EDUCATION
+
+Master of Science in Computer and Information Sciences
+Southern Arkansas University | Magnolia, Arkansas, USA
+
+---RESUME END---
+
+**STRICT RULES:**
+❌ Never change: Company names, dates, job titles, contact info
+❌ Never add: Summary section, Projects section
+❌ Never change: Section order
+❌ Never change: Certifications or Education text
+✅ Title must be "Full Stack Developer" (never change)
+
+====================================================
+SECTION 4: APPLYING OPTIMIZATION POINTS
+====================================================
+
+**Apply EXACTLY as specified in optimization points:**
+
+IF point type is "ADD_SKILL":
+→ Add skill to Skills section under specified category
+→ Add skill to Experience section at specified company/bullet
+→ Make integration sound natural and realistic
+
+IF point type is "REORDER_BULLETS":
+→ Rearrange bullets in exact order specified
+→ Keep all bullet content, just change position
+
+IF point type is "MODIFY_BULLET":
+→ Update the specified bullet with new content
+→ Keep core message, add specified skills/context
+
+IF point type is "MERGE_BULLETS":
+→ Combine two bullets into one coherent bullet
+→ Reduces total bullet count by 1
+
+IF point type is "ENHANCE_METRIC":
+→ Make existing metric more specific or impressive
+→ Keep it realistic (round numbers only)
+
+**DO NOT:**
+❌ Make changes not mentioned in optimization points
+❌ Add content optimization points didn't request
+❌ Remove bullets unless points say to merge
+❌ Change structure points didn't mention
+
+====================================================
+SECTION 5: HUMANIZATION RULES (CRITICAL)
+====================================================
+
+**1. NATURAL LANGUAGE VARIATION**
+
+Action Verb Rotation:
+- Use: Architected, Built, Developed, Engineered, Created, Designed, Led, Established, Deployed
+- "Implemented" → MAX 2 times total
+- "Architected" → MAX 2 times total  
+- Never start consecutive bullets with same verb
+
+❌ BAD (robotic):
+• Implemented microservices using Spring Boot
+• Implemented RESTful APIs with OAuth2
+• Implemented event-driven architecture
+• Implemented monitoring with Prometheus
+
+✅ GOOD (human, with JD skills bolded):
+• Architected microservices ecosystem using **Spring Boot** processing 2M+ daily transactions
+• Built RESTful APIs with **OAuth2** authentication integrating Bloomberg market data
+• Designed event-driven architecture using **Kafka** with sub-200ms latency
+• Established monitoring platform with **Prometheus** reducing incident resolution by 55%
+
+**2. REALISTIC METRICS (40-50% OF BULLETS)**
+
+Metrics Guidelines:
+- Only 40-50% of bullets should have metrics
+- Use round numbers: 40%, 2M+, 99.9% (not 43.7%, 2.3M)
+- Mix of bullets WITH and WITHOUT metrics
+
+Examples:
+
+✅ With metric: "Built microservices using **Spring Boot** processing 2M+ daily transactions with 99.9% uptime"
+✅ Without metric: "Engineered RESTful APIs with **OAuth2** authentication integrating market data feeds"
+✅ With metric: "Optimized database queries using **PostgreSQL** reducing load time from 4.2s to 1.5s"
+✅ Without metric: "Designed event-driven architecture using **Kafka** and **Redis** distributed caching"
+
+**3. CONVERSATIONAL TECH LANGUAGE**
+
+✅ Use real tech terms: Spring Boot, Kafka, React, PostgreSQL, Kubernetes
+❌ Avoid buzzwords: "cutting-edge", "revolutionary", "synergized", "leveraged"
+❌ Avoid corporate speak: "spearheaded", "championed"
+
+Write like an engineer explaining to another engineer.
+
+**4. NATURAL SENTENCE STRUCTURE**
+
+Vary bullet length and complexity:
+- Some short (1 line): "Built GraphQL APIs for mobile banking application"
+- Some long (2 lines): "Architected event-driven microservices ecosystem using Spring Boot and Apache Kafka with 10-node cluster processing 2M+ portfolio events daily implementing custom serializers and exactly-once delivery semantics"
+- Mix technical depth: some high-level, some detailed
+
+====================================================
+SECTION 6: SKILLS SECTION FORMAT
+====================================================
+
+Format EXACTLY like this (plain text):
+
+TECHNICAL SKILLS
+
+Category Name: skill1, skill2, skill3, skill4, skill5
+Category Name: skill1, skill2, skill3
+Category Name: skill1, skill2, skill3, skill4
+
+**Rules:**
+- Section header: "TECHNICAL SKILLS" (all caps, no colon)
+- Each category: "Category Name: " (with colon and space)
+- Skills: comma-separated with spaces
+- NO bold text in skills section
+- NO bullet points in skills section
+- NO tables or special formatting
+
+**Category Management:**
+- MINIMIZE categories: fit skills into existing categories whenever possible
+- ONLY create new category if skill truly doesn't fit anywhere
+- Category names: Descriptive for ATS + humans (e.g., "Machine Learning & AI:" not "ML/AI:")
+- Use "&" instead of "and": "Cloud & DevOps:", "Testing & Quality Assurance:"
+
+**Category Placement (when new category needed):**
+- If JD heavily emphasizes the new skill → Place HIGH (position 2-3)
+- If JD mentions as nice-to-have → Place LOW (near end)
+- Default: Place after logically related categories
+
+**Fitting Skills into Existing Categories (examples):**
+- OAuth2, JWT, SAML → Add to "Backend Frameworks" (don't create "Security")
+- Redis, Memcached → Add to "Databases" (don't create "Caching")
+- Prometheus, Grafana → Add to "Monitoring" or "Cloud & DevOps" (don't create "Observability")
+- GraphQL → Add to "Backend Frameworks" (don't create "API Technologies")
+- Tailwind, Sass → Add to "Frontend Frameworks" (don't create "CSS Frameworks")
+
+**When optimization points specify new category:**
+- Place category at position specified (e.g., "after Testing category")
+- Use exact category name from optimization points
+- Add skills comma-separated like existing categories
+
+====================================================
+SECTION 7: EXPERIENCE BULLET BEST PRACTICES
+====================================================
 
 RESUME TYPE:
 ${resumeType}
@@ -1250,121 +1436,113 @@ ${jobDescription}
 PORTAL:
 ${atsAnalysis.portalName}
 
-==============================
-OUTPUT FORMAT
-==============================
+====================================================
+SECTION 8: FORMATTING REQUIREMENTS
+====================================================
 
-Return ONLY valid JSON.
-NO markdown.
-NO backticks.
-NO text before or after JSON.
+**Bullets:**
+✅ Use "• " (bullet symbol + space) for ALL bullets
+❌ Don't use "-", "*", or numbers
 
-==============================
-JSON SCHEMA
-==============================
+**Text Formatting:**
+✅ Bold: Section headers (PROFESSIONAL EXPERIENCE, TECHNICAL SKILLS)
+✅ Bold: Company names and job titles
+✅ Bold: JD-mentioned skills in Experience bullets ONLY
+❌ Don't bold: Skills in Skills section (plain text only)
+❌ Don't bold: Common words like "using", "with", "implementing"
+❌ Don't use italics or underlines
 
-{
-  "SUMMARY": "5 to 6 lines max. Technical, concise, JD aligned.",
+**Bold Formatting Examples for Experience Bullets:**
+✅ "Built event-driven microservices using **Spring Boot** and **Apache Kafka**"
+✅ "Migrated application to **React 18** with **TypeScript**"
+✅ "Implemented **Redis** distributed caching for sub-200ms response times"
+❌ "Built event-driven microservices using **Spring Boot and Apache Kafka**" (don't bold entire phrase)
+❌ "**Implemented** Redis distributed caching" (don't bold action verbs)
 
-  "SKILL_1": "comma separated skills",
-  "SKILL_2": "comma separated skills",
-  "SKILL_3": "comma separated skills",
-  "SKILL_4": "comma separated skills",
-  "SKILL_5": "comma separated skills",
-  "SKILL_6": "comma separated skills",
-  "SKILL_7": "comma separated skills",
-  "SKILL_8": "comma separated skills",
-  "SKILL_9": "comma separated skills",
-  "SKILL_10": "comma separated skills",
-  "SKILL_11": "comma separated skills",
-  "SKILL_12": "comma separated skills",
+**Spacing:**
+✅ One blank line between sections
+✅ One blank line between companies
+✅ No blank lines between bullets at same company
 
-  "CERT_1": "string",
-  "CERT_2": "string",
-  "CERT_3": "string",
-  "CERT_4": "string",
-  "CERT_5": "string or empty",
+**Output Format:**
+✅ Plain text output
+❌ No markdown formatting
+❌ No HTML tags
+❌ No special characters for formatting
 
-  "TRUIST_TECH_STACK": "comma separated tech stack",
-  "TRUIST_B": ["8 to 10 bullet strings, no empty strings"],
+====================================================
+SECTION 9: QUALITY CHECKLIST
+====================================================
 
-  "ACC_TECH_STACK": "comma separated tech stack",
-  "ACC_B": ["8 to 10 bullet strings, no empty strings"],
+Before returning the resume, verify:
 
-  "HCL_TECH_STACK": "comma separated tech stack",
-  "HCL_B": ["8 to 10 bullet strings, no empty strings"],  
+**Structure:**
+□ Sections in order: Experience → Skills → Certifications → Education
+□ NO Summary or Projects sections
+□ Header has "Lokesh Para" and "Full Stack Developer"
+□ All 4 companies present with exact names/dates
 
-  "PAY_B": ["b1","b2","b3"],
-  "CLIN_B": ["b1","b2","b3"],
-  "RAG_B": ["b1","b2","b3"],
-  "SEARCH_B": ["b1","b2","b3"],
+**Bullets:**
+□ LPL Financial: 6-7 bullets (depending on ${resumeType})
+□ Athenahealth: 5-6 bullets
+□ YES Bank: 5-6 bullets
+□ Comcast: 4-5 bullets
 
-  "EDU_1": "Southern Arkansas University",
-  "EDU_2": "Master’s Degree, Computer and Information Science"
-}
+**Humanization:**
+□ No consecutive bullets start with same verb
+□ "Implemented" used MAX 2 times total
+□ "Architected" used MAX 2 times total
+□ 40-50% of bullets have metrics (not all)
+□ Metrics use round numbers (no decimals)
+□ Natural language variation
+□ NO buzzwords ("cutting-edge", "revolutionary")
 
-==============================
-FINAL VALIDATION
-==============================
+**Optimization:**
+□ All optimization points applied
+□ Skills added to both Skills AND Experience sections
+□ Bullets reordered as specified
+□ No changes beyond what points requested
 
-- Each role has 8 to 10 bullets
-- Each role has 1 to 2 metric bullets (max 3 only if required)
-- Every skill in Skills is proven in bullets
-- Every JD mandatory skill is proven in bullets
-- AI skills appear only if justified and proven
-- Career growth feels appropriate for a 5+ years engineer
-- Resume does NOT read like 7–8+ years or Staff level
-- Output is strict JSON only
+**Formatting:**
+□ All bullets use "• " symbol
+□ JD-mentioned skills are bolded in Experience bullets
+□ Skills section has NO bold (plain text only)
+□ No bold on common words ("using", "with", "implementing")
+□ Only section headers and company names bolded (besides JD skills)
+□ Plain text output
+□ Proper spacing
+
+**Interview Safety:**
+□ Every bullet is defendable in interview
+□ No exaggerated claims
+□ No unknown technologies mentioned
+□ Resume looks human-written
+
+====================================================
+SECTION 10: OUTPUT INSTRUCTIONS
+====================================================
+
+Return ONLY the complete rewritten resume.
+
+NO preamble like "Here is the resume"
+NO explanations or commentary
+NO markdown formatting
+NO extra text before or after
+
+Start directly with "Lokesh Para"
+End with education section
+
+Resume should be ready to copy-paste into Google Doc.
+
+Begin output now:
 `;
+
+
+
     const rewriteKey = aiProvider === 'gemini' ? geminiKey3 : (chatgptKey3 || chatgptApiKey);
     const optimizedResume = await generateAIContent(rewritePrompt, aiProvider, rewriteKey);
-    let resumeJson;
-try {
-  const raw = (optimizedResume || '').trim();
-
-  // hard guard: must be JSON only
-  if (!raw.startsWith('{') || !raw.endsWith('}')) {
-    throw new Error('AI did not return strict JSON only');
-  }
-
-  resumeJson = JSON.parse(raw);
-} catch (e) {
-  console.log('❌ Rewrite JSON parse failed. Preview:', (optimizedResume || '').slice(0, 400));
-  throw new Error(`Rewrite JSON parse failed: ${e.message}`);
-}
-
-
-function validateBullets(arr, label) 
-{
-  if (!Array.isArray(arr)) {
-    throw new Error(`${label} must be an array`)
-  }
-
-  const clean = arr
-    .map(x => (typeof x === 'string' ? x.trim() : ''))
-    .filter(x => x.length > 0)
-
-  if (clean.length < 8) {
-    throw new Error(`${label} must have 8 to 10 bullets, got ${clean.length}`)
-  }
-
-  if (clean.length > 10) {
-    console.log(`⚠️ ${label} returned ${clean.length} bullets, trimming to 10`)
-    return clean.slice(0, 10)
-  }
-
-  return clean
-}
-
-
-
-
-const truistBullets = validateBullets(resumeJson.TRUIST_B, 'TRUIST_B');
-const accBullets = validateBullets(resumeJson.ACC_B, 'ACC_B');
-const hclBullets = validateBullets(resumeJson.HCL_B, 'HCL_B');
-
-    console.log(`✅ Resume rewritten (${optimizedResume.length} chars)`)
-    console.log(`Rewrite resume ======> ${optimizedResume}`)
+    console.log(`✅ Resume rewritten (${optimizedResume.length} chars)`);
+    console.log(`Rewrite resume ======> ${optimizedResume}`);
 
     // Step 6: Pick filename
     console.log('📄 Step 6: Preparing template resume doc...')
@@ -1739,18 +1917,23 @@ function convertToStyledHTML(text) {
     margin-bottom: 4pt;
   }
 
-  p {
-    margin: 2pt 0;
-    text-align: left;
-  }
-
-  .company-line {
-    font-size: 10pt;
+  
+  
+  /* Company Header - Bold */
+  .company-header {
+    font-size: 11pt;
     font-weight: bold;
     margin-top: 8pt;
     margin-bottom: 2pt;
   }
-
+  
+  /* Job Date - Italic */
+  .job-date {
+    font-size: 11pt;
+    margin-bottom: 4pt;
+  }
+  
+  /* Bullet List - For experience only */
   ul {
     margin: 0 0 2pt 0.25in;
     padding: 0;
@@ -1795,32 +1978,56 @@ function convertToStyledHTML(text) {
   let inExperience = false;
   let inProjects = false;
   let inEducation = false;
-
-  let bullets = [];
+  let currentBulletList = [];
 
   function flushBullets() {
-    if (!bullets.length) return;
-    html += `<ul>`;
-    for (const b of bullets) html += `<li>${processBoldText(b)}</li>`;
-    html += `</ul>`;
-    bullets = [];
+    if (currentBulletList.length > 0) {
+      html += '<ul>\n';
+      for (const bullet of currentBulletList) {
+        // Process bold text in bullets
+        const processedBullet = processBoldText(bullet);
+        html += `<li>${processedBullet}</li>\n`;
+      }
+      html += '</ul>\n';
+      currentBulletList = [];
+    }
   }
 
-  while (i < lines.length) {
-    const line = lines[i];
+  // Helper: Convert contact links
+  function convertContactLinks(text) {
+    text = text.replace(
+      /linkedin\.com\/in\/lokeshpara99/gi,
+      '<a href="https://linkedin.com/in/lokeshpara99">LinkedIn</a>'
+    );
+    
+    text = text.replace(
+      /github\.com\/lokeshpara/gi,
+      '<a href="https://github.com/lokeshpara">GitHub</a>'
+    );
+    
+    text = text.replace(
+      /lokeshpara\.github\.io\/Portfolio/gi,
+      '<a href="https://lokeshpara.github.io/Portfolio">Portfolio</a>'
+    );
+    
+    return text;
+  }
 
-    // Section headers
-    if (isSectionHeader(line) && !line.startsWith('•')) {
+  for (let i = 0; i < lines.length; i++) {
+    let line = lines[i].trim();
+    if (!line) continue;
+
+    // NAME
+    if (i === 0 || (i < 3 && line.toUpperCase().includes('LOKESH'))) {
       flushBullets();
-      html += `<div class="section-header">${line.toUpperCase()}</div>`;
+      html += `<div class="name">${line}</div>\n`;
+      continue;
+    }
 
-      const u = line.toUpperCase();
-      inSkills = u === 'TECHNICAL SKILLS';
-      inCerts = u === 'CERTIFICATIONS & AWARDS';
-      inExperience = u === 'PROFESSIONAL EXPERIENCE';
-      inProjects = u === 'KEY PROJECTS';
-      inEducation = u === 'EDUCATION';
-      i += 1;
+    // TITLE
+    if (i <= 3 && (line.includes('Full Stack') || line.includes('Developer')) && !line.includes('|')) {
+      flushBullets();
+      html += `<div class="title">${line}</div>\n`;
       continue;
     }
 
@@ -1833,59 +2040,128 @@ function convertToStyledHTML(text) {
       continue;
     }
 
-    // Project title lines inside KEY PROJECTS (not bullets)
-    if (inProjects && !line.startsWith('•') && !isSectionHeader(line) && !line.includes(':')) {
-      // Treat short lines as project titles
-      if (line.length <= 80) {
+    // SECTION HEADERS
+    if (line === line.toUpperCase() && line.length > 3 && !line.startsWith('•')) {
+      if (line.includes('PROFESSIONAL EXPERIENCE') ||
+          line.includes('TECHNICAL SKILLS') ||
+          line.includes('EDUCATION') ||
+          line.includes('CERTIFICATIONS')) {
+        
         flushBullets();
-        html += `<div class="project-title">${processBoldText(line)}</div>`;
-        i += 1;
+        html += `<div class="section-header">${line}</div>\n`;
+        
+        inSkills = line.includes('SKILL');
+        inCertifications = line.includes('CERTIFICATION');
+        inEducation = line.includes('EDUCATION');
         continue;
       }
     }
 
-    // Bullets in Experience and Projects
-    if ((inExperience || inProjects) && (line.startsWith('•') || line.startsWith('-') || line.startsWith('*'))) {
-      const bulletText = line.replace(/^[•*-]\s*/, '').trim();
-      if (bulletText) bullets.push(bulletText);
-      i += 1;
+    // PROJECT HEADER (detect project names)
+    if (inProjects && 
+        !inSkills && 
+        !inEducation && 
+        !inCertifications &&
+        !line.startsWith('•') &&
+        !line.startsWith('GitHub:') &&
+        !line.startsWith('Technologies:') &&
+        (line.includes('Resume Optimizer') || 
+         line.includes('CIFAR-10') || 
+         line.includes('CIFAR10') ||
+         line.includes('Chrome Extension') ||
+         line.includes('Image Classification'))) {
+      flushBullets();
+      const projectWithLink = convertProjectNameToLink(line);
+      html += `<div class="project-header">${projectWithLink}</div>\n`;
       continue;
     }
 
-    // Skills lines
-    if (inSkills) {
+    // PROJECT SUBHEADER (GitHub: or Technologies: line)
+    if (inProjects && 
+        !inSkills && 
+        !inEducation && 
+        !inCertifications &&
+        !line.startsWith('•') &&
+        (line.startsWith('GitHub:') || line.startsWith('Technologies:'))) {
+      flushBullets();
+      const projectLinksConverted = convertProjectLinks(line);
+      html += `<div class="project-subheader">${projectLinksConverted}</div>\n`;
+      continue;
+    }
+
+    // COMPANY HEADER
+    if (line.includes('|') && 
+        !line.startsWith('•') && 
+        !line.includes('@') && 
+        !inSkills &&
+        !inEducation &&
+        !inCertifications &&
+        (line.includes('Developer') || line.includes('Engineer') || 
+         line.includes('LPL') || line.includes('Athenahealth') || 
+         line.includes('YES Bank') || line.includes('Comcast'))) {
+      flushBullets();
+      html += `<div class="company-header">${line}</div>\n`;
+      continue;
+    }
+
+    // JOB DATE
+    if ((line.includes('Present') || 
+         line.match(/^(January|February|March|April|May|June|July|August|September|October|November|December)/i) ||
+         line.match(/^\w+\s+\d{4}\s*[-–]\s*/)) && 
+        !line.startsWith('•') &&
+        !inSkills &&
+        !inEducation &&
+        !inCertifications) {
       flushBullets();
       html += `<p class="skills-line">${processBoldText(line)}</p>`;
       i += 1;
       continue;
     }
 
-    // Certifications lines
-    if (inCerts) {
+    // SKILLS SECTION - NO BOLD (plain text only)
+    if (inSkills && !inCertifications && !inEducation) {
       flushBullets();
       html += `<p class="cert-line">${processBoldText(line.replace(/^[•*-]\s*/, ''))}</p>`;
       i += 1;
       continue;
     }
 
-    // Education lines
-    if (inEducation) {
+    // CERTIFICATIONS SECTION - NO BULLETS, PLAIN TEXT
+    if (inCertifications && !inEducation) {
       flushBullets();
       html += `<p>${processBoldText(line)}</p>`;
       i += 1;
       continue;
     }
 
-    // Default paragraph
-    flushBullets();
-    html += `<p>${processBoldText(line)}</p>`;
-    i += 1;
-  }
+    // EDUCATION SECTION
+    if (inEducation && !inCertifications) {
+      flushBullets();
+      if (line.includes('Master of Science') || line.includes('GPA:')) {
+        html += `<p class="edu-degree">${line}</p>\n`;
+        continue;
+      }
+      if (line.includes('University') || line.includes('Southern Arkansas')) {
+        html += `<p class="edu-school">${line}</p>\n`;
+        continue;
+      }
+    }
 
-  flushBullets();
-  html += `</body></html>`;
-  return html;
-}
+    // BULLETS (Experience section only - NOT certifications)
+    if (line.startsWith('•') || line.startsWith('-') || line.startsWith('*')) {
+      // Only add to bullet list if NOT in certifications
+      if (!inCertifications) {
+        const bulletContent = line.replace(/^[•*-]\s*/, '');
+        currentBulletList.push(bulletContent);
+        continue;
+      }
+    }
+
+    // Any other line
+    flushBullets();
+    const processedLine = processBoldText(line);
+    html += `<p>${processedLine}</p>\n`;
+  }
 
 
 // ============================================================================
