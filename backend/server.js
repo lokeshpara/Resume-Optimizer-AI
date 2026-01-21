@@ -71,6 +71,8 @@ const gmail = google.gmail({ version: 'v1', auth: gmailOAuth2Client });
 // const ORIGINAL_RESUME_DOC_ID = process.env.ORIGINAL_RESUME_DOC_ID;
 const DRIVE_FOLDER_ID = process.env.DRIVE_FOLDER_ID;
 const TRACKING_SHEET_ID = process.env.TRACKING_SHEET_ID;
+const SAI_RESUME_TEMPLATE_ID = process.env.SAI_RESUME_TEMPLATE_ID;
+
 
 // ADD THESE 4 NEW LINES:
 
@@ -1183,7 +1185,7 @@ Begin output:
     if (!suggestedFileName && companyName !== 'N/A' && position !== 'N/A') {
       const posClean = position.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, '_');
       const compClean = companyName.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, '_');
-      suggestedFileName = `Lokesh_Para_${posClean}_${compClean}`;
+      suggestedFileName = `Sai Kiran ${posClean} ${compClean}`;
       console.log(`📝 Generated filename from extracted data: ${suggestedFileName}`);
     }
 
@@ -1214,7 +1216,6 @@ SECTION 1: CRITICAL CONTEXT
 - Keep resume looking human-written
 - Target 85-92% ATS (NOT 100% - that looks fake)
 - Prioritize HUMAN TRUST over ATS scores
-- Use Projects section strategically for competitive advantage
 
 ====================================================
 SECTION 2: INPUTS
@@ -1233,10 +1234,6 @@ ${jobDescription}
 
 PORTAL: ${atsAnalysis.portalName}
 
-Project Readmes:
-${projectReadmes.resumeOptimizerReadme}
-${projectReadmes.cifar10Readme}
-
 ====================================================
 SECTION 3: MANDATORY STRUCTURE (NON-NEGOTIABLE)
 ====================================================
@@ -1246,7 +1243,7 @@ Your output MUST follow this EXACT structure:
 ---RESUME START---
 
 Lokesh Para
-Software Engineer
+Full Stack Developer
 
 paralokesh5@gmail.com | 682-503-1723 | linkedin.com/in/lokeshpara99 | github.com/lokeshpara | lokeshpara.github.io/Portfolio
 
@@ -1268,14 +1265,6 @@ Java Developer | Comcast Corporation, Chennai, India
 May 2020 - October 2021
 • [4-5 bullets depending on resume type]
 
-PROJECTS
-
-Resume Optimizer AI - Chrome Extension with AI & Google Workspace Integration
-• [3-5 bullets - apply optimizations here if specified]
-
-CIFAR-10 Image Classification with Custom ResNet Architecture
-• [3-5 bullets - apply optimizations here if specified]
-
 TECHNICAL SKILLS
 
 [Categories with comma-separated skills]
@@ -1294,11 +1283,10 @@ Southern Arkansas University | Magnolia, Arkansas, USA
 
 **STRICT RULES:**
 ❌ Never change: Company names, dates, job titles, contact info
-❌ Never add: Summary section
-❌ Never change: Section order (Experience → Projects → Skills → Certifications → Education)
+❌ Never add: Summary section, Projects section
+❌ Never change: Section order
 ❌ Never change: Certifications or Education text
-❌ Never change: Project names or core project technologies
-✅ Title must be "Software Engineer" (never change)
+✅ Title must be "Full Stack Developer" (never change)
 
 ====================================================
 SECTION 4: APPLYING OPTIMIZATION POINTS
@@ -1308,19 +1296,16 @@ SECTION 4: APPLYING OPTIMIZATION POINTS
 
 IF point type is "ADD_SKILL":
 → Add skill to Skills section under specified category
-→ Add skill to Experience OR Projects section at specified location
+→ Add skill to Experience section at specified company/bullet
 → Make integration sound natural and realistic
-→ Use Projects section when specified (especially for AI/ML skills)
 
 IF point type is "REORDER_BULLETS":
 → Rearrange bullets in exact order specified
-→ Works for both Experience AND Projects sections
 → Keep all bullet content, just change position
 
 IF point type is "MODIFY_BULLET":
 → Update the specified bullet with new content
 → Keep core message, add specified skills/context
-→ Works for both Experience AND Projects bullets
 
 IF point type is "MERGE_BULLETS":
 → Combine two bullets into one coherent bullet
@@ -1343,8 +1328,8 @@ SECTION 5: HUMANIZATION RULES (CRITICAL)
 **1. NATURAL LANGUAGE VARIATION**
 
 Action Verb Rotation:
-- Use: Architected, Built, Developed, Engineered, Created, Designed, Implemented, Established, Deployed
-- "Implemented" → MAX 3 times total
+- Use: Architected, Built, Developed, Engineered, Created, Designed, Led, Established, Deployed
+- "Implemented" → MAX 2 times total
 - "Architected" → MAX 2 times total  
 - Never start consecutive bullets with same verb
 
@@ -1390,37 +1375,7 @@ Vary bullet length and complexity:
 - Mix technical depth: some high-level, some detailed
 
 ====================================================
-SECTION 6: PROJECTS SECTION FORMAT
-====================================================
-
-**Format EXACTLY like this:**
-
-PROJECTS
-
-[Project Name] - [Brief Description]
-• [3-5 bullets per project]
-• [Focus on technical implementation and results]
-• [Bold JD-mentioned skills in bullets]
-
-**Project Bullet Best Practices:**
-- Start with strong action verbs (Built, Developed, Implemented, Designed)
-- Include specific technologies used
-- Mention concrete results (accuracy %, performance metrics, features)
-- Bold skills that appear in the JD
-- Keep bullets concise but impactful
-
-**Examples:**
-
-Resume Optimizer AI - Chrome Extension with AI & Google Workspace Integration
-• Developed full-stack Chrome extension with **Node.js** backend integrating **Google Gemini 2.0** and **ChatGPT GPT-4** APIs for AI-powered resume optimization achieving 85-92% ATS match rates
-• Built comprehensive application tracking system using **PostgreSQL** database with full-text search and automated **Google Drive** integration handling 360+ applications
-
-CIFAR-10 Image Classification with Custom ResNet Architecture
-• Designed custom ResNet-inspired CNN architecture using **PyTorch** achieving 92.22% test accuracy with minimal overfitting and 100% accuracy on 8 out of 10 classes
-• Implemented One Cycle Policy learning rate scheduling with **PyTorch** optimizer enabling super-convergence and 40% faster training
-
-====================================================
-SECTION 7: SKILLS SECTION FORMAT
+SECTION 6: SKILLS SECTION FORMAT
 ====================================================
 
 Format EXACTLY like this (plain text):
@@ -1451,11 +1406,11 @@ Category Name: skill1, skill2, skill3, skill4
 - Default: Place after logically related categories
 
 **Fitting Skills into Existing Categories (examples):**
-- OAuth2, JWT, SAML → Add to "Backend" (don't create "Security")
-- Redis, Memcached → Add to "Databases & Messaging" (don't create "Caching")
-- Prometheus, Grafana → Add to "Testing, Monitoring & Security" (don't create "Observability")
-- GraphQL → Add to "Backend" (don't create "API Technologies")
-- Tailwind, Sass → Add to "Frontend" (don't create "CSS Frameworks")
+- OAuth2, JWT, SAML → Add to "Backend Frameworks" (don't create "Security")
+- Redis, Memcached → Add to "Databases" (don't create "Caching")
+- Prometheus, Grafana → Add to "Monitoring" or "Cloud & DevOps" (don't create "Observability")
+- GraphQL → Add to "Backend Frameworks" (don't create "API Technologies")
+- Tailwind, Sass → Add to "Frontend Frameworks" (don't create "CSS Frameworks")
 
 **When optimization points specify new category:**
 - Place category at position specified (e.g., "after Testing category")
@@ -1463,60 +1418,51 @@ Category Name: skill1, skill2, skill3, skill4
 - Add skills comma-separated like existing categories
 
 ====================================================
-SECTION 8: EXPERIENCE BULLET BEST PRACTICES
+SECTION 7: EXPERIENCE BULLET BEST PRACTICES
 ====================================================
 
-**Bullet Structure Formula:**
-[Action Verb] + [What you built] + [Technologies used] + [Impact/Scale - optional]
+RESUME TYPE:
+${resumeType}
 
-**Technology Mentions:**
-✅ Specific versions when relevant: React 18, Spring Boot 3.x, Java 17
-✅ Specific tools naturally: Redis, Kafka, PostgreSQL, Kubernetes
-❌ Don't list every technology in every bullet
-❌ Don't repeat same tech stack constantly
+ORIGINAL RESUME:
+${originalResume}
 
-**When to Include Metrics:**
-✅ Performance improvements: "reducing load time from 4.2s to 1.5s"
-✅ Scale: "handling 2M+ daily transactions", "serving 29K advisors"
-✅ Business impact: "saving $800K annually"
-✅ Efficiency: "reducing deployment time by 87%"
-✅ Quality: "achieving 99.9% uptime", "85% test coverage"
+OPTIMIZATION POINTS:
+${optimizationPoints}
 
-**When NOT to Include Metrics:**
-✅ Describing architecture: "Built RESTful APIs with OAuth2"
-✅ Listing responsibilities: "Integrated Bloomberg market data feeds"
-✅ Technical implementation: "Implemented Redis distributed caching"
+JOB DESCRIPTION:
+${jobDescription}
+
+PORTAL:
+${atsAnalysis.portalName}
 
 ====================================================
-SECTION 9: FORMATTING REQUIREMENTS
+SECTION 8: FORMATTING REQUIREMENTS
 ====================================================
 
 **Bullets:**
-✅ Use "• " (bullet symbol + space) for ALL bullets in Experience AND Projects
+✅ Use "• " (bullet symbol + space) for ALL bullets
 ❌ Don't use "-", "*", or numbers
 
 **Text Formatting:**
-✅ Bold: Section headers (PROFESSIONAL EXPERIENCE, PROJECTS, TECHNICAL SKILLS)
+✅ Bold: Section headers (PROFESSIONAL EXPERIENCE, TECHNICAL SKILLS)
 ✅ Bold: Company names and job titles
-✅ Bold: Project names (before the dash)
-✅ Bold: JD-mentioned skills in Experience AND Projects bullets ONLY
+✅ Bold: JD-mentioned skills in Experience bullets ONLY
 ❌ Don't bold: Skills in Skills section (plain text only)
 ❌ Don't bold: Common words like "using", "with", "implementing"
-❌ Don't bold: Project descriptions or GitHub links
 ❌ Don't use italics or underlines
 
-**Bold Formatting Examples for Bullets:**
+**Bold Formatting Examples for Experience Bullets:**
 ✅ "Built event-driven microservices using **Spring Boot** and **Apache Kafka**"
-✅ "Implemented custom ResNet using **PyTorch** achieving 92% accuracy"
-✅ "Developed Chrome extension with **Node.js** backend and **PostgreSQL** database"
+✅ "Migrated application to **React 18** with **TypeScript**"
+✅ "Implemented **Redis** distributed caching for sub-200ms response times"
 ❌ "Built event-driven microservices using **Spring Boot and Apache Kafka**" (don't bold entire phrase)
 ❌ "**Implemented** Redis distributed caching" (don't bold action verbs)
 
 **Spacing:**
 ✅ One blank line between sections
 ✅ One blank line between companies
-✅ One blank line between projects
-✅ No blank lines between bullets at same company/project
+✅ No blank lines between bullets at same company
 
 **Output Format:**
 ✅ Plain text output
@@ -1525,28 +1471,26 @@ SECTION 9: FORMATTING REQUIREMENTS
 ❌ No special characters for formatting
 
 ====================================================
-SECTION 10: QUALITY CHECKLIST
+SECTION 9: QUALITY CHECKLIST
 ====================================================
 
 Before returning the resume, verify:
 
 **Structure:**
-□ Sections in order: Experience → Projects → Skills → Certifications → Education
-□ Header has "Lokesh Para" and "Software Engineer"
+□ Sections in order: Experience → Skills → Certifications → Education
+□ NO Summary or Projects sections
+□ Header has "Lokesh Para" and "Full Stack Developer"
 □ All 4 companies present with exact names/dates
-□ Both projects present with names and descriptions
 
 **Bullets:**
 □ LPL Financial: 6-7 bullets (depending on ${resumeType})
 □ Athenahealth: 5-6 bullets
 □ YES Bank: 5-6 bullets
 □ Comcast: 4-5 bullets
-□ Resume Optimizer AI: 3-5 bullets
-□ CIFAR-10 Project: 3-5 bullets
 
 **Humanization:**
 □ No consecutive bullets start with same verb
-□ "Implemented" used MAX 3 times total
+□ "Implemented" used MAX 2 times total
 □ "Architected" used MAX 2 times total
 □ 40-50% of bullets have metrics (not all)
 □ Metrics use round numbers (no decimals)
@@ -1555,18 +1499,16 @@ Before returning the resume, verify:
 
 **Optimization:**
 □ All optimization points applied
-□ Skills added to Skills AND (Experience OR Projects) sections as specified
-□ Projects section used strategically for AI/ML and full-stack skills
+□ Skills added to both Skills AND Experience sections
 □ Bullets reordered as specified
 □ No changes beyond what points requested
 
 **Formatting:**
-□ All bullets use "• " symbol in Experience AND Projects
-□ JD-mentioned skills are bolded in Experience AND Projects bullets
+□ All bullets use "• " symbol
+□ JD-mentioned skills are bolded in Experience bullets
 □ Skills section has NO bold (plain text only)
 □ No bold on common words ("using", "with", "implementing")
-□ Project names bolded before the dash
-□ Only section headers, company names, project names, and JD skills bolded
+□ Only section headers and company names bolded (besides JD skills)
 □ Plain text output
 □ Proper spacing
 
@@ -1577,7 +1519,7 @@ Before returning the resume, verify:
 □ Resume looks human-written
 
 ====================================================
-SECTION 11: OUTPUT INSTRUCTIONS
+SECTION 10: OUTPUT INSTRUCTIONS
 ====================================================
 
 Return ONLY the complete rewritten resume.
@@ -1602,58 +1544,122 @@ Begin output now:
     console.log(`✅ Resume rewritten (${optimizedResume.length} chars)`);
     console.log(`Rewrite resume ======> ${optimizedResume}`);
 
-    // Step 6: Convert to HTML
-    console.log('🎨 Step 6: Converting to HTML...');
-    const styledHtml = convertToStyledHTML(optimizedResume);
-
-    // Step 7: Upload to Google Drive
-    console.log('☁️ Step 7: Uploading to Google Drive...');
-
-    let fileName = suggestedFileName;
+    // Step 6: Pick filename
+    console.log('📄 Step 6: Preparing template resume doc...')
+    let fileName = suggestedFileName
     if (!fileName) {
-      const timestamp = new Date().toISOString().replace(/[-:]/g, '').split('.')[0];
-      fileName = `Lokesh_Para_Optimized_${timestamp}`;
+      const timestamp = new Date().toISOString().replace(/[-:]/g, '').split('.')[0]
+      fileName = `SaiKiranP_Optimized_${timestamp}`
     }
-    console.log(`📄 Filename: ${fileName}`);
+    console.log(`📄 Filename: ${fileName}`)
 
-    const file = await drive.files.create({
-      requestBody: {
-        name: fileName,
-        parents: [DRIVE_FOLDER_ID],
-        mimeType: 'application/vnd.google-apps.document'
-      },
-      media: {
-        mimeType: 'text/html',
-        body: styledHtml
-      },
-      fields: 'id'
-    });
+    // Step 7: Copy Google Docs template into your Drive folder
+    console.log('📄 Step 7: Copying resume template...')
+    const documentId = await copyTemplateDoc({
+      drive,
+      templateId: SAI_RESUME_TEMPLATE_ID,
+      folderId: DRIVE_FOLDER_ID,
+      fileName
+    })
+    
+    const meta = await drive.files.get
+    ({
+      fileId: documentId,
+      fields: 'id, name, mimeType'
+    })
 
-    const fileId = file.data.id;
-    const resumeLink = `https://docs.google.com/document/d/${fileId}/edit`;
-    console.log('✅ Document created! ID:', fileId);
+    console.log('📄 Copied file mimeType:', meta.data.mimeType)
 
-    // Apply page formatting
-    await setDocumentFormatting(fileId);
+    if (meta.data.mimeType !== 'application/vnd.google-apps.document') {
+      throw new Error(`Template copy is not Google Docs. mimeType=${meta.data.mimeType}`)
+    }
 
-    // // Step 8: Log to Google Sheets
-    // await logToGoogleSheet({
-    //   companyName: companyName,
-    //   position: position,
-    //   resumeLink: resumeLink,
-    //   jobPostUrl: jobPostUrl,
-    //   contacts: '',
-    //   fileName: fileName
-    // });
 
-    // Step 8: Log to PostgreSQL
+    const resumeLink = `https://docs.google.com/document/d/${documentId}/edit`
+    console.log(`✅ Template copied. Doc ID: ${documentId}`)
+
+    // Step 8: Build placeholder replacements
+    console.log('🧩 Step 8: Replacing placeholders...')
+
+    const removeMarker = '[REMOVE]'
+
+    function pickBullet(arr, idx) {
+      return idx < arr.length ? arr[idx] : removeMarker
+    }
+
+    const payBullets = cleanFixedBullets(resumeJson.PAY_B || [], 'PAY_B', 3)
+    const clinBullets = cleanFixedBullets(resumeJson.CLIN_B || [], 'CLIN_B', 3)
+    const ragBullets = cleanFixedBullets(resumeJson.RAG_B || [], 'RAG_B', 3)
+    const searchBullets = cleanFixedBullets(resumeJson.SEARCH_B || [], 'SEARCH_B', 3)
+
+    const replacements = {
+      '{{SUMMARY}}': resumeJson.SUMMARY || '',
+
+      '{{SKILL_1}}': resumeJson.SKILL_1 || '',
+      '{{SKILL_2}}': resumeJson.SKILL_2 || '',
+      '{{SKILL_3}}': resumeJson.SKILL_3 || '',
+      '{{SKILL_4}}': resumeJson.SKILL_4 || '',
+      '{{SKILL_5}}': resumeJson.SKILL_5 || '',
+      '{{SKILL_6}}': resumeJson.SKILL_6 || '',
+      '{{SKILL_7}}': resumeJson.SKILL_7 || '',
+      '{{SKILL_8}}': resumeJson.SKILL_8 || '',
+      '{{SKILL_9}}': resumeJson.SKILL_9 || '',
+      '{{SKILL_10}}': resumeJson.SKILL_10 || '',
+      '{{SKILL_11}}': resumeJson.SKILL_11 || '',
+      '{{SKILL_12}}': resumeJson.SKILL_12 || '',
+
+      '{{CERT_1}}': resumeJson.CERT_1 || '',
+      '{{CERT_2}}': resumeJson.CERT_2 || '',
+      '{{CERT_3}}': resumeJson.CERT_3 || '',
+      '{{CERT_4}}': resumeJson.CERT_4 || '',
+
+      '{{TRUIST_TECH_STACK}}': resumeJson.TRUIST_TECH_STACK || '',
+      '{{ACC_TECH_STACK}}': resumeJson.ACC_TECH_STACK || '',
+      '{{HCL_TECH_STACK}}': resumeJson.HCL_TECH_STACK || '',
+
+      '{{EDU_1}}': resumeJson.EDU_1 || 'Southern Arkansas University',
+      '{{EDU_2}}': resumeJson.EDU_2 || "Master’s Degree, Computer and Information Science",
+
+      '{{PAY_B1}}': payBullets[0],
+      '{{PAY_B2}}': payBullets[1],
+      '{{PAY_B3}}': payBullets[2],
+
+      '{{CLIN_B1}}': clinBullets[0],
+      '{{CLIN_B2}}': clinBullets[1],
+      '{{CLIN_B3}}': clinBullets[2],
+
+      '{{RAG_B1}}': ragBullets[0],
+      '{{RAG_B2}}': ragBullets[1],
+      '{{RAG_B3}}': ragBullets[2],
+
+      '{{SEARCH_B1}}': searchBullets[0],
+      '{{SEARCH_B2}}': searchBullets[1],
+      '{{SEARCH_B3}}': searchBullets[2]
+    }
+
+    for (let i = 0; i < 10; i++) {
+      replacements[`{{TRUIST_B${i + 1}}}`] = pickBullet(truistBullets, i)
+      replacements[`{{ACC_B${i + 1}}}`] = pickBullet(accBullets, i)
+      replacements[`{{HCL_B${i + 1}}}`] = pickBullet(hclBullets, i)
+    }
+
+    await replacePlaceholders({ docs, documentId, replacements })
+
+    // Step 9: Remove extra bullet lines that became [REMOVE]
+    await removeMarkedParagraphs({ docs, documentId, marker: removeMarker })
+
+    // Step 10: Apply page formatting
+    await setDocumentFormatting(documentId)
+
+    // Step 11: Log to PostgreSQL
     await logApplicationToDB({
       companyName,
       position,
       resumeLink,
       jobPostUrl,
       jobDescription
-    });
+    })
+
 
 
     res.json({
@@ -1673,11 +1679,11 @@ Begin output now:
       position: position,
       links: {
         editInGoogleDocs: resumeLink,
-        downloadPDF: `https://docs.google.com/document/d/${fileId}/export?format=pdf`,
-        downloadWord: `https://docs.google.com/document/d/${fileId}/export?format=docx`,
+        downloadPDF: `https://docs.google.com/document/d/${documentId}/export?format=pdf`,
+        downloadWord: `https://docs.google.com/document/d/${documentId}/export?format=docx`,
         trackingSheet: `https://docs.google.com/spreadsheets/d/${TRACKING_SHEET_ID}/edit`
       },
-      documentId: fileId,
+      documentId: documentId,
       optimizationPoints: pointCount
     });
 
@@ -1689,6 +1695,118 @@ Begin output now:
     });
   }
 });
+// new code
+// =====================================================
+// TEMPLATE COPY + PLACEHOLDER REPLACE HELPERS (NEW)
+// =====================================================
+
+function extractJsonObject(raw) {
+  const start = raw.indexOf('{');
+  const end = raw.lastIndexOf('}');
+  if (start === -1 || end === -1 || end <= start) {
+    throw new Error('AI did not return a valid JSON object');
+  }
+  const jsonStr = raw.slice(start, end + 1);
+  return JSON.parse(jsonStr);
+}
+
+function cleanAndValidateBullets(arr, label) {
+  if (!Array.isArray(arr)) throw new Error(`${label} must be an array`);
+
+  const cleaned = arr
+    .map(x => (x || '').toString().trim())
+    .filter(x => x.length > 0);
+
+  if (cleaned.length < 8 || cleaned.length > 10) {
+    throw new Error(`${label} must have 8 to 10 bullets after cleaning. Got ${cleaned.length}`);
+  }
+  return cleaned;
+}
+
+function cleanFixedBullets(arr, label, exactCount) 
+{
+  if (!Array.isArray(arr)) throw new Error(`${label} must be an array`);
+
+  const cleaned = arr
+    .map(x => (x || "").toString().trim())
+    .filter(Boolean);
+
+  // If AI returns more than needed, trim
+  if (cleaned.length > exactCount) return cleaned.slice(0, exactCount);
+
+  // If AI returns less, pad with [REMOVE] so placeholders always exist
+  while (cleaned.length < exactCount) cleaned.push("[REMOVE]");
+
+  return cleaned;
+}
+
+
+async function copyTemplateDoc({ drive, templateId, folderId, fileName }) {
+  const copy = await drive.files.copy({
+    fileId: templateId,
+    requestBody: {
+      name: fileName,
+      parents: [folderId],
+      mimeType: 'application/vnd.google-apps.document'
+    },
+    fields: 'id'
+  })
+
+  return copy.data.id
+}
+
+
+async function replacePlaceholders({ docs, documentId, replacements }) 
+{
+  const requests = Object.entries(replacements).map(([key, value]) => ({
+    replaceAllText: {
+      containsText: { text: key, matchCase: true },
+      replaceText: value == null ? '' : String(value)
+    }
+  }));
+
+  await docs.documents.batchUpdate({
+    documentId,
+    requestBody: { requests }
+  });
+}
+
+async function removeMarkedParagraphs({ docs, documentId, marker }) {
+  const doc = await docs.documents.get({ documentId })
+  const content = (doc.data.body && doc.data.body.content) ? doc.data.body.content : []
+
+  const ranges = []
+
+  for (const el of content) {
+    const para = el.paragraph
+    if (!para || !para.elements) continue
+
+    const text = para.elements
+      .map(e => (e.textRun && e.textRun.content) ? e.textRun.content : '')
+      .join('')
+
+    if (text.includes(marker) && el.startIndex != null && el.endIndex != null) {
+      ranges.push({ startIndex: el.startIndex, endIndex: el.endIndex })
+    }
+  }
+
+  if (!ranges.length) return
+
+  const requests = ranges
+    .sort((a, b) => b.startIndex - a.startIndex)
+    .map(r => ({
+      deleteContentRange: {
+        range: { startIndex: r.startIndex, endIndex: r.endIndex }
+      }
+    }))
+
+  await docs.documents.batchUpdate({
+    documentId,
+    requestBody: { requests }
+  })
+}
+
+
 
 // Helper: Extract text from Google Doc (NO CHANGES NEEDED)
 function extractTextFromDoc(doc) {
@@ -1731,86 +1849,82 @@ function extractTextFromDoc(doc) {
 // REPLACE the convertToStyledHTML function in your server.js with this version:
 
 function convertToStyledHTML(text) {
-  const lines = text.split('\n');
+  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+
+  // Converts **skill** markers from AI output into bold in HTML
+  function processBoldText(s) {
+    return s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  }
+
+  function isSectionHeader(line) {
+    const u = line.toUpperCase();
+    return [
+      'PROFESSIONAL SUMMARY',
+      'TECHNICAL SKILLS',
+      'CERTIFICATIONS & AWARDS',
+      'PROFESSIONAL EXPERIENCE',
+      'KEY PROJECTS',
+      'EDUCATION'
+    ].includes(u);
+  }
+
+  // Header parsing
+  // Expected first non-empty lines:
+  // 0 Name
+  // 1 Title
+  // 2 Contact line
+  const headerName = lines[0] || '';
+  const headerTitle = lines[1] || '';
+  const headerContact = lines[2] || '';
+
   let html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>
-  * {
-    margin: 0;
-    padding: 0;
-  }
-  
+  * { margin: 0; padding: 0; }
+
   body {
-    font-family: Calibri, sans-serif;
-    font-size: 11pt;
-    line-height: 1.00;
-    margin: 0.5in 0.5in;
-    color: #000000;
+    font-family: "Times New Roman", Times, serif;
+    font-size: 10pt;
+    line-height: 1.0;
+    margin: 0.25in 0.5in 0.5in 0.5in;
+    color: #000;
   }
-  
-  /* Header - Name */
+
   .name {
-    font-size: 18pt;
+    font-size: 14pt;
     font-weight: bold;
     text-align: center;
     margin-bottom: 2pt;
   }
-  
-  /* Header - Title */
+
   .title {
-    font-size: 11pt;
+    font-size: 12pt;
     font-weight: bold;
     text-align: center;
     margin-bottom: 2pt;
   }
-  
-  /* Header - Contact */
+
   .contact {
-    font-size: 11pt;
-    text-align: center;
-    margin-bottom: 2pt;
-    line-height: 1.2;
-  }
-  
-  .contact a {
-    color: #000000;
-    text-decoration: none;
-  }
-  
-  /* Section Headers - Tight spacing */
-  .section-header {
-    font-size: 13pt;
+    font-size: 10pt;
     font-weight: bold;
-    color: #000000;
-    margin-top: 2pt;
-    margin-bottom: 4pt;
-    text-transform: uppercase;
+    text-align: center;
+    margin-bottom: 6pt;
   }
+
+  .section-header {
+    font-size: 10pt;
+    font-weight: bold;
+    text-transform: uppercase;
+    margin-top: 10pt;
+    margin-bottom: 4pt;
+  }
+
+  
   
   /* Company Header - Bold */
   .company-header {
     font-size: 11pt;
     font-weight: bold;
-    margin-top: 6pt;
+    margin-top: 8pt;
     margin-bottom: 2pt;
-  }
-  
-  /* Project Header - Bold with clickable project name */
-  .project-header {
-    font-size: 11pt;
-    font-weight: bold;
-    margin-top: 6pt;
-    margin-bottom: 2pt;
-  }
-  
-  .project-header a {
-    color: #000000;
-    text-decoration: none;
-    font-weight: bold;
-  }
-  
-  
-  .project-subheader a {
-    color: #000000;
-    text-decoration: none;
   }
   
   /* Job Date - Italic */
@@ -1819,72 +1933,53 @@ function convertToStyledHTML(text) {
     margin-bottom: 4pt;
   }
   
-  /* Bullet List - For experience AND projects */
+  /* Bullet List - For experience only */
   ul {
-    margin: 0 0 4pt 0.25in;
+    margin: 0 0 2pt 0.25in;
     padding: 0;
-    list-style-position: outside;
     list-style-type: disc;
+    list-style-position: outside;
   }
-  
-  ul li {
+
+  li {
     margin: 2pt 0;
     padding-left: 0.05in;
-    text-align: justify;
-    line-height: 1.08;
+    text-align: left;
+    line-height: 1.0;
   }
-  
-  /* Skills Section - Tight spacing */
-  .skills-para {
-    margin: 2pt 0;
-    text-align: justify;
-    line-height: 1.08;
-  }
-  
-  .skills-para strong {
-    font-weight: bold;
-  }
-  
-  /* Education - Tight spacing */
-  .edu-degree {
-    font-weight: bold;
-    margin-top: 2pt;
-    margin-bottom: 2pt;
-  }
-  
-  .edu-school {
-    margin-top: 0pt;
-    margin-bottom: 2pt;
-  }
-  
-  /* Certification - Plain paragraph (NO BULLETS) */
-  .cert-item {
+
+  .skills-line {
     margin: 2pt 0;
     text-align: left;
-    line-height: 1.08;
   }
-  
-  /* Regular paragraphs */
-  p {
+
+  .cert-line {
     margin: 2pt 0;
-    text-align: justify;
-    line-height: 1.08;
+    text-align: left;
+  }
+
+  .project-title {
+    font-weight: bold;
+    margin-top: 6pt;
+    margin-bottom: 2pt;
   }
   </style></head><body>`;
 
+  // Render header
+  html += `<div class="name">${processBoldText(headerName)}</div>`;
+  html += `<div class="title">${processBoldText(headerTitle)}</div>`;
+  html += `<div class="contact">${processBoldText(headerContact)}</div>`;
+
+  // Start reading body after header
+  let i = 3;
+
   let inSkills = false;
-  let inCertifications = false;
-  let inEducation = false;
+  let inCerts = false;
+  let inExperience = false;
   let inProjects = false;
+  let inEducation = false;
   let currentBulletList = [];
 
-  // Helper: Convert **text** to <strong>text</strong>
-  function processBoldText(text) {
-    // Replace **text** with <strong>text</strong>
-    return text.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-  }
-
-  // Helper: Flush accumulated bullets
   function flushBullets() {
     if (currentBulletList.length > 0) {
       html += '<ul>\n';
@@ -1918,38 +2013,6 @@ function convertToStyledHTML(text) {
     return text;
   }
 
-  // Helper: Convert project names to hyperlinks
-  function convertProjectNameToLink(text) {
-    // Resume Optimizer AI
-    if (text.includes('Resume Optimizer AI')) {
-      text = text.replace(
-        /(Resume Optimizer AI[^•\n]*)/,
-        '<a href="https://github.com/lokeshpara/Resume-Optimizer-AI">$1</a>'
-      );
-    }
-    
-    // CIFAR-10
-    if (text.includes('CIFAR-10') || text.includes('CIFAR10')) {
-      text = text.replace(
-        /(CIFAR-?10[^•\n]*)/,
-        '<a href="https://github.com/lokeshpara/CIFAR10-Custom-ResNet">$1</a>'
-      );
-    }
-    
-    return text;
-  }
-
-  // Helper: Convert GitHub links in project subheaders
-  function convertProjectLinks(text) {
-    // Convert GitHub links
-    text = text.replace(
-      /(GitHub:\s*)(github\.com\/[^\s]+)/gi,
-      '$1<a href="https://$2">$2</a>'
-    );
-    
-    return text;
-  }
-
   for (let i = 0; i < lines.length; i++) {
     let line = lines[i].trim();
     if (!line) continue;
@@ -1962,24 +2025,24 @@ function convertToStyledHTML(text) {
     }
 
     // TITLE
-    if (i <= 3 && (line.includes('Software Engineer') || line.includes('Full Stack') || line.includes('Developer')) && !line.includes('|')) {
+    if (i <= 3 && (line.includes('Full Stack') || line.includes('Developer')) && !line.includes('|')) {
       flushBullets();
       html += `<div class="title">${line}</div>\n`;
       continue;
     }
 
-    // CONTACT
-    if ((line.includes('@') || line.includes('|')) && i < 6) {
+    // Experience company line
+    // Example: Software Engineer | Truist Bank - USA | Aug 2024 - Present
+    if (inExperience && line.includes('|') && !line.startsWith('•')) {
       flushBullets();
-      const contactWithLinks = convertContactLinks(line);
-      html += `<div class="contact">${contactWithLinks}</div>\n`;
+      html += `<div class="company-line">${processBoldText(line)}</div>`;
+      i += 1;
       continue;
     }
 
     // SECTION HEADERS
     if (line === line.toUpperCase() && line.length > 3 && !line.startsWith('•')) {
       if (line.includes('PROFESSIONAL EXPERIENCE') ||
-          line.includes('PROJECTS') ||
           line.includes('TECHNICAL SKILLS') ||
           line.includes('EDUCATION') ||
           line.includes('CERTIFICATIONS')) {
@@ -1990,7 +2053,6 @@ function convertToStyledHTML(text) {
         inSkills = line.includes('SKILL');
         inCertifications = line.includes('CERTIFICATION');
         inEducation = line.includes('EDUCATION');
-        inProjects = line.includes('PROJECTS');
         continue;
       }
     }
@@ -2028,8 +2090,7 @@ function convertToStyledHTML(text) {
     }
 
     // COMPANY HEADER
-    if (!inProjects && 
-        line.includes('|') && 
+    if (line.includes('|') && 
         !line.startsWith('•') && 
         !line.includes('@') && 
         !inSkills &&
@@ -2050,43 +2111,31 @@ function convertToStyledHTML(text) {
         !line.startsWith('•') &&
         !inSkills &&
         !inEducation &&
-        !inProjects &&
         !inCertifications) {
       flushBullets();
-      html += `<div class="job-date">${line}</div>\n`;
+      html += `<p class="skills-line">${processBoldText(line)}</p>`;
+      i += 1;
       continue;
     }
 
     // SKILLS SECTION - NO BOLD (plain text only)
-    if (inSkills && !inCertifications && !inEducation && !inProjects) {
+    if (inSkills && !inCertifications && !inEducation) {
       flushBullets();
-      if (line.includes(':')) {
-        const colonIdx = line.indexOf(':');
-        const category = line.substring(0, colonIdx).trim();
-        const skills = line.substring(colonIdx + 1).trim();
-        
-        // Don't process bold in skills section
-        html += `<p class="skills-para"><strong>${category}:</strong> ${skills}</p>\n`;
-        continue;
-      }
+      html += `<p class="cert-line">${processBoldText(line.replace(/^[•*-]\s*/, ''))}</p>`;
+      i += 1;
+      continue;
     }
 
     // CERTIFICATIONS SECTION - NO BULLETS, PLAIN TEXT
-    if (inCertifications && !inEducation && !inProjects) {
+    if (inCertifications && !inEducation) {
       flushBullets();
-      
-      // Remove bullet if present and display as plain paragraph
-      let certText = line.replace(/^[•*-]\s*/, '');
-      
-      // Skip if it's just a bullet with no text
-      if (certText.trim()) {
-        html += `<p class="cert-item">${certText}</p>\n`;
-      }
+      html += `<p>${processBoldText(line)}</p>`;
+      i += 1;
       continue;
     }
 
     // EDUCATION SECTION
-    if (inEducation && !inCertifications && !inProjects) {
+    if (inEducation && !inCertifications) {
       flushBullets();
       if (line.includes('Master of Science') || line.includes('GPA:')) {
         html += `<p class="edu-degree">${line}</p>\n`;
@@ -2098,9 +2147,9 @@ function convertToStyledHTML(text) {
       }
     }
 
-    // BULLETS (Experience AND Projects sections - NOT certifications)
+    // BULLETS (Experience section only - NOT certifications)
     if (line.startsWith('•') || line.startsWith('-') || line.startsWith('*')) {
-      // Add to bullet list if in Experience OR Projects (but NOT certifications)
+      // Only add to bullet list if NOT in certifications
       if (!inCertifications) {
         const bulletContent = line.replace(/^[•*-]\s*/, '');
         currentBulletList.push(bulletContent);
@@ -2114,58 +2163,46 @@ function convertToStyledHTML(text) {
     html += `<p>${processedLine}</p>\n`;
   }
 
-  flushBullets();
-
-  return html + `</body></html>`;
-}
 
 // ============================================================================
 // PAGE FORMATTING
 // ============================================================================
-
-async function setDocumentFormatting(documentId) {
-  try {
-    console.log('📐 Setting exact page formatting...');
+async function setDocumentFormatting(documentId) 
+{
+  try 
+  {
+    console.log('📐 Setting page formatting...');
 
     const requests = [
       {
-        updateDocumentStyle: {
-          documentStyle: {
-            marginTop: { magnitude: 36, unit: 'PT' },
-            marginBottom: { magnitude: 36, unit: 'PT' },
-            marginLeft: { magnitude: 36, unit: 'PT' },
-            marginRight: { magnitude: 36, unit: 'PT' },
-            pageSize: {
-              width: { magnitude: 595, unit: 'PT' },
-              height: { magnitude: 842, unit: 'PT' }
+        updateDocumentStyle: 
+        {
+          documentStyle: 
+          {
+            marginTop: { magnitude: 18, unit: 'PT' },     // 0.25in
+            marginBottom: { magnitude: 36, unit: 'PT' },  // 0.5in
+            marginLeft: { magnitude: 36, unit: 'PT' },    // 0.5in
+            marginRight: { magnitude: 36, unit: 'PT' },   // 0.5in
+            pageSize: 
+            {
+              width: { magnitude: 612, unit: 'PT' },      // 8.5in
+              height: { magnitude: 792, unit: 'PT' }      // 11in
             }
           },
           fields: 'marginTop,marginBottom,marginLeft,marginRight,pageSize'
         }
-      },
-      {
-        updateParagraphStyle: {
-          range: {
-            startIndex: 1,
-            endIndex: 2
-          },
-          paragraphStyle: {
-            lineSpacing: 108,
-            spaceAbove: { magnitude: 0, unit: 'PT' },
-            spaceBelow: { magnitude: 0, unit: 'PT' }
-          },
-          fields: 'lineSpacing,spaceAbove,spaceBelow'
-        }
       }
     ];
 
-    await docs.documents.batchUpdate({
-      documentId: documentId,
+    await docs.documents.batchUpdate(
+    {
+      documentId,
       requestBody: { requests }
     });
 
     console.log('✅ Page formatting applied');
-  } catch (error) {
+  } catch (error) 
+  {
     console.error('⚠️ Failed to set formatting:', error.message);
   }
 }
@@ -2941,7 +2978,8 @@ app.listen(PORT, () => {
   console.log(`🎯 ATS Target: 100% Match Rate\n`);
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, () => 
+{
   console.log(`\n🚀 Job Tracker Server Running!`);
   console.log(`📍 http://localhost:${PORT}`);
   console.log(`📊 Dashboard: http://localhost:${PORT}/dashboard\n`);
