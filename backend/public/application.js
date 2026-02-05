@@ -52,6 +52,7 @@ async function init() {
     await loadApplication();
     await loadNotes();
     await loadContacts();
+    await displayTailoringAnalysis();
 }
 
 // =====================================================
@@ -90,6 +91,99 @@ async function loadApplication() {
         console.error('Failed to load application:', error);
         alert('Failed to load application details');
         window.location.href = '/dashboard';
+    }
+}
+
+// =====================================================
+// DISPLAY TAILORING ANALYSIS
+// =====================================================
+
+async function displayTailoringAnalysis() {
+    try {
+        // Check if appData has tailoring analysis
+        if (!appData.tailoringAnalysis) {
+            document.getElementById('tailoringPlaceholder').style.display = 'block';
+            document.getElementById('tailoringAnalysis').classList.add('hidden');
+            return;
+        }
+
+        const analysis = appData.tailoringAnalysis;
+        
+        // Show analysis section
+        document.getElementById('tailoringPlaceholder').style.display = 'none';
+        document.getElementById('tailoringAnalysis').classList.remove('hidden');
+
+        // Display score
+        document.getElementById('tailoringScoreNumber').textContent = analysis.tailoringScore + '%';
+
+        // Display risk with color
+        const riskEl = document.getElementById('tailoringRisk');
+        riskEl.textContent = analysis.tailoringRisk;
+        
+        // Set risk color
+        if (analysis.tailoringRisk.includes('LOW')) {
+            riskEl.className = 'risk-level low';
+        } else if (analysis.tailoringRisk.includes('MEDIUM')) {
+            riskEl.className = 'risk-level medium';
+        } else {
+            riskEl.className = 'risk-level high';
+        }
+
+        // Display validators
+        const validatorsList = document.getElementById('validatorsList');
+        validatorsList.innerHTML = '';
+        
+        const validatorNames = [
+            'JD Keyword Repetition',
+            'Metrics Realism',
+            'Skill Distribution',
+            'Company-Specific Language',
+            'Weak Skill Relevance'
+        ];
+
+        if (analysis.validatorsPassed) {
+            const parts = analysis.validatorsPassed.split('/');
+            const passed = parseInt(parts[0]);
+            const total = parseInt(parts[1]);
+
+            for (let i = 0; i < total; i++) {
+                const isPassed = i < passed;
+                const icon = isPassed ? '✅' : '⚠️';
+                const status = isPassed ? 'passed' : 'failed';
+                const li = document.createElement('div');
+                li.className = `validator-item ${status}`;
+                li.innerHTML = `<span class="validator-icon">${icon}</span><span class="validator-name">${validatorNames[i] || 'Validator ' + (i+1)}</span>`;
+                validatorsList.appendChild(li);
+            }
+        }
+
+        // Display verdict
+        const verdictEl = document.getElementById('tailoringVerdict');
+        if (analysis.tailoringScore >= 75) {
+            verdictEl.textContent = '✅ Resume works for multiple similar positions. This resume should be safe to submit to similar roles.';
+        } else if (analysis.tailoringScore >= 50) {
+            verdictEl.textContent = '⚠️ Resume has some customization. Make small adjustments before applying to other companies.';
+        } else {
+            verdictEl.textContent = '🔴 Resume looks obviously tailored. Requires significant revision for other applications.';
+        }
+
+        // Display recommendations
+        const recList = document.getElementById('recommendationsList');
+        recList.innerHTML = '';
+        
+        if (analysis.recommendations && analysis.recommendations.length > 0) {
+            analysis.recommendations.forEach(rec => {
+                const li = document.createElement('li');
+                li.textContent = typeof rec === 'string' ? rec : (rec.message || JSON.stringify(rec));
+                recList.appendChild(li);
+            });
+        } else {
+            const li = document.createElement('li');
+            li.textContent = 'No specific recommendations at this time.';
+            recList.appendChild(li);
+        }
+    } catch (error) {
+        console.error('Failed to display tailoring analysis:', error);
     }
 }
 

@@ -2,15 +2,18 @@
 console.log('Results page loaded');
 
 // Load data from chrome.storage
-chrome.storage.local.get(['analysisResults'], function (result) {
+chrome.storage.local.get(['analysisResults', 'optimizationResults', 'tailoringAnalysis'], function (result) {
     console.log('Storage result:', result);
 
-    if (result.analysisResults) {
-        const data = result.analysisResults;
+    // Check if we have analysis results (from analyze) or optimization results (from optimize)
+    const data = result.analysisResults || result.optimizationResults;
+    
+    if (data) {
         console.log('Analysis data loaded:', data);
         console.log('Company:', data.companyName);
         console.log('Scores:', data.scores);
         console.log('Summary:', data.summary);
+        console.log('Tailoring Analysis:', data.tailoringAnalysis || result.tailoringAnalysis);
 
         try {
             displayResults(data);
@@ -21,7 +24,7 @@ chrome.storage.local.get(['analysisResults'], function (result) {
         }
 
         // Clear the storage after loading
-        chrome.storage.local.remove(['analysisResults']);
+        chrome.storage.local.remove(['analysisResults', 'optimizationResults', 'tailoringAnalysis']);
     } else {
         console.error('No analysis results found in storage');
         console.log('Available storage keys:', Object.keys(result));
@@ -107,6 +110,14 @@ function displayResults(data) {
     } else {
         console.error('No detailed reports in data');
     }
+
+    // Tailoring analysis
+    if (data.tailoringAnalysis) {
+        displayTailoringAnalysis(data.tailoringAnalysis);
+        console.log('Tailoring analysis displayed');
+    } else {
+        console.log('No tailoring analysis in data');
+    }
 }
 
 function displayScore(num, score) {
@@ -146,4 +157,96 @@ function optimizeNow() {
 
 function downloadReport() {
     alert('PDF download feature coming soon!');
+}
+
+// =====================================================
+// DISPLAY TAILORING ANALYSIS
+// =====================================================
+
+function displayTailoringAnalysis(tailoringData) {
+    if (!tailoringData) return;
+
+    // Display tailoring score
+    const scoreEl = document.getElementById('tailoringScore');
+    if (scoreEl) {
+        scoreEl.textContent = tailoringData.tailoringScore + '%';
+    }
+
+    // Display tailoring risk with color
+    const riskEl = document.getElementById('tailoringRisk');
+    if (riskEl) {
+        riskEl.textContent = tailoringData.tailoringRisk;
+        
+        // Set risk color class
+        riskEl.className = 'tailoring-risk';
+        if (tailoringData.tailoringRisk.includes('LOW')) {
+            riskEl.classList.add('low');
+        } else if (tailoringData.tailoringRisk.includes('MEDIUM')) {
+            riskEl.classList.add('medium');
+        } else {
+            riskEl.classList.add('high');
+        }
+    }
+
+    // Display validators
+    const validatorsList = document.getElementById('validatorsList');
+    if (validatorsList) {
+        validatorsList.innerHTML = '';
+        
+        const validatorNames = [
+            'JD Keyword Repetition',
+            'Metrics Realism',
+            'Skill Distribution',
+            'Company-Specific Language',
+            'Weak Skill Relevance'
+        ];
+
+        if (tailoringData.validatorsPassed) {
+            const parts = tailoringData.validatorsPassed.split('/');
+            const passed = parseInt(parts[0]);
+            const total = parseInt(parts[1]);
+
+            for (let i = 0; i < total; i++) {
+                const isPassed = i < passed;
+                const icon = isPassed ? '✅' : '⚠️';
+                const status = isPassed ? 'passed' : 'failed';
+                
+                const div = document.createElement('div');
+                div.className = `validator-item ${status}`;
+                div.innerHTML = `<span>${icon} ${validatorNames[i] || 'Validator ' + (i+1)}</span>`;
+                validatorsList.appendChild(div);
+            }
+        }
+    }
+
+    // Display verdict
+    const verdictEl = document.getElementById('tailoringVerdict');
+    if (verdictEl) {
+        const score = tailoringData.tailoringScore;
+        if (score >= 75) {
+            verdictEl.textContent = '✅ Resume works for multiple similar positions. This resume should be safe to submit to similar roles.';
+        } else if (score >= 50) {
+            verdictEl.textContent = '⚠️ Resume has some customization. Make small adjustments before applying to other companies.';
+        } else {
+            verdictEl.textContent = '🔴 Resume looks obviously tailored. Requires significant revision for other applications.';
+        }
+    }
+
+    // Display recommendations
+    const recList = document.getElementById('tailoringRecommendations');
+    if (recList) {
+        recList.innerHTML = '';
+        
+        if (tailoringData.recommendations && tailoringData.recommendations.length > 0) {
+            tailoringData.recommendations.forEach(rec => {
+                const li = document.createElement('li');
+                li.textContent = typeof rec === 'string' ? rec : (rec.message || JSON.stringify(rec));
+                recList.appendChild(li);
+            });
+        } else {
+            const li = document.createElement('li');
+            li.textContent = 'No specific recommendations at this time.';
+            recList.appendChild(li);
+        }
+    }
 }

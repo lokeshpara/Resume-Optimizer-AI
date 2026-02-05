@@ -233,10 +233,10 @@ document.addEventListener('DOMContentLoaded', function () {
         }
       }
 
-      // Check if keys are set
-      const hasKeys = provider === 'gemini'
-        ? (result.geminiKey1 && result.geminiKey2 && result.geminiKey3)
-        : (result.chatgptApiKey && result.chatgptKey2 && result.chatgptKey3);
+      // Check if at least one key is set
+      const hasGeminiKeys = result.geminiKey1 || result.geminiKey2 || result.geminiKey3;
+      const hasChatgptKeys = result.chatgptApiKey || result.chatgptKey2 || result.chatgptKey3;
+      const hasKeys = provider === 'gemini' ? hasGeminiKeys : hasChatgptKeys;
 
       if (provider && hasKeys) {
         showState('actionSelection');
@@ -554,6 +554,12 @@ document.addEventListener('DOMContentLoaded', function () {
   function showSuccess(data) {
     console.log('✅ Success data:', data);
     showState('success');
+
+    // Store the full response including tailoring analysis for the results page
+    chrome.storage.local.set({ 
+      optimizationResults: data,
+      tailoringAnalysis: data.tailoringAnalysis || null 
+    });
 
     // Update optimization count
     if (optimizationCount && data.optimizationPoints) {
